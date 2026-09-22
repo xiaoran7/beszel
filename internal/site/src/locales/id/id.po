@@ -187,7 +187,6 @@ msgstr "Semua Container"
 
 #: src/components/alerts/alerts-sheet.tsx
 #: src/components/command-palette.tsx
-#: src/components/routes/home.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/systems-table/systems-table.tsx
 #: src/components/systems-table/systems-table.tsx
@@ -500,8 +499,8 @@ msgid "Container Health"
 msgstr "Kesehatan Kontainer"
 
 #: src/components/routes/system.tsx
-msgid "Containers"
-msgstr "Kontainer"
+#~ msgid "Containers"
+#~ msgstr "Kontainer"
 
 #: src/components/network-monitors-table/network-monitors-table.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
@@ -573,9 +572,9 @@ msgid "Copy YAML"
 msgstr "Salin YAML"
 
 #: src/components/routes/system.tsx
-msgctxt "Core system metrics"
-msgid "Core"
-msgstr "Inti"
+#~ msgctxt "Core system metrics"
+#~ msgid "Core"
+#~ msgstr "Inti"
 
 #: src/components/containers-table/containers-table-columns.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
@@ -710,7 +709,6 @@ msgstr "Perangkat"
 msgid "Discharging"
 msgstr "Sedang tidak di charge"
 
-#: src/components/routes/system.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Disk"
 msgstr "Disk"
@@ -811,8 +809,8 @@ msgid "Endpoint URL to ping (required)"
 msgstr "URL titik akhir untuk di-ping (diperlukan)"
 
 #: src/components/login/login.tsx
-msgid "Enter email address to reset password"
-msgstr "Masukkan alamat email untuk mereset kata sandi"
+#~ msgid "Enter email address to reset password"
+#~ msgstr "Masukkan alamat email untuk mereset kata sandi"
 
 #: src/components/routes/settings/notifications.tsx
 msgid "Enter email address..."
@@ -996,8 +994,8 @@ msgid "Global"
 msgstr "Global"
 
 #: src/components/routes/system.tsx
-msgid "GPU"
-msgstr "GPU"
+#~ msgid "GPU"
+#~ msgstr "GPU"
 
 #: src/components/routes/system/charts/gpu-charts.tsx
 msgid "GPU Engines"
@@ -1159,8 +1157,8 @@ msgid "Log Out"
 msgstr "Keluar"
 
 #: src/components/login/login.tsx
-msgid "Login"
-msgstr "Masuk"
+#~ msgid "Login"
+#~ msgstr "Masuk"
 
 #: src/components/login/auth-form.tsx
 #: src/components/login/forgot-pass-form.tsx
@@ -1271,8 +1269,8 @@ msgid "Net"
 msgstr "Jaringan"
 
 #: src/components/routes/system.tsx
-msgid "Network"
-msgstr "Jaringan"
+#~ msgid "Network"
+#~ msgstr "Jaringan"
 
 #: src/components/network-monitors-table/monitor-dialog.tsx
 #: src/components/network-monitors-table/monitor-dialog.tsx
@@ -1508,8 +1506,8 @@ msgid "Please check your credentials and try again"
 msgstr "Silakan periksa kredensial anda dan coba lagi"
 
 #: src/components/login/login.tsx
-msgid "Please create an admin account"
-msgstr "Silakan buat akun admin"
+#~ msgid "Please create an admin account"
+#~ msgstr "Silakan buat akun admin"
 
 #: src/components/login/auth-form.tsx
 msgid "Please enable pop-ups for this site"
@@ -1524,8 +1522,8 @@ msgid "Please see <0>the documentation</0> for instructions."
 msgstr "Silakan lihat <0>dokumentasi</0> untuk instruksi."
 
 #: src/components/login/login.tsx
-msgid "Please sign in to your account"
-msgstr "Silakan masuk ke akun anda"
+#~ msgid "Please sign in to your account"
+#~ msgstr "Silakan masuk ke akun anda"
 
 #: src/components/routes/system/storage-pools-table.tsx
 msgid "Pool Health"
@@ -1628,8 +1626,8 @@ msgid "Relationships"
 msgstr "Relasi"
 
 #: src/components/login/login.tsx
-msgid "Request a one-time password"
-msgstr "Minta kata sandi sekali pakai"
+#~ msgid "Request a one-time password"
+#~ msgstr "Minta kata sandi sekali pakai"
 
 #: src/components/login/otp-forms.tsx
 msgid "Request OTP"
@@ -1798,7 +1796,6 @@ msgstr "Nomor Seri"
 msgid "Service Details"
 msgstr "Detail Layanan"
 
-#: src/components/routes/system.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Services"
 msgstr "Layanan"

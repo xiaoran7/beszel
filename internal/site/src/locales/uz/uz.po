@@ -187,7 +187,6 @@ msgstr "Barcha konteynerlar"
 
 #: src/components/alerts/alerts-sheet.tsx
 #: src/components/command-palette.tsx
-#: src/components/routes/home.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/systems-table/systems-table.tsx
 #: src/components/systems-table/systems-table.tsx
@@ -500,8 +499,8 @@ msgid "Container Health"
 msgstr "Konteyner holati"
 
 #: src/components/routes/system.tsx
-msgid "Containers"
-msgstr "Konteynerlar"
+#~ msgid "Containers"
+#~ msgstr "Konteynerlar"
 
 #: src/components/network-monitors-table/network-monitors-table.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
@@ -573,9 +572,9 @@ msgid "Copy YAML"
 msgstr "YAML nusxalash"
 
 #: src/components/routes/system.tsx
-msgctxt "Core system metrics"
-msgid "Core"
-msgstr "Asosiy"
+#~ msgctxt "Core system metrics"
+#~ msgid "Core"
+#~ msgstr "Asosiy"
 
 #: src/components/containers-table/containers-table-columns.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
@@ -710,7 +709,6 @@ msgstr "Qurilma"
 msgid "Discharging"
 msgstr "Razryadlanmoqda"
 
-#: src/components/routes/system.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Disk"
 msgstr "Disk"
@@ -811,8 +809,8 @@ msgid "Endpoint URL to ping (required)"
 msgstr "Ping uchun endpoint URL (majburiy)"
 
 #: src/components/login/login.tsx
-msgid "Enter email address to reset password"
-msgstr "Parolni tiklash uchun elektron pochta manzilini kiriting"
+#~ msgid "Enter email address to reset password"
+#~ msgstr "Parolni tiklash uchun elektron pochta manzilini kiriting"
 
 #: src/components/routes/settings/notifications.tsx
 msgid "Enter email address..."
@@ -996,8 +994,8 @@ msgid "Global"
 msgstr "Global"
 
 #: src/components/routes/system.tsx
-msgid "GPU"
-msgstr "GPU"
+#~ msgid "GPU"
+#~ msgstr "GPU"
 
 #: src/components/routes/system/charts/gpu-charts.tsx
 msgid "GPU Engines"
@@ -1159,8 +1157,8 @@ msgid "Log Out"
 msgstr "Chiqish"
 
 #: src/components/login/login.tsx
-msgid "Login"
-msgstr "Kirish"
+#~ msgid "Login"
+#~ msgstr "Kirish"
 
 #: src/components/login/auth-form.tsx
 #: src/components/login/forgot-pass-form.tsx
@@ -1271,8 +1269,8 @@ msgid "Net"
 msgstr "Tarmoq"
 
 #: src/components/routes/system.tsx
-msgid "Network"
-msgstr "Tarmoq"
+#~ msgid "Network"
+#~ msgstr "Tarmoq"
 
 #: src/components/network-monitors-table/monitor-dialog.tsx
 #: src/components/network-monitors-table/monitor-dialog.tsx
@@ -1508,8 +1506,8 @@ msgid "Please check your credentials and try again"
 msgstr "Hisobingizni tekshirib, qayta urinib ko'ring"
 
 #: src/components/login/login.tsx
-msgid "Please create an admin account"
-msgstr "Admin hisob yarating"
+#~ msgid "Please create an admin account"
+#~ msgstr "Admin hisob yarating"
 
 #: src/components/login/auth-form.tsx
 msgid "Please enable pop-ups for this site"
@@ -1524,8 +1522,8 @@ msgid "Please see <0>the documentation</0> for instructions."
 msgstr "Ko'rsatmalar uchun <0>hujjatlarni</0> ko'ring."
 
 #: src/components/login/login.tsx
-msgid "Please sign in to your account"
-msgstr "Hisobingizga kiring"
+#~ msgid "Please sign in to your account"
+#~ msgstr "Hisobingizga kiring"
 
 #: src/components/routes/system/storage-pools-table.tsx
 msgid "Pool Health"
@@ -1628,8 +1626,8 @@ msgid "Relationships"
 msgstr "Munosabatlar"
 
 #: src/components/login/login.tsx
-msgid "Request a one-time password"
-msgstr "Bir martalik parol so'rash"
+#~ msgid "Request a one-time password"
+#~ msgstr "Bir martalik parol so'rash"
 
 #: src/components/login/otp-forms.tsx
 msgid "Request OTP"
@@ -1798,7 +1796,6 @@ msgstr "Seriya raqami"
 msgid "Service Details"
 msgstr "Xizmat tafsilotlari"
 
-#: src/components/routes/system.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Services"
 msgstr "Xizmatlar"

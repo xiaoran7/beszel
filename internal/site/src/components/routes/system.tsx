@@ -7,7 +7,7 @@ import InfoBar from "./system/info-bar"
 import { useSystemData } from "./system/use-system-data"
 import { CpuChart, ContainerCpuChart } from "./system/charts/cpu-charts"
 import { MemoryChart, ContainerMemoryChart, SwapChart } from "./system/charts/memory-charts"
-import { RootDiskCharts, ExtraFsCharts } from "./system/charts/disk-charts"
+import { DiskUsageChart, DiskIOChart, RootDiskCharts, ExtraFsCharts } from "./system/charts/disk-charts"
 import { ZfsCharts } from "./system/charts/storage-pool-charts"
 import { BandwidthChart, ContainerNetworkChart } from "./system/charts/network-charts"
 import { TemperatureChart, FanChart, BatteryChart } from "./system/charts/sensor-charts"
@@ -20,10 +20,12 @@ import {
 	LazyZfsTable,
 } from "./system/lazy-tables"
 import { LoadAverageChart } from "./system/charts/load-average-chart"
-import { ContainerIcon, CpuIcon, HardDriveIcon, NetworkIcon, TerminalSquareIcon } from "lucide-react"
+import { ContainerIcon, CpuIcon, HardDriveIcon, NetworkIcon, TerminalSquareIcon, SlidersHorizontalIcon } from "lucide-react"
 import { GpuIcon } from "../ui/icons"
-import SystemdTable from "../systemd-table/systemd-table"
-import ContainersTable from "../containers-table/containers-table"
+import { SystemHeroHeader } from "./system/system-hero-header"
+import { SystemKpiCards } from "./system/system-kpi-cards"
+import { SystemDockerCard } from "./system/system-docker-card"
+import { SystemInfoOverviewCard } from "./system/system-info-overview-card"
 
 const SEMVER_0_14_0 = parseSemVer("0.14.0")
 const SEMVER_0_15_0 = parseSemVer("0.15.0")
@@ -57,9 +59,8 @@ export default memo(function SystemDetail({ id }: { id: string }) {
 		hasGpuPowerData,
 	} = systemData
 
-	// extra margin to add to bottom of page, specifically for temperature chart,
-	// where the tooltip can go past the bottom of the page if lots of sensors
 	const [pageBottomExtraMargin, setPageBottomExtraMargin] = useState(0)
+	const [showAdvancedPanels, setShowAdvancedPanels] = useState(false)
 
 	if (!system.id) {
 		return null
@@ -68,248 +69,107 @@ export default memo(function SystemDetail({ id }: { id: string }) {
 	const hasContainers = containerData.length > 0
 	const maybeHasSmartData = compareSemVer(chartData.agentVersion, SEMVER_0_15_0) >= 0
 	const hasContainersTable = hasContainers && compareSemVer(chartData.agentVersion, SEMVER_0_14_0) >= 0
-	const hasSystemd = system.info.sv
+	const hasSystemd = system.info?.sv
 	const hasGpu = hasGpuData || hasGpuPowerData
 	const hasZfs = Object.keys(systemStats.at(-1)?.stats?.z ?? {}).length > 0
 	const hasNetworkMonitors = supportsNetworkMonitors(system)
 
-	// keep tabsRef in sync for keyboard navigation
 	const tabs = ["core", "network", "disk"]
 	if (hasGpu) tabs.push("gpu")
 	if (hasContainers) tabs.push("containers")
 	if (hasSystemd) tabs.push("services")
 	tabsRef.current = tabs
 
-	// shared chart props
 	const coreProps = { chartData, grid, dataEmpty, showMax, isLongerChart, maxValues }
 
-	function defaultLayout() {
-		return (
-			<>
-				{/* main charts */}
-				<div className="grid xl:grid-cols-2 gap-4">
-					<CpuChart {...coreProps} />
+	return (
+		<div className="flex flex-col gap-6 w-full pb-16">
+			{/* 1. Top Server Hero Header (HK-01, ONLINE, Arona Bubble & Banner from Ref 2) */}
+			<SystemHeroHeader system={system} />
 
-					{hasContainers && (
-						<ContainerCpuChart
-							chartData={chartData}
-							grid={grid}
-							dataEmpty={dataEmpty}
-							isPodman={isPodman}
-							cpuConfig={containerChartConfigs.cpu}
-						/>
-					)}
+			{/* 2. 4 Main KPI Cards (Uptime, Load Average, CPU Temp, IP from Ref 2) */}
+			<SystemKpiCards system={system} details={details} />
 
-					<MemoryChart {...coreProps} />
-
-					{hasContainers && (
-						<ContainerMemoryChart
-							chartData={chartData}
-							grid={grid}
-							dataEmpty={dataEmpty}
-							isPodman={isPodman}
-							memoryConfig={containerChartConfigs.memory}
-						/>
-					)}
-
-					<RootDiskCharts systemData={systemData} />
-
-					<BandwidthChart {...coreProps} systemStats={systemStats} />
-
-					{hasContainers && (
-						<ContainerNetworkChart
-							chartData={chartData}
-							grid={grid}
-							dataEmpty={dataEmpty}
-							isPodman={isPodman}
-							networkConfig={containerChartConfigs.network}
-						/>
-					)}
-
-					<SwapChart chartData={chartData} grid={grid} dataEmpty={dataEmpty} systemStats={systemStats} />
-
-					<LoadAverageChart chartData={chartData} grid={grid} dataEmpty={dataEmpty} />
-
-					<TemperatureChart {...coreProps} />
-
-					<FanChart {...coreProps} />
-
-					<BatteryChart system={system} {...coreProps} />
-
-					{hasGpuPowerData && <GpuPowerChart chartData={chartData} grid={grid} dataEmpty={dataEmpty} />}
-				</div>
-
-				{hasGpuData && lastGpus && (
-					<GpuCharts
+			{/* Controls bar: Time Range & Advanced toggle */}
+			<div className="flex flex-wrap items-center justify-between gap-3 px-1">
+				<div className="flex items-center gap-2">
+					<InfoBar
+						system={system}
 						chartData={chartData}
 						grid={grid}
-						dataEmpty={dataEmpty}
-						lastGpus={lastGpus as Record<string, GPUData>}
-						hasGpuEnginesData={hasGpuEnginesData}
+						setGrid={setGrid}
+						displayMode={displayMode}
+						setDisplayMode={setDisplayMode}
+						details={details}
 					/>
-				)}
+				</div>
 
-				<ExtraFsCharts systemData={systemData} />
+				<button
+					type="button"
+					onClick={() => setShowAdvancedPanels((v) => !v)}
+					className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-secondary/80 hover:bg-secondary text-muted-foreground hover:text-foreground border border-border/60 transition-all cursor-pointer"
+				>
+					<SlidersHorizontalIcon className="size-3.5" />
+					<span>{showAdvancedPanels ? "Hide Extended Sensors" : "Show Extended Sensors & Logs"}</span>
+				</button>
+			</div>
 
-				{hasZfs && <ZfsCharts systemData={systemData} />}
+			{/* 3. Main 6-Grid Core Charts (Matching Reference Image 2: 2 cols x 3 rows) */}
+			<div className="grid grid-cols-1 xl:grid-cols-2 gap-5 sm:gap-6">
+				{/* Row 1, Col 1: CPU Usage */}
+				<CpuChart {...coreProps} />
 
-				{hasZfs && <LazyZfsTable systemId={system.id} />}
+				{/* Row 1, Col 2: Memory Usage */}
+				<MemoryChart {...coreProps} />
 
-				{maybeHasSmartData && <LazySmartTable systemId={system.id} />}
+				{/* Row 2, Col 1: Disk Usage */}
+				<DiskUsageChart systemData={systemData} />
 
-				{hasContainersTable && <LazyContainersTable systemId={system.id} />}
+				{/* Row 2, Col 2: Network Traffic (Bandwidth) */}
+				<BandwidthChart {...coreProps} systemStats={systemStats} />
 
-				{hasSystemd && <LazySystemdTable systemId={system.id} />}
+				{/* Row 3, Col 1: Disk IO Throughput */}
+				<DiskIOChart systemData={systemData} />
 
-				{hasNetworkMonitors && <LazyNetworkMonitorsTable systemId={system.id} />}
-			</>
-		)
-	}
+				{/* Row 3, Col 2: Docker Containers Table Card */}
+				<SystemDockerCard />
+			</div>
 
-	function tabbedLayout() {
-		return (
-			<Tabs value={activeTab} onValueChange={setActiveTab} className="contents">
-				<TabsList className="h-11 p-1.5 w-full shadow-xs overflow-auto justify-start">
-					<TabsTrigger value="core" className="w-full flex items-center gap-1.5">
-						<CpuIcon className="size-3.5" />
-						<Trans context="Core system metrics">Core</Trans>
-					</TabsTrigger>
-					<TabsTrigger value="network" className="w-full flex items-center gap-1.5">
-						<NetworkIcon className="size-3.5" />
-						<Trans>Network</Trans>
-					</TabsTrigger>
-					<TabsTrigger value="disk" className="w-full flex items-center gap-1.5">
-						<HardDriveIcon className="size-3.5" />
-						<Trans>Disk</Trans>
-					</TabsTrigger>
-					{hasGpu && (
-						<TabsTrigger value="gpu" className="w-full flex items-center gap-2">
-							<GpuIcon className="size-3.5" />
-							<Trans>GPU</Trans>
-						</TabsTrigger>
-					)}
-					{hasContainers && (
-						<TabsTrigger value="containers" className="w-full flex items-center gap-2">
-							<ContainerIcon className="size-3.5" />
-							<Trans>Containers</Trans>
-						</TabsTrigger>
-					)}
-					{hasSystemd && (
-						<TabsTrigger value="services" className="w-full flex items-center gap-2">
-							<TerminalSquareIcon className="size-3.5" />
-							<Trans>Services</Trans>
-						</TabsTrigger>
-					)}
-				</TabsList>
+			{/* 4. Bottom System Information Card with Skyline (Reference Image 2) */}
+			<SystemInfoOverviewCard system={system} details={details} />
 
-				<TabsContent value="core" forceMount className={activeTab === "core" ? "contents" : "hidden"}>
-					<div className="grid xl:grid-cols-2 gap-4">
-						<CpuChart {...coreProps} />
+			{/* 5. Extended / Advanced Panels (Sensors, GPU, Smart, Systemd, Extra Disks) */}
+			{showAdvancedPanels && (
+				<div className="flex flex-col gap-6 pt-4 border-t border-border/60">
+					<div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
 						<LoadAverageChart chartData={chartData} grid={grid} dataEmpty={dataEmpty} />
-						<MemoryChart {...coreProps} />
 						<SwapChart chartData={chartData} grid={grid} dataEmpty={dataEmpty} systemStats={systemStats} />
 						<TemperatureChart {...coreProps} setPageBottomExtraMargin={setPageBottomExtraMargin} />
 						<FanChart {...coreProps} />
 						<BatteryChart system={system} {...coreProps} />
-						{pageBottomExtraMargin > 0 && <div style={{ marginBottom: pageBottomExtraMargin }}></div>}
+						{hasGpuPowerData && <GpuPowerChart chartData={chartData} grid={grid} dataEmpty={dataEmpty} />}
 					</div>
-				</TabsContent>
 
-				<TabsContent value="network" forceMount className={activeTab === "network" ? "contents" : "hidden"}>
-					{mountedTabs.has("network") && (
-						<>
-							<div className="grid xl:grid-cols-2 gap-4">
-								<BandwidthChart {...coreProps} systemStats={systemStats} />
-							</div>
-							{hasNetworkMonitors && <LazyNetworkMonitorsTable systemId={system.id} />}
-						</>
-					)}
-				</TabsContent>
-
-				<TabsContent value="disk" forceMount className={activeTab === "disk" ? "contents" : "hidden"}>
-					{mountedTabs.has("disk") && (
-						<>
-							<div className="grid xl:grid-cols-2 gap-4">
-								<RootDiskCharts systemData={systemData} />
-							</div>
-							<ExtraFsCharts systemData={systemData} />
-							{hasZfs && <ZfsCharts systemData={systemData} />}
-							{hasZfs && <LazyZfsTable systemId={system.id} />}
-							{maybeHasSmartData && <LazySmartTable systemId={system.id} />}
-						</>
-					)}
-				</TabsContent>
-
-				{hasGpu && (
-					<TabsContent value="gpu" forceMount className={activeTab === "gpu" ? "contents" : "hidden"}>
+					{hasGpuData && lastGpus && (
 						<GpuCharts
 							chartData={chartData}
 							grid={grid}
 							dataEmpty={dataEmpty}
-							lastGpus={(lastGpus ?? {}) as Record<string, GPUData>}
+							lastGpus={lastGpus as Record<string, GPUData>}
 							hasGpuEnginesData={hasGpuEnginesData}
-						>
-							{hasGpuPowerData && <GpuPowerChart chartData={chartData} grid={grid} dataEmpty={dataEmpty} />}
-						</GpuCharts>
-					</TabsContent>
-				)}
+						/>
+					)}
 
-				{hasContainers && (
-					<TabsContent value="containers" forceMount className={activeTab === "containers" ? "contents" : "hidden"}>
-						{mountedTabs.has("containers") && (
-							<>
-								<div className="grid xl:grid-cols-2 gap-4">
-									<ContainerCpuChart
-										chartData={chartData}
-										grid={grid}
-										dataEmpty={dataEmpty}
-										isPodman={isPodman}
-										cpuConfig={containerChartConfigs.cpu}
-									/>
-									<ContainerMemoryChart
-										chartData={chartData}
-										grid={grid}
-										dataEmpty={dataEmpty}
-										isPodman={isPodman}
-										memoryConfig={containerChartConfigs.memory}
-									/>
-									<ContainerNetworkChart
-										chartData={chartData}
-										grid={grid}
-										dataEmpty={dataEmpty}
-										isPodman={isPodman}
-										networkConfig={containerChartConfigs.network}
-									/>
-								</div>
-								{hasContainersTable && <ContainersTable systemId={system.id} />}
-							</>
-						)}
-					</TabsContent>
-				)}
+					<ExtraFsCharts systemData={systemData} />
 
-				{hasSystemd && (
-					<TabsContent value="services" forceMount className={activeTab === "services" ? "contents" : "hidden"}>
-						{mountedTabs.has("services") && <SystemdTable systemId={system.id} />}
-					</TabsContent>
-				)}
-			</Tabs>
-		)
-	}
-
-	return (
-		<div className="grid gap-4 mb-14 overflow-x-clip">
-			{/* system info */}
-			<InfoBar
-				system={system}
-				chartData={chartData}
-				grid={grid}
-				setGrid={setGrid}
-				displayMode={displayMode}
-				setDisplayMode={setDisplayMode}
-				details={details}
-			/>
-
-			{displayMode === "tabs" ? tabbedLayout() : defaultLayout()}
+					{hasZfs && <ZfsCharts systemData={systemData} />}
+					{hasZfs && <LazyZfsTable systemId={system.id} />}
+					{maybeHasSmartData && <LazySmartTable systemId={system.id} />}
+					{hasContainersTable && <LazyContainersTable systemId={system.id} />}
+					{hasSystemd && <LazySystemdTable systemId={system.id} />}
+					{hasNetworkMonitors && <LazyNetworkMonitorsTable systemId={system.id} />}
+				</div>
+			)}
 		</div>
 	)
 })

@@ -182,7 +182,6 @@ msgstr "All Containers"
 
 #: src/components/alerts/alerts-sheet.tsx
 #: src/components/command-palette.tsx
-#: src/components/routes/home.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/systems-table/systems-table.tsx
 #: src/components/systems-table/systems-table.tsx
@@ -495,8 +494,8 @@ msgid "Container Health"
 msgstr "Container Health"
 
 #: src/components/routes/system.tsx
-msgid "Containers"
-msgstr "Containers"
+#~ msgid "Containers"
+#~ msgstr "Containers"
 
 #: src/components/network-monitors-table/network-monitors-table.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
@@ -568,9 +567,9 @@ msgid "Copy YAML"
 msgstr "Copy YAML"
 
 #: src/components/routes/system.tsx
-msgctxt "Core system metrics"
-msgid "Core"
-msgstr "Core"
+#~ msgctxt "Core system metrics"
+#~ msgid "Core"
+#~ msgstr "Core"
 
 #: src/components/containers-table/containers-table-columns.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
@@ -705,7 +704,6 @@ msgstr "Device"
 msgid "Discharging"
 msgstr "Discharging"
 
-#: src/components/routes/system.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Disk"
 msgstr "Disk"
@@ -806,8 +804,8 @@ msgid "Endpoint URL to ping (required)"
 msgstr "Endpoint URL to ping (required)"
 
 #: src/components/login/login.tsx
-msgid "Enter email address to reset password"
-msgstr "Enter email address to reset password"
+#~ msgid "Enter email address to reset password"
+#~ msgstr "Enter email address to reset password"
 
 #: src/components/routes/settings/notifications.tsx
 msgid "Enter email address..."
@@ -991,8 +989,8 @@ msgid "Global"
 msgstr "Global"
 
 #: src/components/routes/system.tsx
-msgid "GPU"
-msgstr "GPU"
+#~ msgid "GPU"
+#~ msgstr "GPU"
 
 #: src/components/routes/system/charts/gpu-charts.tsx
 msgid "GPU Engines"
@@ -1154,8 +1152,8 @@ msgid "Log Out"
 msgstr "Log Out"
 
 #: src/components/login/login.tsx
-msgid "Login"
-msgstr "Login"
+#~ msgid "Login"
+#~ msgstr "Login"
 
 #: src/components/login/auth-form.tsx
 #: src/components/login/forgot-pass-form.tsx
@@ -1266,8 +1264,8 @@ msgid "Net"
 msgstr "Net"
 
 #: src/components/routes/system.tsx
-msgid "Network"
-msgstr "Network"
+#~ msgid "Network"
+#~ msgstr "Network"
 
 #: src/components/network-monitors-table/monitor-dialog.tsx
 #: src/components/network-monitors-table/monitor-dialog.tsx
@@ -1503,8 +1501,8 @@ msgid "Please check your credentials and try again"
 msgstr "Please check your credentials and try again"
 
 #: src/components/login/login.tsx
-msgid "Please create an admin account"
-msgstr "Please create an admin account"
+#~ msgid "Please create an admin account"
+#~ msgstr "Please create an admin account"
 
 #: src/components/login/auth-form.tsx
 msgid "Please enable pop-ups for this site"
@@ -1519,8 +1517,8 @@ msgid "Please see <0>the documentation</0> for instructions."
 msgstr "Please see <0>the documentation</0> for instructions."
 
 #: src/components/login/login.tsx
-msgid "Please sign in to your account"
-msgstr "Please sign in to your account"
+#~ msgid "Please sign in to your account"
+#~ msgstr "Please sign in to your account"
 
 #: src/components/routes/system/storage-pools-table.tsx
 msgid "Pool Health"
@@ -1623,8 +1621,8 @@ msgid "Relationships"
 msgstr "Relationships"
 
 #: src/components/login/login.tsx
-msgid "Request a one-time password"
-msgstr "Request a one-time password"
+#~ msgid "Request a one-time password"
+#~ msgstr "Request a one-time password"
 
 #: src/components/login/otp-forms.tsx
 msgid "Request OTP"
@@ -1793,7 +1791,6 @@ msgstr "Serial Number"
 msgid "Service Details"
 msgstr "Service Details"
 
-#: src/components/routes/system.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Services"
 msgstr "Services"

@@ -187,7 +187,6 @@ msgstr "Všechny kontejnery"
 
 #: src/components/alerts/alerts-sheet.tsx
 #: src/components/command-palette.tsx
-#: src/components/routes/home.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/systems-table/systems-table.tsx
 #: src/components/systems-table/systems-table.tsx
@@ -500,8 +499,8 @@ msgid "Container Health"
 msgstr "Zdraví kontejneru"
 
 #: src/components/routes/system.tsx
-msgid "Containers"
-msgstr "Kontejnery"
+#~ msgid "Containers"
+#~ msgstr "Kontejnery"
 
 #: src/components/network-monitors-table/network-monitors-table.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
@@ -573,9 +572,9 @@ msgid "Copy YAML"
 msgstr "Kopírovat YAML"
 
 #: src/components/routes/system.tsx
-msgctxt "Core system metrics"
-msgid "Core"
-msgstr "Jádro"
+#~ msgctxt "Core system metrics"
+#~ msgid "Core"
+#~ msgstr "Jádro"
 
 #: src/components/containers-table/containers-table-columns.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
@@ -710,7 +709,6 @@ msgstr "Zařízení"
 msgid "Discharging"
 msgstr "Vybíjení"
 
-#: src/components/routes/system.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Disk"
 msgstr ""
@@ -811,8 +809,8 @@ msgid "Endpoint URL to ping (required)"
 msgstr "URL koncového bodu pro ping (vyžadováno)"
 
 #: src/components/login/login.tsx
-msgid "Enter email address to reset password"
-msgstr "Zadejte e-mailovou adresu pro obnovu hesla"
+#~ msgid "Enter email address to reset password"
+#~ msgstr "Zadejte e-mailovou adresu pro obnovu hesla"
 
 #: src/components/routes/settings/notifications.tsx
 msgid "Enter email address..."
@@ -996,8 +994,8 @@ msgid "Global"
 msgstr "Globální"
 
 #: src/components/routes/system.tsx
-msgid "GPU"
-msgstr ""
+#~ msgid "GPU"
+#~ msgstr ""
 
 #: src/components/routes/system/charts/gpu-charts.tsx
 msgid "GPU Engines"
@@ -1159,8 +1157,8 @@ msgid "Log Out"
 msgstr "Odhlásit"
 
 #: src/components/login/login.tsx
-msgid "Login"
-msgstr "Přihlásit"
+#~ msgid "Login"
+#~ msgstr "Přihlásit"
 
 #: src/components/login/auth-form.tsx
 #: src/components/login/forgot-pass-form.tsx
@@ -1271,8 +1269,8 @@ msgid "Net"
 msgstr "Síť"
 
 #: src/components/routes/system.tsx
-msgid "Network"
-msgstr "Síť"
+#~ msgid "Network"
+#~ msgstr "Síť"
 
 #: src/components/network-monitors-table/monitor-dialog.tsx
 #: src/components/network-monitors-table/monitor-dialog.tsx
@@ -1508,8 +1506,8 @@ msgid "Please check your credentials and try again"
 msgstr "Zkontrolujte prosím Vaše přihlašovací údaje a zkuste to znovu"
 
 #: src/components/login/login.tsx
-msgid "Please create an admin account"
-msgstr "Vytvořte si prosím účet administrátora"
+#~ msgid "Please create an admin account"
+#~ msgstr "Vytvořte si prosím účet administrátora"
 
 #: src/components/login/auth-form.tsx
 msgid "Please enable pop-ups for this site"
@@ -1524,8 +1522,8 @@ msgid "Please see <0>the documentation</0> for instructions."
 msgstr "Instrukce naleznete v <0>dokumentaci</0>."
 
 #: src/components/login/login.tsx
-msgid "Please sign in to your account"
-msgstr "Přihlaste se prosím k vašemu účtu"
+#~ msgid "Please sign in to your account"
+#~ msgstr "Přihlaste se prosím k vašemu účtu"
 
 #: src/components/routes/system/storage-pools-table.tsx
 msgid "Pool Health"
@@ -1628,8 +1626,8 @@ msgid "Relationships"
 msgstr "Vztahy"
 
 #: src/components/login/login.tsx
-msgid "Request a one-time password"
-msgstr "Požádat o jednorázové heslo"
+#~ msgid "Request a one-time password"
+#~ msgstr "Požádat o jednorázové heslo"
 
 #: src/components/login/otp-forms.tsx
 msgid "Request OTP"
@@ -1798,7 +1796,6 @@ msgstr "Sériové číslo"
 msgid "Service Details"
 msgstr "Detaily služby"
 
-#: src/components/routes/system.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Services"
 msgstr "Služby"

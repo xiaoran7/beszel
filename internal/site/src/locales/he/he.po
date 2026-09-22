@@ -187,7 +187,6 @@ msgstr "כל הקונטיינרים"
 
 #: src/components/alerts/alerts-sheet.tsx
 #: src/components/command-palette.tsx
-#: src/components/routes/home.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/systems-table/systems-table.tsx
 #: src/components/systems-table/systems-table.tsx
@@ -500,8 +499,8 @@ msgid "Container Health"
 msgstr "בריאות הקונטיינר"
 
 #: src/components/routes/system.tsx
-msgid "Containers"
-msgstr "קונטיינרים"
+#~ msgid "Containers"
+#~ msgstr "קונטיינרים"
 
 #: src/components/network-monitors-table/network-monitors-table.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
@@ -573,9 +572,9 @@ msgid "Copy YAML"
 msgstr "העתק YAML"
 
 #: src/components/routes/system.tsx
-msgctxt "Core system metrics"
-msgid "Core"
-msgstr "ליבה"
+#~ msgctxt "Core system metrics"
+#~ msgid "Core"
+#~ msgstr "ליבה"
 
 #: src/components/containers-table/containers-table-columns.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
@@ -710,7 +709,6 @@ msgstr "התקן"
 msgid "Discharging"
 msgstr "בפריקה"
 
-#: src/components/routes/system.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Disk"
 msgstr "דיסק"
@@ -811,8 +809,8 @@ msgid "Endpoint URL to ping (required)"
 msgstr "כתובת נקודת קצה לפינג (חובה)"
 
 #: src/components/login/login.tsx
-msgid "Enter email address to reset password"
-msgstr "הכנס כתובת אימייל לאיפוס סיסמה"
+#~ msgid "Enter email address to reset password"
+#~ msgstr "הכנס כתובת אימייל לאיפוס סיסמה"
 
 #: src/components/routes/settings/notifications.tsx
 msgid "Enter email address..."
@@ -996,8 +994,8 @@ msgid "Global"
 msgstr "גלובלי"
 
 #: src/components/routes/system.tsx
-msgid "GPU"
-msgstr "מעבד גרפי"
+#~ msgid "GPU"
+#~ msgstr "מעבד גרפי"
 
 #: src/components/routes/system/charts/gpu-charts.tsx
 msgid "GPU Engines"
@@ -1159,8 +1157,8 @@ msgid "Log Out"
 msgstr "התנתק"
 
 #: src/components/login/login.tsx
-msgid "Login"
-msgstr "התחבר"
+#~ msgid "Login"
+#~ msgstr "התחבר"
 
 #: src/components/login/auth-form.tsx
 #: src/components/login/forgot-pass-form.tsx
@@ -1271,8 +1269,8 @@ msgid "Net"
 msgstr "רשת"
 
 #: src/components/routes/system.tsx
-msgid "Network"
-msgstr "רשת"
+#~ msgid "Network"
+#~ msgstr "רשת"
 
 #: src/components/network-monitors-table/monitor-dialog.tsx
 #: src/components/network-monitors-table/monitor-dialog.tsx
@@ -1508,8 +1506,8 @@ msgid "Please check your credentials and try again"
 msgstr "אנא בדוק את האישורים שלך ונסה שוב"
 
 #: src/components/login/login.tsx
-msgid "Please create an admin account"
-msgstr "אנא צור חשבון מנהל"
+#~ msgid "Please create an admin account"
+#~ msgstr "אנא צור חשבון מנהל"
 
 #: src/components/login/auth-form.tsx
 msgid "Please enable pop-ups for this site"
@@ -1524,8 +1522,8 @@ msgid "Please see <0>the documentation</0> for instructions."
 msgstr "אנא ראה <0>את התיעוד</0> להוראות."
 
 #: src/components/login/login.tsx
-msgid "Please sign in to your account"
-msgstr "אנא התחבר לחשבון שלך"
+#~ msgid "Please sign in to your account"
+#~ msgstr "אנא התחבר לחשבון שלך"
 
 #: src/components/routes/system/storage-pools-table.tsx
 msgid "Pool Health"
@@ -1628,8 +1626,8 @@ msgid "Relationships"
 msgstr "קשרים"
 
 #: src/components/login/login.tsx
-msgid "Request a one-time password"
-msgstr "בקש סיסמה חד-פעמית"
+#~ msgid "Request a one-time password"
+#~ msgstr "בקש סיסמה חד-פעמית"
 
 #: src/components/login/otp-forms.tsx
 msgid "Request OTP"
@@ -1798,7 +1796,6 @@ msgstr "מספר סידורי"
 msgid "Service Details"
 msgstr "פרטי שירות"
 
-#: src/components/routes/system.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Services"
 msgstr "שירותים"

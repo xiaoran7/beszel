@@ -1,14 +1,14 @@
 import { t } from "@lingui/core/macro"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { useStore } from "@nanostores/react"
-import { XIcon } from "lucide-react"
+import { XIcon, MoreVerticalIcon } from "lucide-react"
 import React, { type JSX, memo, useCallback, useEffect, useState } from "react"
 import { $containerFilter, $maxValues } from "@/lib/stores"
 import { useIntersectionObserver } from "@/lib/use-intersection-observer"
 import { cn } from "@/lib/utils"
 import Spinner from "../../spinner"
 import { Button } from "../../ui/button"
-import { Card, CardDescription, CardHeader, CardTitle } from "../../ui/card"
+import { Card, CardHeader, CardTitle, CardDescription } from "../../ui/card"
 import { ChartAverage, ChartMax } from "../../ui/icons"
 import { Input } from "../../ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select"
@@ -44,7 +44,7 @@ export function FilterBar({ store = $containerFilter }: { store?: typeof $contai
 		<>
 			<Input
 				placeholder={t`Filter...`}
-				className="ps-4 pe-8 w-full sm:w-44"
+				className="ps-4 pe-8 w-full sm:w-44 rounded-xl"
 				onChange={handleChange}
 				value={inputValue}
 			/>
@@ -64,15 +64,15 @@ export function FilterBar({ store = $containerFilter }: { store?: typeof $contai
 	)
 }
 
-export const SelectAvgMax = memo(({ max }: { max: boolean }) => {
+export const SelectAvgMax = memo(function SelectAvgMax({ max }: { max: boolean }) {
 	const Icon = max ? ChartMax : ChartAverage
 	return (
 		<Select value={max ? "max" : "avg"} onValueChange={(e) => $maxValues.set(e === "max")}>
-			<SelectTrigger className="relative ps-10 pe-5 w-full sm:w-44">
-				<Icon className="h-4 w-4 absolute start-4 top-1/2 -translate-y-1/2 opacity-85" />
+			<SelectTrigger className="relative ps-10 pe-5 w-full sm:w-36 h-8 text-xs rounded-xl">
+				<Icon className="h-4 w-4 absolute start-3 top-1/2 -translate-y-1/2 opacity-85" />
 				<SelectValue />
 			</SelectTrigger>
-			<SelectContent>
+			<SelectContent className="rounded-xl text-xs">
 				<SelectItem key="avg" value="avg">
 					<Trans>Average</Trans>
 				</SelectItem>
@@ -92,15 +92,19 @@ export function ChartCard({
 	empty,
 	cornerEl,
 	legend,
+	icon: Icon,
+	statBadge,
 	className,
 }: {
 	title: string
-	description: React.ReactNode
+	description?: React.ReactNode
 	children: React.ReactNode
 	grid?: boolean
 	empty?: boolean
 	cornerEl?: JSX.Element | null
 	legend?: boolean
+	icon?: React.ComponentType<{ className?: string }>
+	statBadge?: React.ReactNode
 	className?: string
 }) {
 	const { isIntersecting, ref } = useIntersectionObserver()
@@ -108,24 +112,49 @@ export function ChartCard({
 	return (
 		<Card
 			className={cn(
-				"px-3 py-5 sm:py-6 sm:px-6 odd:last-of-type:col-span-full min-h-full",
+				"p-5 sm:p-6 rounded-3xl border border-border/80 bg-card shadow-2xs hover:shadow-xs transition-all overflow-hidden flex flex-col justify-between select-none",
 				{ "col-span-full": !grid },
 				className
 			)}
 			ref={ref}
 		>
-			<CardHeader className="gap-1.5 relative p-0 mb-3 sm:mb-4">
-				<CardTitle>{title}</CardTitle>
-				<CardDescription>{description}</CardDescription>
-				{cornerEl && <div className="grid sm:justify-end sm:absolute sm:top-0 sm:end-0 my-1 sm:my-0">{cornerEl}</div>}
+			<CardHeader className="flex flex-row items-center justify-between pb-3 p-0 mb-2 gap-3">
+				<div className="flex items-center gap-2.5 min-w-0">
+					{Icon && (
+						<div className="flex items-center justify-center size-8 rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400 shrink-0">
+							<Icon className="size-4.5" />
+						</div>
+					)}
+					<div className="flex flex-col min-w-0">
+						<CardTitle className="text-base font-bold text-foreground truncate">
+							{title}
+						</CardTitle>
+						{description && (
+							<CardDescription className="text-xs text-muted-foreground truncate">
+								{description}
+							</CardDescription>
+						)}
+					</div>
+				</div>
+
+				<div className="flex items-center gap-2 shrink-0">
+					{statBadge && (
+						<div className="text-xs font-semibold text-muted-foreground">
+							{statBadge}
+						</div>
+					)}
+					{cornerEl}
+					<button className="text-muted-foreground/70 hover:text-foreground p-1 rounded-lg hover:bg-secondary transition-colors">
+						<MoreVerticalIcon className="size-4" />
+					</button>
+				</div>
 			</CardHeader>
-			<div className={cn("ps-0 -me-1 -ms-3.5 relative group", legend ? "h-54 md:h-56" : "h-48 md:h-52")}>
-				{
-					<Spinner
-						msg={empty ? t`Waiting for enough records to display` : undefined}
-						className="group-has-[.opacity-100]:invisible duration-100"
-					/>
-				}
+
+			<div className={cn("relative group w-full", legend ? "h-52 md:h-56" : "h-48 md:h-52")}>
+				<Spinner
+					msg={empty ? t`Waiting for enough records to display` : undefined}
+					className="group-has-[.opacity-100]:invisible duration-100"
+				/>
 				{isIntersecting && children}
 			</div>
 		</Card>
