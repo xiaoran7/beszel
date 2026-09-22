@@ -129,11 +129,11 @@ export function UserAuthForm({
 		[isFirstRun]
 	)
 
-	const authProviders = authMethods.oauth2.providers ?? []
-	const oauthEnabled = authMethods.oauth2.enabled && authProviders.length > 0
-	const passwordEnabled = authMethods.password.enabled
-	const otpEnabled = authMethods.otp.enabled
-	const mfaEnabled = authMethods.mfa.enabled
+		const authProviders = authMethods?.oauth2?.providers ?? []
+		const oauthEnabled = Boolean(authMethods?.oauth2?.enabled && authProviders.length > 0)
+		const passwordEnabled = authMethods?.password?.enabled ?? true
+		const otpEnabled = Boolean(authMethods?.otp?.enabled)
+		const mfaEnabled = Boolean(authMethods?.mfa?.enabled)
 
 	function loginWithOauth(provider: AuthProviderInfo, forcePopup = false) {
 		setIsOauthLoading(true)
@@ -337,9 +337,9 @@ export function UserAuthForm({
 					</Link>
 				</div>
 			)}
-			{oauthEnabled && (
-				<div className="grid gap-2 -mt-1">
-					{authMethods.oauth2.providers.map((provider) => (
+				{oauthEnabled && (
+					<div className="grid gap-2 -mt-1">
+						{authProviders.map((provider) => (
 						<button
 							key={provider.name}
 							type="button"
