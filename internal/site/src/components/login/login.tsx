@@ -1,5 +1,6 @@
 import { t } from "@lingui/core/macro"
 import { useStore } from "@nanostores/react"
+import { LoaderCircle } from "lucide-react"
 import type { AuthMethodsList } from "pocketbase"
 import { useEffect, useMemo, useState } from "react"
 import { UserAuthForm } from "@/components/login/auth-form"
@@ -17,9 +18,11 @@ export default function Login() {
 	useEffect(() => {
 		document.title = "Sign In / Beszel"
 
-		pb.send("/api/beszel/first-run", {}).then(({ firstRun }) => {
-			setFirstRun(firstRun)
-		})
+		pb.send("/api/beszel/first-run", {})
+			.then(({ firstRun }) => {
+				setFirstRun(firstRun)
+			})
+			.catch(() => {})
 	}, [])
 
 	useEffect(() => {
@@ -29,8 +32,13 @@ export default function Login() {
 				setAuthMethods(methods)
 			})
 			.catch(() => {
-				// Fallback mock methods for offline / dev preview
-				setAuthMethods({ authProviders: [] } as any)
+				// Fallback methods for offline / dev preview
+				setAuthMethods({
+					oauth2: { enabled: false, providers: [] },
+					password: { enabled: true, identityFields: ["email"] },
+					otp: { enabled: false, duration: 0 },
+					mfa: { enabled: false, duration: 0 },
+				} as any)
 			})
 	}, [])
 
@@ -87,8 +95,13 @@ export default function Login() {
 					<ForgotPassword />
 				) : page?.route === "request_otp" ? (
 					<OtpRequestForm />
+				) : !authMethods ? (
+					<div className="flex flex-col items-center justify-center py-10 gap-3">
+						<LoaderCircle className="size-7 text-sky-500 animate-spin" />
+						<span className="text-xs text-muted-foreground font-medium">Connecting to Schale Hub...</span>
+					</div>
 				) : (
-					<UserAuthForm isFirstRun={isFirstRun} authMethods={authMethods ?? ({ authProviders: [] } as any)} />
+					<UserAuthForm isFirstRun={isFirstRun} authMethods={authMethods} />
 				)}
 
 				{/* Footer Motto */}
