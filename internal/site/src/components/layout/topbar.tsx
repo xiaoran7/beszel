@@ -154,45 +154,46 @@ export const Topbar = memo(({ onToggleSidebar, onOpenAlerts }: TopbarProps) => {
 						<span className="absolute top-1 right-1 size-2 rounded-full bg-rose-500 ring-2 ring-card animate-pulse" />
 					</Button>
 
-					{/* Sensei User Profile Button & Menu */}
-					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<button className="flex items-center gap-2.5 p-1 pl-1.5 pr-2.5 rounded-full hover:bg-secondary/80 border border-border/60 transition-all cursor-pointer">
-								<div className="relative size-7.5 rounded-full overflow-hidden ring-1.5 ring-sky-400/50 shadow-xs">
-									<img
-										src="/assets/sensei.png"
-										alt="Sensei"
-										className="w-full h-full object-cover"
-										onError={(e) => {
-											// Fallback if image fails
-											(e.target as HTMLElement).style.display = "none"
-										}}
-									/>
-									<div className="w-full h-full bg-gradient-to-tr from-sky-400 to-indigo-500 flex items-center justify-center text-white text-[10px] font-bold">
-										S
+						{/* Sensei User Profile Button & Menu (Aligned with Reference & Highlighted Box) */}
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<button className="flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-full bg-card/90 hover:bg-sky-50/60 dark:hover:bg-sky-950/40 border border-sky-200/80 dark:border-sky-800/80 transition-all duration-200 cursor-pointer shadow-2xs hover:shadow-xs group">
+									<div className="relative size-7.5 rounded-full overflow-hidden ring-1 ring-sky-300/80 dark:ring-sky-500/70 bg-sky-100/50 flex-shrink-0 shadow-2xs">
+										<img
+											src="/assets/sensei_avatar.png"
+											alt="Sensei"
+											className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+											onError={(e) => {
+												(e.target as HTMLElement).style.display = "none"
+											}}
+										/>
+										<div className="w-full h-full bg-gradient-to-tr from-sky-400 to-indigo-500 flex items-center justify-center text-white text-[10px] font-bold">
+											S
+										</div>
 									</div>
-								</div>
-								<div className="flex flex-col text-left hidden sm:flex">
-									<span className="text-xs font-bold text-foreground leading-none tracking-tight">
-										Sensei
-									</span>
-									<span className="text-[10px] text-emerald-500 font-semibold leading-tight flex items-center gap-1 mt-0.5">
-										<span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-										Online
-									</span>
-								</div>
-								<ChevronDownIcon className="size-3.5 text-muted-foreground ml-0.5 hidden sm:block" />
-							</button>
-						</DropdownMenuTrigger>
-						<DropdownMenuContent align="end" className="w-56 rounded-2xl p-1.5 shadow-lg border-border/80">
-							<DropdownMenuLabel className="px-3 py-2 font-normal">
-								<div className="flex flex-col space-y-1">
-									<p className="text-xs font-bold leading-none text-foreground">Sensei</p>
-									<p className="text-[11px] leading-none text-muted-foreground truncate">
-										{pb.authStore.record?.email || "sensei@schale.edu"}
-									</p>
-								</div>
-							</DropdownMenuLabel>
+										<div className="flex flex-col text-left">
+											<span className="text-xs font-bold text-foreground leading-tight tracking-tight">
+												{pb.authStore.record?.name || "Sensei"}
+											</span>
+											<span className="text-[10px] text-emerald-500 dark:text-emerald-400 font-semibold leading-tight flex items-center gap-1">
+												<span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+												Online
+											</span>
+										</div>
+										<ChevronDownIcon className="size-3.5 text-muted-foreground/70 ml-0.5 group-hover:text-foreground transition-colors" />
+									</button>
+								</DropdownMenuTrigger>
+							<DropdownMenuContent align="end" className="w-56 rounded-2xl p-1.5 shadow-lg border-border/80">
+								<DropdownMenuLabel className="px-3 py-2 font-normal">
+									<div className="flex flex-col space-y-1">
+										<p className="text-xs font-bold leading-none text-foreground">
+											{pb.authStore.record?.name || "Sensei"}
+										</p>
+										<p className="text-[11px] leading-none text-muted-foreground truncate">
+											{pb.authStore.record?.email || "sensei@schale.edu"}
+										</p>
+									</div>
+								</DropdownMenuLabel>
 							<DropdownMenuSeparator />
 							<DropdownMenuGroup>
 								<DropdownMenuItem

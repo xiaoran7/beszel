@@ -26,34 +26,19 @@ export const DashboardMetricsHeader = memo(function DashboardMetricsHeader({
 
 	return (
 		<div className="flex flex-col gap-6">
-			{/* Sensei Morning Greeting Banner */}
-			<div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4 py-2">
-				<div className="flex flex-col">
-					<h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground font-sans">
-						Good morning, Sensei.
-					</h1>
-					<p className="text-sm text-muted-foreground mt-1 font-medium">
-						All systems at a glance.{" "}
-						<strong className="text-foreground font-bold">{safeUpCount} of {totalCount}</strong> servers are{" "}
-						<span className="text-emerald-500 font-semibold">online</span>.
-					</p>
-				</div>
-
-				{/* Japanese Handwriting Slogan Badge */}
-				<div className="relative flex items-center md:justify-end">
-					<div className="relative flex flex-col items-end text-right select-none">
-						<span className="text-xs sm:text-sm font-semibold text-sky-700/80 dark:text-sky-300/80 tracking-wider font-sans">
-							いつも、どこでも。
-						</span>
-						<span className="text-xs sm:text-sm font-bold text-sky-800 dark:text-sky-200 tracking-wider">
-							みんなの「あたりまえ」を支える。
-						</span>
-						<span className="text-[10px] font-bold text-sky-600/70 dark:text-sky-400/70 tracking-widest uppercase mt-0.5">
-							MONITOR TODAY, A BRIGHTER TOMORROW.
-						</span>
+					{/* Sensei Morning Greeting Banner */}
+					<div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4 py-1">
+						<div className="flex flex-col z-10">
+							<h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground font-sans">
+								Good morning, Sensei.
+							</h1>
+							<p className="text-sm text-muted-foreground mt-1 font-medium">
+								All systems at a glance.{" "}
+								<strong className="text-foreground font-bold">{safeUpCount} of {totalCount}</strong> servers are{" "}
+								<span className="text-emerald-500 font-semibold">online</span>.
+							</p>
+						</div>
 					</div>
-				</div>
-			</div>
 
 			{/* 4 Summary Metric Cards */}
 			<div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">

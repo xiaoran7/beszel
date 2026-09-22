@@ -6,9 +6,9 @@
 @custom-variant safari (@supports (hanging-punctuation: first) and (-webkit-appearance: none));
 
 :root {
-	--background: hsl(210 60% 98.2%);
+	--background: hsl(214 70% 97.2%);
 	--foreground: hsl(215 35% 15%);
-	--card: hsl(0 0% 100%);
+	--card: hsl(214 60% 99%);
 	--card-foreground: hsl(215 35% 15%);
 	--popover: hsl(0 0% 100%);
 	--popover-foreground: hsl(215 35% 15%);

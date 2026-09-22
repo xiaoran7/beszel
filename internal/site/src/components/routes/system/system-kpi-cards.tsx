@@ -11,7 +11,7 @@ interface SystemKpiCardsProps {
 export const SystemKpiCards = memo(function SystemKpiCards({ system, details }: SystemKpiCardsProps) {
 	// 1. Calculate Uptime
 	const uptimeString = useMemo(() => {
-		if (!system.info?.u) return "27 days 6 hours"
+		if (!system.info?.u) return "—"
 		return secondsToUptimeString(system.info.u)
 	}, [system.info?.u])
 
@@ -21,30 +21,23 @@ export const SystemKpiCards = memo(function SystemKpiCards({ system, details }: 
 		if (Array.isArray(la) && la.length >= 3) {
 			return `${la[0].toFixed(2)} / ${la[1].toFixed(2)} / ${la[2].toFixed(2)}`
 		}
-		return "0.23 / 0.31 / 0.28"
+		return "—"
 	}, [system.info?.la])
 
 	// 3. CPU Temperature
 	const tempString = useMemo(() => {
-		const temp = system.info?.t_c ?? system.info?.temp
+		const temp = system.info?.dt ?? system.info?.t_c
 		if (temp) return `${Math.round(temp)}°C`
-		return "48°C"
+		return "—"
 	}, [system.info])
 
-	// 4. IP Address & Region
-	const ipAddress = useMemo(() => {
-		return system.host || "203.0.113.10"
-	}, [system.host])
-
-	const location = useMemo(() => {
-		const name = system.name.toLowerCase()
-		if (name.includes("hk") || name.includes("hongkong")) return "Hong Kong, HK"
-		if (name.includes("jp") || name.includes("tokyo")) return "Tokyo, JP"
-		if (name.includes("sg") || name.includes("singapore")) return "Singapore, SG"
-		if (name.includes("us")) return "Los Angeles, US"
-		if (name.includes("eu") || name.includes("frankfurt")) return "Frankfurt, DE"
-		return "Hong Kong, HK"
-	}, [system.name])
+	// 4. Host Address & Port
+	const hostAddress = useMemo(() => {
+		if (system.host) {
+			return system.port ? `${system.host}:${system.port}` : system.host
+		}
+		return "—"
+	}, [system.host, system.port])
 
 	return (
 		<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 select-none">
@@ -61,7 +54,7 @@ export const SystemKpiCards = memo(function SystemKpiCards({ system, details }: 
 						{uptimeString}
 					</span>
 					<span className="text-[11px] text-muted-foreground/80 mt-0.5 truncate">
-						Since Mar 17, 2025
+						{system.status === "up" ? "Running continuously" : "System Offline"}
 					</span>
 				</div>
 			</div>
@@ -98,26 +91,25 @@ export const SystemKpiCards = memo(function SystemKpiCards({ system, details }: 
 					</span>
 					<span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5 flex items-center gap-1">
 						<span className="size-1.5 rounded-full bg-emerald-500" />
-						Normal
+						{tempString !== "—" ? "Monitored" : "Not available"}
 					</span>
 				</div>
 			</div>
 
-			{/* KPI 4: IP Address & Location */}
+			{/* KPI 4: Host Address */}
 			<div className="flex items-center gap-4 p-4.5 rounded-2xl bg-card border border-border/80 shadow-2xs hover:border-sky-300/60 transition-all">
 				<div className="flex items-center justify-center size-12 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 shrink-0">
 					<MapPinIcon className="size-6" />
 				</div>
 				<div className="flex flex-col min-w-0">
 					<span className="text-xs font-medium text-muted-foreground">
-						IP Address
+						Host Address
 					</span>
-					<span className="text-lg font-bold tracking-tight text-foreground truncate mt-0.5 font-mono">
-						{ipAddress}
+					<span className="text-lg font-bold tracking-tight text-foreground truncate mt-0.5 font-mono" title={hostAddress}>
+						{hostAddress}
 					</span>
 					<span className="text-[11px] text-muted-foreground/90 font-medium mt-0.5 flex items-center gap-1">
-						<span>🇭🇰</span>
-						<span>{location}</span>
+						<span>Node Location</span>
 					</span>
 				</div>
 			</div>

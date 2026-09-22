@@ -12,16 +12,20 @@ export const SystemInfoOverviewCard = memo(function SystemInfoOverviewCard({
 	system,
 	details,
 }: SystemInfoOverviewCardProps) {
-	const info = useMemo(() => {
-		const hostname = details?.hostname ?? system.info?.h ?? system.name
-		const os = details?.os_name ?? (system.info?.os ? `Linux ${system.info.os}` : "Ubuntu 22.04.5 LTS")
-		const kernel = details?.kernel ?? system.info?.k ?? "5.15.0-105-generic"
-		const arch = details?.arch ?? "x86_64"
-		const cpu = details?.cpu ?? system.info?.m ?? "Intel(R) Xeon(R) Gold 6248R"
-		const memory = details?.memory ? `${(details.memory / 1024 / 1024 / 1024).toFixed(0)} GB` : "12 GB"
-		const totalDisk = "200 GB (ext4)"
-		const docker = "24.0.7"
-		const agent = details?.version ?? "0.7.2"
+		const info = useMemo(() => {
+			const hostname = details?.hostname ?? system.info?.h ?? system.name
+			const os = details?.os_name ?? (system.info?.os ? `Linux ${system.info.os}` : (system.info?.o || "Linux"))
+			const kernel = details?.kernel ?? system.info?.k ?? "—"
+			const arch = details?.arch ?? (system.info?.m?.includes("aarch64") || system.info?.m?.includes("ARM") ? "aarch64" : "x86_64")
+			const cpu = details?.cpu ?? system.info?.m ?? "—"
+			const memory = details?.memory
+				? `${(details.memory / 1024 / 1024 / 1024).toFixed(1)} GB`
+				: system.info?.mp
+				? `Usage ${system.info.mp}%`
+				: "—"
+			const totalDisk = system.info?.dp ? `Usage ${system.info.dp}%` : "—"
+			const docker = details?.podman ? "Podman" : system.info?.p ? "Podman" : "Docker / Agent"
+			const agent = details?.version ?? (system.info?.v ? `v${system.info.v}` : "—")
 
 		return {
 			hostname,
