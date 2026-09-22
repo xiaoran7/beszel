@@ -3,10 +3,8 @@ import { i18n } from "@lingui/core"
 import { I18nProvider } from "@lingui/react"
 import { useStore } from "@nanostores/react"
 import { DirectionProvider } from "@radix-ui/react-direction"
-// import { Suspense, lazy, useEffect, StrictMode } from "react"
-import { lazy, memo, Suspense, useEffect } from "react"
+import { lazy, memo, Suspense, useEffect, useState } from "react"
 import ReactDOM from "react-dom/client"
-import Navbar from "@/components/navbar.tsx"
 import { $router } from "@/components/router.tsx"
 import Settings from "@/components/routes/settings/layout.tsx"
 import { ThemeProvider } from "@/components/theme-provider.tsx"
@@ -21,10 +19,12 @@ import {
 	$newVersion,
 	$publicKey,
 	$userSettings,
-	defaultLayoutWidth,
 } from "@/lib/stores.ts"
 import * as systemsManager from "@/lib/systemsManager.ts"
 import type { BeszelInfo, UpdateInfo } from "./types"
+import { Sidebar } from "@/components/layout/sidebar"
+import { Topbar } from "@/components/layout/topbar"
+import { GlobalAlertsSheet } from "@/components/alerts/global-alerts-sheet"
 
 const LoginPage = lazy(() => import("@/components/login/login.tsx"))
 const Home = lazy(() => import("@/components/routes/home.tsx"))
@@ -91,7 +91,8 @@ const Layout = () => {
 	const authenticated = useStore($authenticated)
 	const copyContent = useStore($copyContent)
 	const direction = useStore($direction)
-	const { layoutWidth } = useStore($userSettings, { keys: ["layoutWidth"] })
+	const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false)
+	const [alertsSheetOpen, setAlertsSheetOpen] = useState(false)
 
 	useEffect(() => {
 		document.documentElement.dir = direction
@@ -104,18 +105,33 @@ const Layout = () => {
 					<LoginPage />
 				</Suspense>
 			) : (
-				<div style={{ "--container": `${layoutWidth ?? defaultLayoutWidth}px` } as React.CSSProperties}>
-					<div className="container">
-						<Navbar />
+				<div className="min-h-screen bg-background text-foreground flex flex-col md:flex-row antialiased selection:bg-sky-500/20 selection:text-sky-600">
+					{/* Left Sidebar */}
+					<Sidebar
+						mobileOpen={sidebarMobileOpen}
+						setMobileOpen={setSidebarMobileOpen}
+						onOpenAlerts={() => setAlertsSheetOpen(true)}
+					/>
+
+					{/* Right Content Area */}
+					<div className="flex-1 flex flex-col min-w-0 md:pl-64 transition-all duration-300">
+						<Topbar
+							onToggleSidebar={() => setSidebarMobileOpen((prev) => !prev)}
+							onOpenAlerts={() => setAlertsSheetOpen(true)}
+						/>
+						<main className="flex-1 p-4 md:p-6 lg:p-8 max-w-[1720px] w-full mx-auto">
+							<App />
+						</main>
 					</div>
-					<div className="container relative">
-						<App />
-						{copyContent && (
-							<Suspense>
-								<CopyToClipboardDialog content={copyContent} />
-							</Suspense>
-						)}
-					</div>
+
+					{/* Global Alerts Drawer */}
+					<GlobalAlertsSheet open={alertsSheetOpen} onOpenChange={setAlertsSheetOpen} />
+
+					{copyContent && (
+						<Suspense>
+							<CopyToClipboardDialog content={copyContent} />
+						</Suspense>
+					)}
 				</div>
 			)}
 		</DirectionProvider>
@@ -139,9 +155,5 @@ const I18nApp = () => {
 }
 
 ReactDOM.createRoot(document.getElementById("app") as HTMLElement).render(
-	// strict mode in dev mounts / unmounts components twice
-	// and breaks the clipboard dialog
-	//<StrictMode>
 	<I18nApp />
-	//</StrictMode>
 )

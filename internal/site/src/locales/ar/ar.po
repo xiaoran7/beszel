@@ -187,7 +187,6 @@ msgstr "جميع الحاويات"
 
 #: src/components/alerts/alerts-sheet.tsx
 #: src/components/command-palette.tsx
-#: src/components/routes/home.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/systems-table/systems-table.tsx
 #: src/components/systems-table/systems-table.tsx
@@ -500,8 +499,8 @@ msgid "Container Health"
 msgstr "صحة الحاوية"
 
 #: src/components/routes/system.tsx
-msgid "Containers"
-msgstr "حاويات"
+#~ msgid "Containers"
+#~ msgstr "حاويات"
 
 #: src/components/network-monitors-table/network-monitors-table.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
@@ -573,9 +572,9 @@ msgid "Copy YAML"
 msgstr "نسخ YAML"
 
 #: src/components/routes/system.tsx
-msgctxt "Core system metrics"
-msgid "Core"
-msgstr "النواة"
+#~ msgctxt "Core system metrics"
+#~ msgid "Core"
+#~ msgstr "النواة"
 
 #: src/components/containers-table/containers-table-columns.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
@@ -710,7 +709,6 @@ msgstr "الجهاز"
 msgid "Discharging"
 msgstr "قيد التفريغ"
 
-#: src/components/routes/system.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Disk"
 msgstr "القرص"
@@ -811,8 +809,8 @@ msgid "Endpoint URL to ping (required)"
 msgstr "رابط نقطة النهاية إلى ping (مطلوب)"
 
 #: src/components/login/login.tsx
-msgid "Enter email address to reset password"
-msgstr "أدخل عنوان البريد الإشباكي لإعادة تعيين كلمة المرور"
+#~ msgid "Enter email address to reset password"
+#~ msgstr "أدخل عنوان البريد الإشباكي لإعادة تعيين كلمة المرور"
 
 #: src/components/routes/settings/notifications.tsx
 msgid "Enter email address..."
@@ -996,8 +994,8 @@ msgid "Global"
 msgstr "عالمي"
 
 #: src/components/routes/system.tsx
-msgid "GPU"
-msgstr "معالج الرسوميات"
+#~ msgid "GPU"
+#~ msgstr "معالج الرسوميات"
 
 #: src/components/routes/system/charts/gpu-charts.tsx
 msgid "GPU Engines"
@@ -1159,8 +1157,8 @@ msgid "Log Out"
 msgstr "تسجيل الخروج"
 
 #: src/components/login/login.tsx
-msgid "Login"
-msgstr "تسجيل الدخول"
+#~ msgid "Login"
+#~ msgstr "تسجيل الدخول"
 
 #: src/components/login/auth-form.tsx
 #: src/components/login/forgot-pass-form.tsx
@@ -1271,8 +1269,8 @@ msgid "Net"
 msgstr "الشبكة"
 
 #: src/components/routes/system.tsx
-msgid "Network"
-msgstr "الشبكة"
+#~ msgid "Network"
+#~ msgstr "الشبكة"
 
 #: src/components/network-monitors-table/monitor-dialog.tsx
 #: src/components/network-monitors-table/monitor-dialog.tsx
@@ -1508,8 +1506,8 @@ msgid "Please check your credentials and try again"
 msgstr "يرجى التحقق من بيانات الاعتماد الخاصة بك والمحاولة مرة أخرى"
 
 #: src/components/login/login.tsx
-msgid "Please create an admin account"
-msgstr "يرجى إنشاء حساب مسؤول"
+#~ msgid "Please create an admin account"
+#~ msgstr "يرجى إنشاء حساب مسؤول"
 
 #: src/components/login/auth-form.tsx
 msgid "Please enable pop-ups for this site"
@@ -1524,8 +1522,8 @@ msgid "Please see <0>the documentation</0> for instructions."
 msgstr "يرجى الاطلاع على <0>التوثيق</0> للحصول على التعليمات."
 
 #: src/components/login/login.tsx
-msgid "Please sign in to your account"
-msgstr "يرجى تسجيل الدخول إلى حسابك"
+#~ msgid "Please sign in to your account"
+#~ msgstr "يرجى تسجيل الدخول إلى حسابك"
 
 #: src/components/routes/system/storage-pools-table.tsx
 msgid "Pool Health"
@@ -1628,8 +1626,8 @@ msgid "Relationships"
 msgstr "العلاقات"
 
 #: src/components/login/login.tsx
-msgid "Request a one-time password"
-msgstr "طلب كلمة مرور لمرة واحدة"
+#~ msgid "Request a one-time password"
+#~ msgstr "طلب كلمة مرور لمرة واحدة"
 
 #: src/components/login/otp-forms.tsx
 msgid "Request OTP"
@@ -1798,7 +1796,6 @@ msgstr "الرقم التسلسلي"
 msgid "Service Details"
 msgstr "تفاصيل الخدمة"
 
-#: src/components/routes/system.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Services"
 msgstr "الخدمات"

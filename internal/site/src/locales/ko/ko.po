@@ -187,7 +187,6 @@ msgstr "모든 컨테이너"
 
 #: src/components/alerts/alerts-sheet.tsx
 #: src/components/command-palette.tsx
-#: src/components/routes/home.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/systems-table/systems-table.tsx
 #: src/components/systems-table/systems-table.tsx
@@ -500,8 +499,8 @@ msgid "Container Health"
 msgstr "컨테이너 상태"
 
 #: src/components/routes/system.tsx
-msgid "Containers"
-msgstr "컨테이너"
+#~ msgid "Containers"
+#~ msgstr "컨테이너"
 
 #: src/components/network-monitors-table/network-monitors-table.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
@@ -573,9 +572,9 @@ msgid "Copy YAML"
 msgstr "YAML 복사"
 
 #: src/components/routes/system.tsx
-msgctxt "Core system metrics"
-msgid "Core"
-msgstr "코어"
+#~ msgctxt "Core system metrics"
+#~ msgid "Core"
+#~ msgstr "코어"
 
 #: src/components/containers-table/containers-table-columns.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
@@ -710,7 +709,6 @@ msgstr "장치"
 msgid "Discharging"
 msgstr "방전 중"
 
-#: src/components/routes/system.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Disk"
 msgstr "디스크"
@@ -811,8 +809,8 @@ msgid "Endpoint URL to ping (required)"
 msgstr "핑을 보낼 엔드포인트 URL (필수)"
 
 #: src/components/login/login.tsx
-msgid "Enter email address to reset password"
-msgstr "비밀번호를 재설정하려면 이메일 주소를 입력하세요"
+#~ msgid "Enter email address to reset password"
+#~ msgstr "비밀번호를 재설정하려면 이메일 주소를 입력하세요"
 
 #: src/components/routes/settings/notifications.tsx
 msgid "Enter email address..."
@@ -996,8 +994,8 @@ msgid "Global"
 msgstr "전역"
 
 #: src/components/routes/system.tsx
-msgid "GPU"
-msgstr "GPU"
+#~ msgid "GPU"
+#~ msgstr "GPU"
 
 #: src/components/routes/system/charts/gpu-charts.tsx
 msgid "GPU Engines"
@@ -1159,8 +1157,8 @@ msgid "Log Out"
 msgstr "로그아웃"
 
 #: src/components/login/login.tsx
-msgid "Login"
-msgstr "로그인"
+#~ msgid "Login"
+#~ msgstr "로그인"
 
 #: src/components/login/auth-form.tsx
 #: src/components/login/forgot-pass-form.tsx
@@ -1271,8 +1269,8 @@ msgid "Net"
 msgstr "네트워크"
 
 #: src/components/routes/system.tsx
-msgid "Network"
-msgstr "네트워크"
+#~ msgid "Network"
+#~ msgstr "네트워크"
 
 #: src/components/network-monitors-table/monitor-dialog.tsx
 #: src/components/network-monitors-table/monitor-dialog.tsx
@@ -1508,8 +1506,8 @@ msgid "Please check your credentials and try again"
 msgstr "자격 증명을 확인하고 다시 시도하세요."
 
 #: src/components/login/login.tsx
-msgid "Please create an admin account"
-msgstr "관리자 계정을 생성하세요."
+#~ msgid "Please create an admin account"
+#~ msgstr "관리자 계정을 생성하세요."
 
 #: src/components/login/auth-form.tsx
 msgid "Please enable pop-ups for this site"
@@ -1524,8 +1522,8 @@ msgid "Please see <0>the documentation</0> for instructions."
 msgstr "사용법은 <0>문서</0>를 참조하세요."
 
 #: src/components/login/login.tsx
-msgid "Please sign in to your account"
-msgstr "계정에 로그인하세요."
+#~ msgid "Please sign in to your account"
+#~ msgstr "계정에 로그인하세요."
 
 #: src/components/routes/system/storage-pools-table.tsx
 msgid "Pool Health"
@@ -1628,8 +1626,8 @@ msgid "Relationships"
 msgstr "관계"
 
 #: src/components/login/login.tsx
-msgid "Request a one-time password"
-msgstr "OTP 요청"
+#~ msgid "Request a one-time password"
+#~ msgstr "OTP 요청"
 
 #: src/components/login/otp-forms.tsx
 msgid "Request OTP"
@@ -1798,7 +1796,6 @@ msgstr "시리얼 번호"
 msgid "Service Details"
 msgstr "서비스 세부 정보"
 
-#: src/components/routes/system.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Services"
 msgstr "서비스"

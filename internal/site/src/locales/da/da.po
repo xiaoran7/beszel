@@ -187,7 +187,6 @@ msgstr "Alle containere"
 
 #: src/components/alerts/alerts-sheet.tsx
 #: src/components/command-palette.tsx
-#: src/components/routes/home.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/systems-table/systems-table.tsx
 #: src/components/systems-table/systems-table.tsx
@@ -500,8 +499,8 @@ msgid "Container Health"
 msgstr "Container-sundhed"
 
 #: src/components/routes/system.tsx
-msgid "Containers"
-msgstr "Containere"
+#~ msgid "Containers"
+#~ msgstr "Containere"
 
 #: src/components/network-monitors-table/network-monitors-table.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
@@ -573,9 +572,9 @@ msgid "Copy YAML"
 msgstr "Kopier YAML"
 
 #: src/components/routes/system.tsx
-msgctxt "Core system metrics"
-msgid "Core"
-msgstr "Kerne"
+#~ msgctxt "Core system metrics"
+#~ msgid "Core"
+#~ msgstr "Kerne"
 
 #: src/components/containers-table/containers-table-columns.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
@@ -710,7 +709,6 @@ msgstr "Enhed"
 msgid "Discharging"
 msgstr "Aflader"
 
-#: src/components/routes/system.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Disk"
 msgstr "Disk"
@@ -811,8 +809,8 @@ msgid "Endpoint URL to ping (required)"
 msgstr "Endpoint-URL til ping (påkrævet)"
 
 #: src/components/login/login.tsx
-msgid "Enter email address to reset password"
-msgstr "Indtast emailadresse for at nulstille adgangskoden"
+#~ msgid "Enter email address to reset password"
+#~ msgstr "Indtast emailadresse for at nulstille adgangskoden"
 
 #: src/components/routes/settings/notifications.tsx
 msgid "Enter email address..."
@@ -996,8 +994,8 @@ msgid "Global"
 msgstr "Global"
 
 #: src/components/routes/system.tsx
-msgid "GPU"
-msgstr ""
+#~ msgid "GPU"
+#~ msgstr ""
 
 #: src/components/routes/system/charts/gpu-charts.tsx
 msgid "GPU Engines"
@@ -1159,8 +1157,8 @@ msgid "Log Out"
 msgstr "Log ud"
 
 #: src/components/login/login.tsx
-msgid "Login"
-msgstr "Log ind"
+#~ msgid "Login"
+#~ msgstr "Log ind"
 
 #: src/components/login/auth-form.tsx
 #: src/components/login/forgot-pass-form.tsx
@@ -1271,8 +1269,8 @@ msgid "Net"
 msgstr "Net"
 
 #: src/components/routes/system.tsx
-msgid "Network"
-msgstr "Netværk"
+#~ msgid "Network"
+#~ msgstr "Netværk"
 
 #: src/components/network-monitors-table/monitor-dialog.tsx
 #: src/components/network-monitors-table/monitor-dialog.tsx
@@ -1508,8 +1506,8 @@ msgid "Please check your credentials and try again"
 msgstr "Tjek dine legitimationsoplysninger og prøv igen"
 
 #: src/components/login/login.tsx
-msgid "Please create an admin account"
-msgstr "Opret venligst en administratorkonto"
+#~ msgid "Please create an admin account"
+#~ msgstr "Opret venligst en administratorkonto"
 
 #: src/components/login/auth-form.tsx
 msgid "Please enable pop-ups for this site"
@@ -1524,8 +1522,8 @@ msgid "Please see <0>the documentation</0> for instructions."
 msgstr "Se <0>dokumentationen</0> for instruktioner."
 
 #: src/components/login/login.tsx
-msgid "Please sign in to your account"
-msgstr "Log venligst ind på din konto"
+#~ msgid "Please sign in to your account"
+#~ msgstr "Log venligst ind på din konto"
 
 #: src/components/routes/system/storage-pools-table.tsx
 msgid "Pool Health"
@@ -1628,8 +1626,8 @@ msgid "Relationships"
 msgstr "Relationer"
 
 #: src/components/login/login.tsx
-msgid "Request a one-time password"
-msgstr "Anmod om engangsadgangskode"
+#~ msgid "Request a one-time password"
+#~ msgstr "Anmod om engangsadgangskode"
 
 #: src/components/login/otp-forms.tsx
 msgid "Request OTP"
@@ -1798,7 +1796,6 @@ msgstr "Serienummer"
 msgid "Service Details"
 msgstr "Tjenestedetaljer"
 
-#: src/components/routes/system.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Services"
 msgstr "Tjenester"
