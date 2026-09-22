@@ -1,4 +1,4 @@
-import { memo } from "react"
+import { memo, useMemo } from "react"
 import { useStore } from "@nanostores/react"
 import { getPagePath } from "@nanostores/router"
 import {
@@ -9,7 +9,7 @@ import {
 	HardDriveIcon,
 	BoxesIcon,
 	FileTextIcon,
-	PuzzleIcon,
+	NetworkIcon,
 	XIcon,
 } from "lucide-react"
 import { $router, basePath, Link, navigate } from "../router"
@@ -25,7 +25,20 @@ interface SidebarProps {
 export const Sidebar = memo(({ mobileOpen, setMobileOpen, onOpenAlerts }: SidebarProps) => {
 	const page = useStore($router)
 	const alerts = useStore($alerts)
-	const unreadAlertsCount = alerts ? Object.values(alerts).flat().length : 2
+
+	// Calculate true active/triggered alerts count across all systems
+	const activeAlertsCount = useMemo(() => {
+		if (!alerts) return 0
+		let count = 0
+		for (const systemId of Object.keys(alerts)) {
+			for (const alert of alerts[systemId].values()) {
+				if (alert.triggered) {
+					count++
+				}
+			}
+		}
+		return count
+	}, [alerts])
 
 	const currentRoute = page?.route ?? "home"
 
@@ -48,7 +61,7 @@ export const Sidebar = memo(({ mobileOpen, setMobileOpen, onOpenAlerts }: Sideba
 			id: "alerts",
 			label: "Alerts",
 			icon: BellIcon,
-			badge: unreadAlertsCount > 0 ? unreadAlertsCount : 2,
+			badge: activeAlertsCount > 0 ? activeAlertsCount : undefined,
 			onClick: () => {
 				onOpenAlerts?.()
 				setMobileOpen?.(false)
@@ -67,10 +80,10 @@ export const Sidebar = memo(({ mobileOpen, setMobileOpen, onOpenAlerts }: Sideba
 	const monitorItems = [
 		{
 			id: "infrastructure",
-			label: "Infrastructure",
+			label: "Disk & S.M.A.R.T.",
 			icon: HardDriveIcon,
-			href: basePath || "/",
-			active: false,
+			href: getPagePath($router, "smart"),
+			active: currentRoute === "smart",
 		},
 		{
 			id: "containers",
@@ -80,16 +93,9 @@ export const Sidebar = memo(({ mobileOpen, setMobileOpen, onOpenAlerts }: Sideba
 			active: currentRoute === "containers",
 		},
 		{
-			id: "logs",
-			label: "Logs",
-			icon: FileTextIcon,
-			href: getPagePath($router, "smart"),
-			active: currentRoute === "smart",
-		},
-		{
-			id: "integrations",
-			label: "Integrations",
-			icon: PuzzleIcon,
+			id: "monitors",
+			label: "Network Monitors",
+			icon: NetworkIcon,
 			href: getPagePath($router, "monitors"),
 			active: currentRoute === "monitors",
 		},

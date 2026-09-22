@@ -1,4 +1,4 @@
-import { memo, useState } from "react"
+import { memo, useMemo, useState } from "react"
 import { useStore } from "@nanostores/react"
 import { getPagePath } from "@nanostores/router"
 import {
@@ -10,14 +10,15 @@ import {
 	ChevronDownIcon,
 	LogOutIcon,
 	SettingsIcon,
-	GlobeIcon,
 	UserIcon,
 	BellIcon,
+	ShieldCheckIcon,
+	ExternalLinkIcon,
 } from "lucide-react"
-import { $router, basePath, Link, navigate } from "../router"
-import { $systems } from "@/lib/stores"
+import { $router, basePath, Link, navigate, prependBasePath } from "../router"
+import { $systems, $alerts } from "@/lib/stores"
 import { ModeToggle } from "../mode-toggle"
-import { pb, logOut } from "@/lib/api"
+import { pb, logOut, isAdmin } from "@/lib/api"
 import { AddSystemDialog } from "../add-system"
 import CommandPalette from "../command-palette"
 import {
@@ -39,10 +40,31 @@ interface TopbarProps {
 export const Topbar = memo(({ onToggleSidebar, onOpenAlerts }: TopbarProps) => {
 	const page = useStore($router)
 	const systems = useStore($systems)
+	const alerts = useStore($alerts)
 	const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
 	const [addSystemDialogOpen, setAddSystemDialogOpen] = useState(false)
 
 	const isMac = typeof navigator !== "undefined" && navigator.platform?.toUpperCase().includes("MAC")
+
+	// Calculate active/triggered alerts count
+	const activeAlertsCount = useMemo(() => {
+		if (!alerts) return 0
+		let count = 0
+		for (const systemId of Object.keys(alerts)) {
+			for (const alert of alerts[systemId].values()) {
+				if (alert.triggered) {
+					count++
+				}
+			}
+		}
+		return count
+	}, [alerts])
+
+	// Current user info
+	const userRecord = pb.authStore.record
+	const displayName = userRecord?.name || userRecord?.email?.split("@")[0] || "Sensei"
+	const displayEmail = userRecord?.email || "sensei@schale.edu"
+	const userInitial = (displayName.charAt(0) || "S").toUpperCase()
 
 	// Determine current system name for breadcrumb if in system route
 	const currentSystem =
@@ -151,49 +173,51 @@ export const Topbar = memo(({ onToggleSidebar, onOpenAlerts }: TopbarProps) => {
 						aria-label="Alerts"
 					>
 						<BellIcon className="size-4.5" />
-						<span className="absolute top-1 right-1 size-2 rounded-full bg-rose-500 ring-2 ring-card animate-pulse" />
+						{activeAlertsCount > 0 && (
+							<span className="absolute top-1 right-1 size-2 rounded-full bg-rose-500 ring-2 ring-card animate-pulse" />
+						)}
 					</Button>
 
-						{/* Sensei User Profile Button & Menu (Aligned with Reference & Highlighted Box) */}
-						<DropdownMenu>
-							<DropdownMenuTrigger asChild>
-								<button className="flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-full bg-card/90 hover:bg-sky-50/60 dark:hover:bg-sky-950/40 border border-sky-200/80 dark:border-sky-800/80 transition-all duration-200 cursor-pointer shadow-2xs hover:shadow-xs group">
-									<div className="relative size-7.5 rounded-full overflow-hidden ring-1 ring-sky-300/80 dark:ring-sky-500/70 bg-sky-100/50 flex-shrink-0 shadow-2xs">
-										<img
-											src="/assets/sensei_avatar.png"
-											alt="Sensei"
-											className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-											onError={(e) => {
-												(e.target as HTMLElement).style.display = "none"
-											}}
-										/>
-										<div className="w-full h-full bg-gradient-to-tr from-sky-400 to-indigo-500 flex items-center justify-center text-white text-[10px] font-bold">
-											S
-										</div>
+					{/* User Profile Button & Menu */}
+					<DropdownMenu>
+						<DropdownMenuTrigger asChild>
+							<button className="flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-full bg-card/90 hover:bg-sky-50/60 dark:hover:bg-sky-950/40 border border-sky-200/80 dark:border-sky-800/80 transition-all duration-200 cursor-pointer shadow-2xs hover:shadow-xs group">
+								<div className="relative size-7.5 rounded-full overflow-hidden ring-1 ring-sky-300/80 dark:ring-sky-500/70 bg-sky-100/50 flex-shrink-0 shadow-2xs">
+									<img
+										src="/assets/sensei_avatar.png"
+										alt={displayName}
+										className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+										onError={(e) => {
+											(e.target as HTMLElement).style.display = "none"
+										}}
+									/>
+									<div className="w-full h-full bg-gradient-to-tr from-sky-400 to-indigo-500 flex items-center justify-center text-white text-[10px] font-bold">
+										{userInitial}
 									</div>
-										<div className="flex flex-col text-left">
-											<span className="text-xs font-bold text-foreground leading-tight tracking-tight">
-												{pb.authStore.record?.name || "Sensei"}
-											</span>
-											<span className="text-[10px] text-emerald-500 dark:text-emerald-400 font-semibold leading-tight flex items-center gap-1">
-												<span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-												Online
-											</span>
-										</div>
-										<ChevronDownIcon className="size-3.5 text-muted-foreground/70 ml-0.5 group-hover:text-foreground transition-colors" />
-									</button>
-								</DropdownMenuTrigger>
-							<DropdownMenuContent align="end" className="w-56 rounded-2xl p-1.5 shadow-lg border-border/80">
-								<DropdownMenuLabel className="px-3 py-2 font-normal">
-									<div className="flex flex-col space-y-1">
-										<p className="text-xs font-bold leading-none text-foreground">
-											{pb.authStore.record?.name || "Sensei"}
-										</p>
-										<p className="text-[11px] leading-none text-muted-foreground truncate">
-											{pb.authStore.record?.email || "sensei@schale.edu"}
-										</p>
-									</div>
-								</DropdownMenuLabel>
+								</div>
+								<div className="flex flex-col text-left">
+									<span className="text-xs font-bold text-foreground leading-tight tracking-tight">
+										{displayName}
+									</span>
+									<span className="text-[10px] text-emerald-500 dark:text-emerald-400 font-semibold leading-tight flex items-center gap-1">
+										<span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+										Online
+									</span>
+								</div>
+								<ChevronDownIcon className="size-3.5 text-muted-foreground/70 ml-0.5 group-hover:text-foreground transition-colors" />
+							</button>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent align="end" className="w-56 rounded-2xl p-1.5 shadow-lg border-border/80">
+							<DropdownMenuLabel className="px-3 py-2 font-normal">
+								<div className="flex flex-col space-y-1">
+									<p className="text-xs font-bold leading-none text-foreground">
+										{displayName}
+									</p>
+									<p className="text-[11px] leading-none text-muted-foreground truncate">
+										{displayEmail}
+									</p>
+								</div>
+							</DropdownMenuLabel>
 							<DropdownMenuSeparator />
 							<DropdownMenuGroup>
 								<DropdownMenuItem
@@ -210,6 +234,15 @@ export const Topbar = memo(({ onToggleSidebar, onOpenAlerts }: TopbarProps) => {
 									<UserIcon className="mr-2 size-4 text-muted-foreground" />
 									<span>Profile & Keys</span>
 								</DropdownMenuItem>
+								{isAdmin() && (
+									<DropdownMenuItem asChild className="rounded-xl cursor-pointer text-xs py-2">
+										<a href={prependBasePath("/_/")} target="_blank" rel="noreferrer" className="flex items-center">
+											<ShieldCheckIcon className="mr-2 size-4 text-sky-500" />
+											<span className="flex-1">PocketBase Admin</span>
+											<ExternalLinkIcon className="size-3 text-muted-foreground/60" />
+										</a>
+									</DropdownMenuItem>
+								)}
 							</DropdownMenuGroup>
 							<DropdownMenuSeparator />
 							<DropdownMenuItem
