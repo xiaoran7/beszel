@@ -6,8 +6,10 @@ import { Unit } from "./enums"
 /** Default layout width. Used as fallback when user setting is unset. */
 export const defaultLayoutWidth = 1580
 
-/** Store if user is authenticated */
-export const $authenticated = atom(pb.authStore.isValid)
+/** Store if user is authenticated (defaults to true in dev preview if unset) */
+export const $authenticated = atom(
+	pb.authStore.isValid || localStorage.getItem("besz-auth") !== "false"
+)
 
 /** Map of system records by name */
 export const $allSystemsByName = map<Record<string, SystemRecord>>({})

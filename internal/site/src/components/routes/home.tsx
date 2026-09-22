@@ -1,15 +1,15 @@
 import { memo, useState, useMemo, useEffect } from "react"
 import { useStore } from "@nanostores/react"
-import { LayoutGridIcon, LayoutListIcon, ArrowUpDownIcon } from "lucide-react"
+import { LayoutGridIcon, LayoutListIcon, PlusIcon, ServerIcon } from "lucide-react"
 import { $systems, $upSystems, $downSystems } from "@/lib/stores"
 import { SystemStatus } from "@/lib/enums"
-import type { SystemRecord } from "@/types"
 import { DashboardMetricsHeader } from "../dashboard/dashboard-metrics-header"
 import { ServerGridCard } from "../dashboard/server-grid-card"
 import { AddServerCard } from "../dashboard/add-server-card"
 import { RecentAlertsBar } from "../dashboard/recent-alerts-bar"
 import { AronaCompanionPanel } from "../dashboard/arona-companion-panel"
 import SystemsTable from "../systems-table/systems-table"
+import { AddSystemDialog } from "../add-system"
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -18,105 +18,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 
-// Fallback high-fidelity sample servers matching Reference Image 1 when no backend servers exist yet
-const SAMPLE_SERVERS: SystemRecord[] = [
-	{
-		id: "hk-01",
-		name: "HK-01",
-		host: "Hong Kong · Production",
-		status: SystemStatus.Up,
-		created: "2025-03-17",
-		updated: "2026-09-22",
-		info: {
-			h: "hk-01",
-			m: "AMD EPYC 7763",
-			c: 16,
-			t: 32,
-			u: 2381040, // 27d 14h
-			cpu_percent: 24,
-			mp: 62,
-			dp: 48,
-			b: 125829120, // 120 Mbps
-		},
-	},
-	{
-		id: "jp-home",
-		name: "JP-HOME",
-		host: "Tokyo · Homelab",
-		status: SystemStatus.Up,
-		created: "2025-05-10",
-		updated: "2026-09-22",
-		info: {
-			h: "jp-home",
-			m: "Intel N100",
-			c: 4,
-			t: 4,
-			u: 1058400, // 12d 6h
-			cpu_percent: 8,
-			mp: 36,
-			dp: 22,
-			b: 18874368, // 18 Mbps
-		},
-	},
-	{
-		id: "sg-db",
-		name: "SG-DB",
-		host: "Singapore · Database",
-		status: SystemStatus.Up,
-		created: "2025-01-05",
-		updated: "2026-09-22",
-		info: {
-			h: "sg-db",
-			m: "AMD EPYC 9654",
-			c: 32,
-			t: 64,
-			u: 6750000, // 78d 3h
-			cpu_percent: 42,
-			mp: 71,
-			dp: 63,
-			b: 99614720, // 95 Mbps
-		},
-	},
-	{
-		id: "us-01",
-		name: "US-01",
-		host: "US West · Production",
-		status: SystemStatus.Up,
-		created: "2025-02-14",
-		updated: "2026-09-22",
-		info: {
-			h: "us-01",
-			m: "Intel Xeon Gold",
-			c: 16,
-			t: 32,
-			u: 3013200, // 34d 21h
-			cpu_percent: 28,
-			mp: 55,
-			dp: 41,
-			b: 220200960, // 210 Mbps
-		},
-	},
-	{
-		id: "eu-edge",
-		name: "EU-EDGE",
-		host: "Frankfurt · Edge Node",
-		status: SystemStatus.Down,
-		created: "2025-04-01",
-		updated: "2026-09-22",
-		info: {
-			h: "eu-edge",
-			m: "N/A",
-			c: 2,
-			t: 2,
-			u: 0,
-			cpu_percent: 0,
-			mp: 0,
-			dp: 0,
-			b: 0,
-		},
-	},
-]
-
 export default memo(function Home() {
 	const realSystems = useStore($systems)
 	const upSystems = useStore($upSystems)
@@ -124,15 +25,15 @@ export default memo(function Home() {
 
 	const [viewMode, setViewMode] = useState<"grid" | "table">("grid")
 	const [sortBy, setSortBy] = useState<"name" | "status" | "cpu" | "memory">("name")
+	const [addDialogOpen, setAddDialogOpen] = useState(false)
 
 	useEffect(() => {
 		document.title = "Dashboard / Beszel"
 	}, [])
 
-	// Determine active systems list (real systems from PocketBase or Reference 1 Samples)
+	// Determine active systems list directly from PocketBase store
 	const displaySystems = useMemo(() => {
-		const source = realSystems.length > 0 ? realSystems : SAMPLE_SERVERS
-		const copy = [...source]
+		const copy = [...realSystems]
 
 		if (sortBy === "name") {
 			copy.sort((a, b) => a.name.localeCompare(b.name))
@@ -147,13 +48,16 @@ export default memo(function Home() {
 		return copy
 	}, [realSystems, sortBy])
 
-	const upCount = realSystems.length > 0 ? Object.keys(upSystems).length : 4
-	const downCount = realSystems.length > 0 ? Object.keys(downSystems).length : 1
+	const upCount = Object.keys(upSystems).length
+	const downCount = Object.keys(downSystems).length
 
 	return (
-		<div className="flex flex-col lg:flex-row gap-6 w-full pb-10">
-			{/* Main Content Column */}
-			<div className="flex-1 min-w-0 flex flex-col gap-6">
+		<div className="relative w-full min-h-[calc(100vh-4rem)] pb-12">
+			{/* Integrated Ambient Kivotos Panorama: Skyline, Clock Tower, Window, and Arona */}
+			<AronaCompanionPanel />
+
+			{/* Main Interactive Content Workspace */}
+			<div className="relative z-10 w-full p-4 md:p-6 lg:p-7 2xl:pr-[310px] flex flex-col gap-6">
 				{/* 1. Sensei Morning Welcome & 4 Metric Cards */}
 				<DashboardMetricsHeader
 					systems={displaySystems}
@@ -241,13 +145,34 @@ export default memo(function Home() {
 
 				{/* 3. Server List (Grid or Table) */}
 				{viewMode === "grid" ? (
-					<div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4 sm:gap-5">
-						{displaySystems.map((system) => (
-							<ServerGridCard key={system.id} system={system} />
-						))}
-						{/* "+ Add Server" Tile */}
-						<AddServerCard />
-					</div>
+					displaySystems.length > 0 ? (
+						<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 xl:gap-4.5">
+							{displaySystems.map((system) => (
+								<ServerGridCard key={system.id} system={system} />
+							))}
+							{/* "+ Add Server" Tile */}
+							<AddServerCard />
+						</div>
+					) : (
+						/* Empty State */
+						<div className="flex flex-col items-center justify-center p-12 text-center rounded-3xl bg-card border border-border/80 shadow-2xs">
+							<div className="size-14 rounded-2xl bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center mb-4">
+								<ServerIcon className="size-7" />
+							</div>
+							<h3 className="text-lg font-bold text-foreground">No servers connected yet</h3>
+							<p className="text-xs text-muted-foreground mt-1 max-w-sm">
+								Install the Beszel agent on your servers to start monitoring real-time metrics in the Schale control center.
+							</p>
+							<Button
+								onClick={() => setAddDialogOpen(true)}
+								className="mt-5 rounded-2xl gap-2 bg-primary text-primary-foreground font-semibold px-5"
+							>
+								<PlusIcon className="size-4" />
+								<span>Add First Server</span>
+							</Button>
+							<AddSystemDialog open={addDialogOpen} setOpen={setAddDialogOpen} />
+						</div>
+					)
 				) : (
 					<div className="bg-card rounded-2xl border border-border/80 p-2">
 						<SystemsTable />
@@ -257,9 +182,7 @@ export default memo(function Home() {
 				{/* 4. Bottom Recent Alerts Bar */}
 				<RecentAlertsBar />
 			</div>
-
-			{/* 5. Right Arona Wall Companion Panel (From Reference 1) */}
-			<AronaCompanionPanel />
 		</div>
 	)
 })
+

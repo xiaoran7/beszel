@@ -79,56 +79,30 @@ export const SystemHeroHeader = memo(function SystemHeroHeader({
 				</div>
 			</div>
 
-			{/* Center: Arona Heartfelt Reassurance Speech Bubble */}
-			<div className="hidden xl:flex items-center justify-center flex-1 z-10 px-4">
-				<div className="relative px-5 py-3 rounded-2xl bg-sky-50/60 dark:bg-sky-950/30 border border-sky-200/60 dark:border-sky-800/50 shadow-2xs flex flex-col">
-					<div className="flex items-center gap-1.5 text-sky-700 dark:text-sky-300 text-xs font-bold">
-						<SparklesIcon className="size-3.5 text-sky-400" />
-						<span className="font-sans">「今日も、きっと大丈夫です。」</span>
-					</div>
-					<span className="text-[11px] text-muted-foreground font-medium mt-0.5">
-						All systems are running well today.
-					</span>
-					{/* Decorative Speech Bubble Tail */}
-					<div className="absolute -right-2 top-1/2 -translate-y-1/2 w-0 h-0 border-t-6 border-t-transparent border-b-6 border-b-transparent border-l-6 border-l-sky-200/60 dark:border-l-sky-800/50" />
-				</div>
-			</div>
-
-			{/* Right: Arona Illustration & S.C.H.A.L.E. Halo Banner */}
-			<div className="relative flex items-center justify-end z-10 shrink-0">
-				<div className="flex items-center gap-4">
-					<div className="flex flex-col text-right">
-						<span className="text-sm font-bold text-sky-800 dark:text-sky-200 tracking-wide font-sans">
-							ずっと、見守っていますよ。
-						</span>
-						<span className="text-[11px] text-muted-foreground font-medium">
-							I'm always keeping an eye on things.
-						</span>
-						<div className="flex items-center justify-end gap-1.5 text-[9px] font-bold text-sky-600/70 dark:text-sky-400/70 uppercase tracking-widest mt-1">
-							<span>S.C.H.A.L.E.</span>
-							<span>·</span>
-							<span>FOR A MORE STABLE TOMORROW</span>
+				{/* Center: Arona Heartfelt Reassurance Speech Bubble */}
+				<div className="hidden xl:flex items-center justify-center z-10 px-2">
+					<div className="relative px-4 py-2.5 rounded-2xl bg-sky-50/70 dark:bg-sky-950/40 border border-sky-200/60 dark:border-sky-800/50 shadow-2xs flex flex-col">
+						<div className="flex items-center gap-1.5 text-sky-700 dark:text-sky-300 text-xs font-bold">
+							<SparklesIcon className="size-3.5 text-sky-400" />
+							<span className="font-sans">「今日も、きっと大丈夫です。」</span>
 						</div>
-					</div>
-
-					{/* Arona Avatar Frame with Ring */}
-					<div className="relative size-15 rounded-2xl overflow-hidden ring-2 ring-sky-300/60 dark:ring-sky-600/40 shadow-sm shrink-0 bg-sky-100/40 dark:bg-sky-950/40">
-						<img
-							src="/assets/arona_head.png"
-							alt="Arona S.C.H.A.L.E."
-							className="w-full h-full object-cover object-top scale-110 pointer-events-none"
-							onError={(e) => {
-								(e.target as HTMLElement).style.display = "none"
-							}}
-						/>
-						{/* Subtle Angelic Halo Light */}
-						<span className="absolute -top-2 -right-2 size-6 rounded-full bg-sky-400/30 blur-xs" />
+						<span className="text-[11px] text-muted-foreground font-medium mt-0.5">
+							All systems are running well today.
+						</span>
 					</div>
 				</div>
-			</div>
 
-			{/* Background Ambient Glow */}
-			<div className="absolute top-0 right-0 w-96 h-full bg-gradient-to-l from-sky-400/8 via-indigo-400/4 to-transparent pointer-events-none" />
-		</div>
-	)
-})
+				{/* Right: Authentic Arona Header Illustration from Reference 2 */}
+				<div className="relative hidden md:flex items-center justify-end z-10 shrink-0 h-32 w-80 lg:w-96 overflow-hidden rounded-2xl">
+					<img
+						src="/assets/arona_header.png"
+						alt="Arona S.C.H.A.L.E."
+						className="w-full h-full object-contain object-right pointer-events-none drop-shadow-xs"
+					/>
+				</div>
+
+				{/* Background Ambient Glow */}
+				<div className="absolute top-0 right-0 w-[420px] h-full bg-gradient-to-l from-sky-300/10 via-sky-400/5 to-transparent pointer-events-none" />
+			</div>
+		)
+	})

@@ -113,16 +113,16 @@ const Layout = () => {
 						onOpenAlerts={() => setAlertsSheetOpen(true)}
 					/>
 
-					{/* Right Content Area */}
-					<div className="flex-1 flex flex-col min-w-0 md:pl-64 transition-all duration-300">
-						<Topbar
-							onToggleSidebar={() => setSidebarMobileOpen((prev) => !prev)}
-							onOpenAlerts={() => setAlertsSheetOpen(true)}
-						/>
-						<main className="flex-1 p-4 md:p-6 lg:p-8 max-w-[1720px] w-full mx-auto">
-							<App />
-						</main>
-					</div>
+							{/* Right Content Area */}
+							<div className="flex-1 flex flex-col min-w-0 md:pl-52 transition-all duration-300">
+								<Topbar
+									onToggleSidebar={() => setSidebarMobileOpen((prev) => !prev)}
+									onOpenAlerts={() => setAlertsSheetOpen(true)}
+								/>
+								<main className="flex-1 w-full mx-auto relative">
+									<App />
+								</main>
+							</div>
 
 					{/* Global Alerts Drawer */}
 					<GlobalAlertsSheet open={alertsSheetOpen} onOpenChange={setAlertsSheetOpen} />
