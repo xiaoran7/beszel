@@ -179,8 +179,8 @@ export default memo(function Home() {
 					</div>
 				)}
 
-				{/* 4. Bottom Recent Alerts Bar */}
-				<RecentAlertsBar />
+					{/* 4. Bottom Recent Alerts Bar */}
+					{displaySystems.length > 0 && <RecentAlertsBar />}
 			</div>
 		</div>
 	)

@@ -1,6 +1,7 @@
 import { memo, useMemo } from "react"
-import { ServerIcon, CheckCircle2Icon, AlertCircleIcon, TrendingUpIcon } from "lucide-react"
+import { ServerIcon, TrendingUpIcon } from "lucide-react"
 import type { SystemRecord } from "@/types"
+import { pb } from "@/lib/api"
 
 interface DashboardMetricsHeaderProps {
 	systems: SystemRecord[]
@@ -17,28 +18,46 @@ export const DashboardMetricsHeader = memo(function DashboardMetricsHeader({
 	const safeUpCount = upCount
 	const safeDownCount = downCount
 
-	// Calculate overall average uptime (or fallback to 99.9%)
+	// Current authenticated user display name
+	const userName = pb.authStore.record?.name || pb.authStore.record?.email?.split("@")[0] || "Sensei"
+
+	// Dynamic greeting based on current local time
+	const greeting = useMemo(() => {
+		const hour = new Date().getHours()
+		if (hour >= 5 && hour < 12) return `Good morning, ${userName}.`
+		if (hour >= 12 && hour < 18) return `Good afternoon, ${userName}.`
+		if (hour >= 18 && hour < 22) return `Good evening, ${userName}.`
+		return `Good night, ${userName}.`
+	}, [userName])
+
+	// Calculate overall average uptime (or graceful fallback if zero servers)
 	const overallUptime = useMemo(() => {
-		if (totalCount === 0) return "100%"
+		if (totalCount === 0) return "—"
 		const percentage = (safeUpCount / totalCount) * 100
-		return percentage === 100 ? "99.9%" : `${percentage.toFixed(1)}%`
+		return `${percentage.toFixed(1)}%`
 	}, [safeUpCount, totalCount])
 
 	return (
 		<div className="flex flex-col gap-6">
-					{/* Sensei Morning Greeting Banner */}
-					<div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4 py-1">
-						<div className="flex flex-col z-10">
-							<h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground font-sans">
-								Good morning, Sensei.
-							</h1>
-							<p className="text-sm text-muted-foreground mt-1 font-medium">
+			{/* Greeting Banner */}
+			<div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4 py-1">
+				<div className="flex flex-col z-10">
+					<h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground font-sans">
+						{greeting}
+					</h1>
+					<p className="text-sm text-muted-foreground mt-1 font-medium">
+						{totalCount === 0 ? (
+							"No servers connected. Connect your first server to start monitoring."
+						) : (
+							<>
 								All systems at a glance.{" "}
 								<strong className="text-foreground font-bold">{safeUpCount} of {totalCount}</strong> servers are{" "}
 								<span className="text-emerald-500 font-semibold">online</span>.
-							</p>
-						</div>
-					</div>
+							</>
+						)}
+					</p>
+				</div>
+			</div>
 
 			{/* 4 Summary Metric Cards */}
 			<div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
