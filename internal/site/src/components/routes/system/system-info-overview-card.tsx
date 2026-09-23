@@ -1,5 +1,5 @@
 import { memo, useMemo } from "react"
-import { FileTextIcon, MoreVerticalIcon } from "lucide-react"
+import { FileTextIcon } from "lucide-react"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import type { SystemRecord, SystemDetailsRecord } from "@/types"
 
@@ -42,19 +42,16 @@ export const SystemInfoOverviewCard = memo(function SystemInfoOverviewCard({
 
 	return (
 		<Card className="relative rounded-3xl border border-border/80 bg-card shadow-2xs hover:shadow-xs transition-all overflow-hidden select-none">
-			<CardHeader className="flex flex-row items-center justify-between pb-2 px-6 pt-5">
-				<div className="flex items-center gap-2.5">
-					<div className="flex items-center justify-center size-8 rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
-						<FileTextIcon className="size-4.5" />
+				<CardHeader className="flex flex-row items-center justify-between pb-2 px-6 pt-5">
+					<div className="flex items-center gap-2.5">
+						<div className="flex items-center justify-center size-8 rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
+							<FileTextIcon className="size-4.5" />
+						</div>
+						<CardTitle className="text-base font-bold text-foreground">
+							System Information
+						</CardTitle>
 					</div>
-					<CardTitle className="text-base font-bold text-foreground">
-						System Information
-					</CardTitle>
-				</div>
-				<button className="text-muted-foreground hover:text-foreground p-1">
-					<MoreVerticalIcon className="size-4" />
-				</button>
-			</CardHeader>
+				</CardHeader>
 
 			<CardContent className="relative z-10 px-6 pb-6 pt-2">
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-y-3.5 gap-x-8 text-xs">

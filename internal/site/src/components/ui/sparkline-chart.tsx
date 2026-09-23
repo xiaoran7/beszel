@@ -24,12 +24,19 @@ export const SparklineChart = memo(function SparklineChart({
 
 		const minVal = Math.min(...data)
 		const maxVal = Math.max(...data)
-		const range = maxVal - minVal || 1
+		const range = maxVal - minVal
 		const padding = 4
 
 		const points = data.map((val, i) => {
 			const x = (i / (data.length - 1)) * 100
-			const y = height - padding - ((val - minVal) / range) * (height - 2 * padding)
+			let y = height / 2
+			if (range > 0.001) {
+				y = height - padding - ((val - minVal) / range) * (height - 2 * padding)
+			} else {
+				// When all values are equal, position vertically based on value ratio (0~100)
+				const normalized = Math.min(100, Math.max(0, val)) / 100
+				y = height - padding - normalized * (height - 2 * padding)
+			}
 			return { x, y }
 		})
 

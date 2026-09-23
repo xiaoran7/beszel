@@ -534,3 +534,20 @@ export function secondsToUptimeString(seconds: number): string {
 		return secondsToString(seconds, "day")
 	}
 }
+
+/**
+ * Server IP Resolution: Map internal Tailscale mesh IPs to verified public IPs
+ */
+export const SERVER_IP_MAP: Record<string, { publicIp: string; location: string }> = {
+	"100.72.34.104": { publicIp: "34.84.62.138", location: "Tokyo, JP" },
+	"100.91.224.45": { publicIp: "107.175.236.156", location: "New York, US" },
+	"100.101.2.4": { publicIp: "8.148.11.79", location: "Hangzhou, CN" },
+	"100.70.173.50": { publicIp: "34.104.162.153", location: "Tokyo Old, JP" },
+}
+
+export function getServerPublicIp(host: string): string | undefined {
+	if (!host) return undefined
+	const cleanHost = host.split(":")[0].trim()
+	return SERVER_IP_MAP[cleanHost]?.publicIp
+}
+

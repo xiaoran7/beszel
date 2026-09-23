@@ -1,7 +1,7 @@
-import { memo, useState } from "react"
-import { ServerIcon, Edit2Icon, CheckIcon, SparklesIcon, HeartIcon } from "lucide-react"
+import { memo, useState, useMemo } from "react"
+import { ServerIcon, Edit2Icon, CheckIcon, SparklesIcon, HeartIcon, GlobeIcon } from "lucide-react"
 import { SystemStatus } from "@/lib/enums"
-import { cn } from "@/lib/utils"
+import { cn, getServerPublicIp, SERVER_IP_MAP } from "@/lib/utils"
 import type { SystemRecord } from "@/types"
 
 interface SystemHeroHeaderProps {
@@ -13,6 +13,7 @@ export const SystemHeroHeader = memo(function SystemHeroHeader({
 	system,
 	onUpdateName,
 }: SystemHeroHeaderProps) {
+	const publicIp = useMemo(() => getServerPublicIp(system.host), [system.host])
 	const [editing, setEditing] = useState(false)
 	const [description, setDescription] = useState(
 		system.host ? `${system.host}` : "Production Server"
@@ -51,31 +52,37 @@ export const SystemHeroHeader = memo(function SystemHeroHeader({
 						</span>
 					</div>
 
-					{/* Description & Inline Edit */}
-					<div className="flex items-center gap-2 mt-1.5 text-sm text-muted-foreground font-medium">
-						{editing ? (
-							<div className="flex items-center gap-1.5">
-								<input
-									type="text"
-									value={description}
-									onChange={(e) => setDescription(e.target.value)}
-									className="px-2 py-0.5 text-xs rounded-md bg-secondary border border-border text-foreground focus:outline-hidden focus:ring-1 focus:ring-sky-400"
-									autoFocus
-								/>
-								<button
-									onClick={() => setEditing(false)}
-									className="p-1 rounded-md text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
-								>
-									<CheckIcon className="size-3.5" />
-								</button>
-							</div>
-						) : (
-							<div className="flex items-center gap-1.5 group cursor-pointer" onClick={() => setEditing(true)}>
-								<span>{description}</span>
-								<Edit2Icon className="size-3 text-muted-foreground/60 group-hover:text-primary transition-colors" />
-							</div>
-						)}
-					</div>
+						{/* Description & Inline Edit */}
+						<div className="flex items-center gap-2 mt-1.5 text-sm text-muted-foreground font-medium flex-wrap">
+							{publicIp && (
+								<span className="inline-flex items-center gap-1 text-sky-600 dark:text-sky-400 font-semibold text-xs px-2 py-0.5 rounded-md bg-sky-500/10 border border-sky-500/20 tabular-nums">
+									<GlobeIcon className="size-3" />
+									<span>Public: {publicIp}</span>
+								</span>
+							)}
+							{editing ? (
+								<div className="flex items-center gap-1.5">
+									<input
+										type="text"
+										value={description}
+										onChange={(e) => setDescription(e.target.value)}
+										className="px-2 py-0.5 text-xs rounded-md bg-secondary border border-border text-foreground focus:outline-hidden focus:ring-1 focus:ring-sky-400"
+										autoFocus
+									/>
+									<button
+										onClick={() => setEditing(false)}
+										className="p-1 rounded-md text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+									>
+										<CheckIcon className="size-3.5" />
+									</button>
+								</div>
+							) : (
+								<div className="flex items-center gap-1.5 group cursor-pointer" onClick={() => setEditing(true)}>
+									<span>Mesh: {description}</span>
+									<Edit2Icon className="size-3 text-muted-foreground/60 group-hover:text-primary transition-colors" />
+								</div>
+							)}
+						</div>
 				</div>
 			</div>
 

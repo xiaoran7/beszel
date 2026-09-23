@@ -1,7 +1,7 @@
 import { t } from "@lingui/core/macro"
 import { Trans, useLingui } from "@lingui/react/macro"
 import { useStore } from "@nanostores/react"
-import { XIcon, MoreVerticalIcon } from "lucide-react"
+import { XIcon } from "lucide-react"
 import React, { type JSX, memo, useCallback, useEffect, useState } from "react"
 import { $containerFilter, $maxValues } from "@/lib/stores"
 import { useIntersectionObserver } from "@/lib/use-intersection-observer"
@@ -137,17 +137,16 @@ export function ChartCard({
 					</div>
 				</div>
 
-				<div className="flex items-center gap-2 shrink-0">
-					{statBadge && (
-						<div className="text-xs font-semibold text-muted-foreground">
-							{statBadge}
-						</div>
-					)}
-					{cornerEl}
-					<button className="text-muted-foreground/70 hover:text-foreground p-1 rounded-lg hover:bg-secondary transition-colors">
-						<MoreVerticalIcon className="size-4" />
-					</button>
-				</div>
+				{(statBadge || cornerEl) && (
+					<div className="flex items-center gap-2 shrink-0">
+						{statBadge && (
+							<div className="text-xs font-semibold text-muted-foreground">
+								{statBadge}
+							</div>
+						)}
+						{cornerEl}
+					</div>
+				)}
 			</CardHeader>
 
 			<div className={cn("relative group w-full", legend ? "h-52 md:h-56" : "h-48 md:h-52")}>
