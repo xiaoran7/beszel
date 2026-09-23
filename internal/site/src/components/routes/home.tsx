@@ -3,6 +3,7 @@ import { useStore } from "@nanostores/react"
 import { LayoutGridIcon, LayoutListIcon, PlusIcon, ServerIcon } from "lucide-react"
 import { $systems, $upSystems, $downSystems } from "@/lib/stores"
 import { SystemStatus } from "@/lib/enums"
+import * as systemsManager from "@/lib/systemsManager"
 import { DashboardMetricsHeader } from "../dashboard/dashboard-metrics-header"
 import { ServerGridCard } from "../dashboard/server-grid-card"
 import { AddServerCard } from "../dashboard/add-server-card"
@@ -29,6 +30,11 @@ export default memo(function Home() {
 
 	useEffect(() => {
 		document.title = "Dashboard / Beszel"
+		// Periodic safety refresh every 15s to keep dashboard synchronized with background hub polls
+		const interval = setInterval(() => {
+			systemsManager.refresh()
+		}, 15000)
+		return () => clearInterval(interval)
 	}, [])
 
 	// Determine active systems list directly from PocketBase store
@@ -39,9 +45,9 @@ export default memo(function Home() {
 			copy.sort((a, b) => a.name.localeCompare(b.name))
 		} else if (sortBy === "status") {
 			copy.sort((a, b) => (a.status === SystemStatus.Up ? -1 : 1))
-		} else if (sortBy === "cpu") {
-			copy.sort((a, b) => ((b.info?.cpu_percent ?? 0) - (a.info?.cpu_percent ?? 0)))
-		} else if (sortBy === "memory") {
+			} else if (sortBy === "cpu") {
+				copy.sort((a, b) => ((b.info?.cpu ?? b.info?.cpu_percent ?? 0) - (a.info?.cpu ?? a.info?.cpu_percent ?? 0)))
+			} else if (sortBy === "memory") {
 			copy.sort((a, b) => ((b.info?.mp ?? 0) - (a.info?.mp ?? 0)))
 		}
 

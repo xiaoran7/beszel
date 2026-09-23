@@ -1,5 +1,5 @@
 import { memo, useEffect, useState, useMemo } from "react"
-import { BoxesIcon, MoreVerticalIcon } from "lucide-react"
+import { BoxesIcon } from "lucide-react"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { pb } from "@/lib/api"
 import type { ContainerRecord } from "@/types"
@@ -88,14 +88,11 @@ export const SystemDockerCard = memo(function SystemDockerCard({
 						Containers
 					</CardTitle>
 				</div>
-				<div className="flex items-center gap-2">
-					<span className="text-xs font-semibold text-muted-foreground bg-secondary/80 px-2.5 py-1 rounded-full">
-						{formattedContainers.length} running
-					</span>
-					<button className="text-muted-foreground hover:text-foreground p-1">
-						<MoreVerticalIcon className="size-4" />
-					</button>
-				</div>
+					<div className="flex items-center gap-2">
+						<span className="text-xs font-semibold text-muted-foreground bg-secondary/80 px-2.5 py-1 rounded-full">
+							{formattedContainers.length} running
+						</span>
+					</div>
 			</CardHeader>
 
 			<CardContent className="px-6 pb-5 pt-1">
