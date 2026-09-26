@@ -72,3 +72,7 @@ Support requests and general discussion can be posted on [GitHub discussions](ht
 ## License
 
 Beszel is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
+
+## 本地维护入口
+
+本目录保留上游项目说明。Go 工具链以 `go.mod` 为准；实现分布于 `agent/` 与 `internal/`，辅助资源位于 `supplemental/`。修改前先核对本地 Git 差异；项目约束见 [AGENTS.md](AGENTS.md)。
