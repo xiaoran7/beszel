@@ -22,3 +22,9 @@ agent/lhm/bin
 dockerfile_agent_dev
 .cr-release-packages
 .tmp
+
+# AOCI agent host integration (machine-bound; do not commit)
+.mcp.json
+.mcp.json.backup.*
+.claude/settings.json
+.claude/settings.json.backup.*
