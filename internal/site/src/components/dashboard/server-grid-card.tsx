@@ -8,6 +8,7 @@ import type { SystemRecord } from "@/types"
 import { $router, navigate } from "../router"
 import { getPagePath } from "@nanostores/router"
 import { ActionsButton } from "../systems-table/systems-table-columns"
+import AlertButton from "../alerts/alert-button"
 
 interface ServerGridCardProps {
 	system: SystemRecord
@@ -21,7 +22,8 @@ export const ServerGridCard = memo(function ServerGridCard({ system }: ServerGri
 	const cpu = isOnline ? (system.info?.cpu ?? system.info?.cpu_percent ?? system.info?.c_p ?? 0) : 0
 	const memory = isOnline ? (system.info?.mp ?? 0) : 0
 	const disk = isOnline ? (system.info?.dp ?? 0) : 0
-	
+	const gpu = isOnline && system.info?.g !== undefined ? system.info.g : null
+
 		const network = useMemo(() => {
 			if (!isOnline) return { value: "—", unit: "", percent: 0 }
 			if (system.info?.bb) {
@@ -84,12 +86,20 @@ export const ServerGridCard = memo(function ServerGridCard({ system }: ServerGri
 			t.push("Podman")
 		}
 
+		if (gpu !== null) {
+			t.push("GPU")
+		}
+
+		if (system.info?.sv) {
+			t.push("Systemd")
+		}
+
 		if (t.length === 0) {
 			t.push("Server")
 		}
 
 		return t
-	}, [system.info])
+	}, [system.info, gpu])
 
 	// Dynamic wave history from real CPU and memory metrics
 	const sparklineData = useMemo(() => {
@@ -165,15 +175,16 @@ export const ServerGridCard = memo(function ServerGridCard({ system }: ServerGri
 							<span>{isOnline ? "ONLINE" : isPaused ? "PAUSED" : "OFFLINE"}</span>
 						</span>
 
-						{/* Actions menu */}
-						<div className="flex items-center text-muted-foreground [&_button]:size-6.5 [&_button]:p-0 [&_svg]:size-3.5">
+						{/* Actions menu & Alert Button */}
+						<div className="flex items-center gap-1 text-muted-foreground [&_button]:size-6.5 [&_button]:p-0 [&_svg]:size-3.5">
+							<AlertButton system={system} />
 							<ActionsButton system={system} />
 						</div>
 					</div>
 				</div>
 
-					{/* 4 Radial Gauges */}
-					<div className="grid grid-cols-4 gap-1.5 my-4 py-2.5 px-1 rounded-2xl bg-secondary/40 border border-border/40">
+					{/* Radial Gauges (4 or 5 columns if GPU present) */}
+					<div className={`grid ${gpu !== null ? "grid-cols-5" : "grid-cols-4"} gap-1.5 my-4 py-2.5 px-1 rounded-2xl bg-secondary/40 border border-border/40`}>
 						<RadialGauge
 							value={isOnline ? `${Math.round(Number(cpu))}%` : "—"}
 							percent={Number(cpu) || 0}
@@ -207,6 +218,16 @@ export const ServerGridCard = memo(function ServerGridCard({ system }: ServerGri
 							strokeWidth={4}
 							color={isOnline ? "#8b5cf6" : "#94a3b8"}
 						/>
+						{gpu !== null && (
+							<RadialGauge
+								value={isOnline ? `${Math.round(Number(gpu))}%` : "—"}
+								percent={Number(gpu) || 0}
+								label="GPU"
+								size={48}
+								strokeWidth={4}
+								color={isOnline ? "#ec4899" : "#94a3b8"}
+							/>
+						)}
 					</div>
 
 				{/* Sparkline & Status/Uptime */}

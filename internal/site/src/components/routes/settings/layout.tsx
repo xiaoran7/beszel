@@ -107,28 +107,30 @@ export default function SettingsLayout() {
 	}, [])
 
 	return (
-		<Card className="pt-5 px-4 pb-8 min-h-96 mb-14 sm:pt-6 sm:px-7">
-			<CardHeader className="p-0">
-				<CardTitle className="mb-1">
-					<Trans>Settings</Trans>
-				</CardTitle>
-				<CardDescription>
-					<Trans>Manage display and notification preferences.</Trans>
-				</CardDescription>
-			</CardHeader>
-			<CardContent className="p-0">
-				<Separator className="hidden md:block my-5" />
-				<div className="flex flex-col gap-3.5 md:flex-row md:gap-5 lg:gap-12">
-					<aside className="md:max-w-52 min-w-40">
-						<SidebarNav items={sidebarNavItems} />
-					</aside>
-					<div className="flex-1 min-w-0">
-						{/* @ts-ignore */}
-						<SettingsContent name={page?.params?.name ?? "general"} />
+		<div className="w-full p-4 md:p-6 lg:p-7 pb-16">
+			<Card className="pt-5 px-4 pb-8 min-h-96 rounded-3xl border border-border/80 shadow-2xs sm:pt-6 sm:px-7">
+				<CardHeader className="p-0">
+					<CardTitle className="mb-1">
+						<Trans>Settings</Trans>
+					</CardTitle>
+					<CardDescription>
+						<Trans>Manage display and notification preferences.</Trans>
+					</CardDescription>
+				</CardHeader>
+				<CardContent className="p-0">
+					<Separator className="hidden md:block my-5" />
+					<div className="flex flex-col gap-3.5 md:flex-row md:gap-5 lg:gap-12">
+						<aside className="md:max-w-52 min-w-40">
+							<SidebarNav items={sidebarNavItems} />
+						</aside>
+						<div className="flex-1 min-w-0">
+							{/* @ts-ignore */}
+							<SettingsContent name={page?.params?.name ?? "general"} />
+						</div>
 					</div>
-				</div>
-			</CardContent>
-		</Card>
+				</CardContent>
+			</Card>
+		</div>
 	)
 }
 
