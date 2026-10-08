@@ -11,6 +11,7 @@ import { RecentAlertsBar } from "../dashboard/recent-alerts-bar"
 import { AronaCompanionPanel } from "../dashboard/arona-companion-panel"
 import SystemsTable from "../systems-table/systems-table"
 import { AddSystemDialog } from "../add-system"
+import { ActiveAlerts } from "../active-alerts"
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -70,6 +71,9 @@ export default memo(function Home() {
 					upCount={upCount}
 					downCount={downCount}
 				/>
+
+				{/* Active Alerts Banner if any */}
+				<ActiveAlerts />
 
 				{/* 2. Server Overview Toolbar */}
 				<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">

@@ -14,6 +14,9 @@ import {
 	BellIcon,
 	ShieldCheckIcon,
 	ExternalLinkIcon,
+	BoxesIcon,
+	HardDriveIcon,
+	NetworkIcon,
 } from "lucide-react"
 import { $router, basePath, Link, navigate, prependBasePath } from "../router"
 import { $systems, $alerts } from "@/lib/stores"
@@ -102,6 +105,66 @@ export const Topbar = memo(({ onToggleSidebar, onOpenAlerts }: TopbarProps) => {
 							<span className="font-semibold text-foreground tracking-tight">
 								{currentSystem.name}
 							</span>
+						</div>
+					) : page?.route === "containers" ? (
+						<div className="flex items-center gap-2 text-sm">
+							<Link
+								href={basePath || "/"}
+								className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground font-medium transition-colors"
+							>
+								<ServerIcon className="size-4" />
+								<span>Dashboard</span>
+							</Link>
+							<ChevronRightIcon className="size-4 text-muted-foreground/60" />
+							<div className="flex items-center gap-1.5 font-semibold text-foreground tracking-tight">
+								<BoxesIcon className="size-4 text-sky-500" />
+								<span>Containers</span>
+							</div>
+						</div>
+					) : page?.route === "smart" ? (
+						<div className="flex items-center gap-2 text-sm">
+							<Link
+								href={basePath || "/"}
+								className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground font-medium transition-colors"
+							>
+								<ServerIcon className="size-4" />
+								<span>Dashboard</span>
+							</Link>
+							<ChevronRightIcon className="size-4 text-muted-foreground/60" />
+							<div className="flex items-center gap-1.5 font-semibold text-foreground tracking-tight">
+								<HardDriveIcon className="size-4 text-sky-500" />
+								<span>Disk & S.M.A.R.T.</span>
+							</div>
+						</div>
+					) : page?.route === "monitors" ? (
+						<div className="flex items-center gap-2 text-sm">
+							<Link
+								href={basePath || "/"}
+								className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground font-medium transition-colors"
+							>
+								<ServerIcon className="size-4" />
+								<span>Dashboard</span>
+							</Link>
+							<ChevronRightIcon className="size-4 text-muted-foreground/60" />
+							<div className="flex items-center gap-1.5 font-semibold text-foreground tracking-tight">
+								<NetworkIcon className="size-4 text-sky-500" />
+								<span>Network Monitors</span>
+							</div>
+						</div>
+					) : page?.route === "settings" ? (
+						<div className="flex items-center gap-2 text-sm">
+							<Link
+								href={basePath || "/"}
+								className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground font-medium transition-colors"
+							>
+								<ServerIcon className="size-4" />
+								<span>Dashboard</span>
+							</Link>
+							<ChevronRightIcon className="size-4 text-muted-foreground/60" />
+							<div className="flex items-center gap-1.5 font-semibold text-foreground tracking-tight">
+								<SettingsIcon className="size-4 text-sky-500" />
+								<span>Settings</span>
+							</div>
 						</div>
 					) : (
 						<div className="hidden sm:flex flex-col">
