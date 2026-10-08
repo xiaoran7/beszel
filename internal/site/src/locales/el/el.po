@@ -36,6 +36,11 @@ msgstr "{0} από {1} σειρά(ες) επιλέχθηκαν."
 msgid "{0} selected"
 msgstr "{0} επιλεγμένα"
 
+#. placeholder {0}: unassignedSystems.length
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "{0} system(s) do not have a dedicated token configured."
+msgstr ""
+
 #: src/components/routes/system/info-bar.tsx
 msgid "{cores, plural, one {# core} other {# cores}}"
 msgstr "{cores, plural, one {# πυρήνας} other {# πυρήνες}}"
@@ -136,6 +141,19 @@ msgstr "Ενεργή κατάσταση"
 msgid "Add {foo}"
 msgstr "Προσθήκη {foo}"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Add system"
+msgstr ""
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Add system token"
+msgstr ""
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Add token"
+msgstr ""
+
 #: src/components/routes/settings/notifications.tsx
 msgid "Add URL"
 msgstr "Προσθήκη URL"
@@ -201,6 +219,10 @@ msgstr "Είστε βέβαιοι ότι θέλετε να διαγράψετε 
 #: src/components/routes/settings/alerts-history-data-table.tsx
 msgid "Are you sure?"
 msgstr "Είστε βέβαιοι;"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Assign an authentication token and optional fingerprint to a system."
+msgstr ""
 
 #: src/components/copy-to-clipboard.tsx
 msgid "Automatic copy requires a secure context."
@@ -361,6 +383,8 @@ msgstr "Δυνατότητα διακοπής"
 #: src/components/network-monitors-table/network-monitors-table.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
 #: src/components/routes/settings/quiet-hours.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Cancel"
 msgstr "Ακύρωση"
@@ -440,9 +464,17 @@ msgstr "Εκκαθάριση"
 msgid "Clear all"
 msgstr "Εκκαθάριση όλων"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Clear fingerprint"
+msgstr ""
+
 #: src/components/network-monitors-table/monitor-dialog.tsx
 msgid "Clear matches"
 msgstr "Εκκαθάριση αντιστοιχιών"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Clearing the fingerprint allows the agent to re-register on next connect."
+msgstr ""
 
 #: src/components/containers-table/containers-table.tsx
 msgid "Click on a container to view more information."
@@ -464,10 +496,23 @@ msgstr "Κάντε κλικ σε ένα σύστημα για να δείτε π
 msgid "Click to copy"
 msgstr "Κάντε κλικ για αντιγραφή"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Click to copy fingerprint"
+msgstr ""
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Click to copy token"
+msgstr ""
+
 #: src/components/login/forgot-pass-form.tsx
 #: src/components/login/forgot-pass-form.tsx
 msgid "Command line instructions"
 msgstr "Οδηγίες γραμμής εντολών"
+
+#. placeholder {0}: unassignedSystems[0].name
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Configure for {0}"
+msgstr ""
 
 #: src/components/routes/settings/notifications.tsx
 msgid "Configure how you receive alert notifications."
@@ -508,6 +553,16 @@ msgstr "Υγεία κοντέινερ"
 msgid "Continue"
 msgstr "Συνέχεια"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Copied"
+msgstr ""
+
 #: src/lib/utils.ts
 msgid "Copied to clipboard"
 msgstr "Αντιγράφηκε στο πρόχειρο"
@@ -528,6 +583,10 @@ msgstr "Αντιγραφή docker run"
 msgctxt "Environment variables"
 msgid "Copy env"
 msgstr "Αντιγραφή env"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Copy fingerprint"
+msgstr ""
 
 #: src/components/alerts/alerts-sheet.tsx
 msgctxt "Copy alerts from another system"
@@ -566,6 +625,11 @@ msgstr "Αντιγράψτε το περιεχόμενο του <0>docker-compos
 #: src/components/network-monitors-table/network-monitors-columns.tsx
 msgid "Copy to system"
 msgstr "Αντιγραφή στο σύστημα"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Copy token"
+msgstr ""
 
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Copy YAML"
@@ -620,6 +684,10 @@ msgstr "Δημιουργία"
 #: src/components/login/auth-form.tsx
 msgid "Create account"
 msgstr "Δημιουργία λογαριασμού"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Create system first"
+msgstr ""
 
 #. Context: date created
 #: src/components/alerts-history-columns.tsx
@@ -689,8 +757,12 @@ msgid "Delete"
 msgstr "Διαγραφή"
 
 #: src/components/routes/settings/tokens-fingerprints.tsx
-msgid "Delete fingerprint"
-msgstr "Διαγραφή αποτυπώματος"
+#~ msgid "Delete fingerprint"
+#~ msgstr "Διαγραφή αποτυπώματος"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Delete record"
+msgstr ""
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Description"
@@ -780,6 +852,14 @@ msgstr "Επεξεργασία"
 msgid "Edit {foo}"
 msgstr "Επεξεργασία {foo}"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Edit credentials"
+msgstr ""
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Edit token & fingerprint"
+msgstr ""
+
 #: src/components/login/auth-form.tsx
 #: src/components/login/forgot-pass-form.tsx
 #: src/components/login/otp-forms.tsx
@@ -821,6 +901,10 @@ msgid "Enter your one-time password."
 msgstr "Εισαγάγετε τον κωδικό μίας χρήσης."
 
 #: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Environment variables copied"
+msgstr ""
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Ephemeral"
 msgstr "Προσωρινό"
 
@@ -837,6 +921,12 @@ msgstr "Προσωρινό"
 #: src/components/routes/settings/notifications.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Error"
@@ -950,8 +1040,22 @@ msgid "Filter..."
 msgstr "Φίλτρο..."
 
 #: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Fingerprint"
 msgstr "Αποτύπωμα"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Fingerprint (optional)"
+msgstr ""
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Fingerprint copied to clipboard"
+msgstr ""
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Fingerprint reset"
+msgstr ""
 
 #: src/components/routes/system/smart-table.tsx
 msgid "Firmware"
@@ -988,6 +1092,10 @@ msgstr "Πλήρες"
 #: src/components/routes/settings/layout.tsx
 msgid "General"
 msgstr "Γενικά"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Generate new"
+msgstr ""
 
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Global"
@@ -1113,6 +1221,18 @@ msgstr "Διάταξη"
 msgid "Layout width"
 msgstr "Πλάτος διάταξης"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Leave empty to allow agent re-registration"
+msgstr ""
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Leave empty to bind on first connection"
+msgstr ""
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Leave empty to let the agent auto-bind its hardware identifier upon first connection."
+msgstr ""
+
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Lifecycle"
 msgstr "Κύκλος ζωής"
@@ -1191,6 +1311,10 @@ msgstr "Κύριο PID"
 #: src/components/routes/settings/layout.tsx
 msgid "Manage display and notification preferences."
 msgstr "Διαχειριστείτε τις προτιμήσεις εμφάνισης και ειδοποιήσεων."
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Manage per-system connection tokens and hardware fingerprints."
+msgstr ""
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
@@ -1317,6 +1441,10 @@ msgstr "Όχι"
 msgid "No detail data for this pool."
 msgstr "Δεν υπάρχουν λεπτομερή δεδομένα για αυτό το pool."
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "No matching records found for \"{searchQuery}\""
+msgstr ""
+
 #: src/components/command-palette.tsx
 #: src/components/systemd-table/systemd-table.tsx
 msgid "No results found."
@@ -1335,6 +1463,14 @@ msgstr "Κανένα αποτέλεσμα."
 #: src/components/routes/system/smart-table.tsx
 msgid "No S.M.A.R.T. attributes available for this device."
 msgstr "Δεν υπάρχουν διαθέσιμα χαρακτηριστικά S.M.A.R.T. για αυτήν τη συσκευή."
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "No system tokens configured"
+msgstr ""
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "No systems available."
+msgstr ""
 
 #: src/components/network-monitors-table/monitor-dialog.tsx
 #: src/components/systems-table/systems-table.tsx
@@ -1521,6 +1657,10 @@ msgstr "Συνδεθείτε ξανά"
 msgid "Please see <0>the documentation</0> for instructions."
 msgstr "Ανατρέξτε στην <0>τεκμηρίωση</0> για οδηγίες."
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Please select a system"
+msgstr ""
+
 #: src/components/login/login.tsx
 #~ msgid "Please sign in to your account"
 #~ msgstr "Συνδεθείτε στον λογαριασμό σας"
@@ -1614,6 +1754,10 @@ msgstr "Σφάλματα ανάγνωσης"
 msgid "Received"
 msgstr "Λήφθηκαν"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Record deleted successfully"
+msgstr ""
+
 #: src/components/containers-table/containers-table.tsx
 #: src/components/containers-table/containers-table.tsx
 #: src/components/routes/system/smart-table.tsx
@@ -1640,6 +1784,10 @@ msgstr "Απαιτείται από"
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Requires"
 msgstr "Απαιτεί"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Reset fingerprint"
+msgstr ""
 
 #: src/components/login/forgot-pass-form.tsx
 msgid "Reset Password"
@@ -1677,6 +1825,7 @@ msgid "Root"
 msgstr "Ρίζα"
 
 #: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Rotate token"
 msgstr "Ανανέωση token"
 
@@ -1696,6 +1845,11 @@ msgstr "Λεπτομέρειες S.M.A.R.T."
 msgid "S.M.A.R.T. Self-Test"
 msgstr "Αυτοέλεγχος S.M.A.R.T."
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Save"
+msgstr ""
+
 #: src/components/add-system.tsx
 #: src/components/network-monitors-table/monitor-dialog.tsx
 msgid "Save {foo}"
@@ -1713,6 +1867,11 @@ msgstr "Αποθήκευση ρυθμίσεων"
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Saved in the database and does not expire until you disable it."
 msgstr "Αποθηκεύεται στη βάση δεδομένων και δεν λήγει μέχρι να το απενεργοποιήσετε."
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Saving..."
+msgstr ""
 
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Schedule"
@@ -1739,6 +1898,10 @@ msgstr "Αναζήτηση συστημάτων ή ρυθμίσεων..."
 msgid "Search systems"
 msgstr "Αναζήτηση συστημάτων"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Search systems or tokens..."
+msgstr ""
+
 #: src/components/routes/settings/heartbeat.tsx
 msgid "Seconds between pings (default: 60)"
 msgstr "Δευτερόλεπτα μεταξύ ping (προεπιλογή: 60)"
@@ -1752,6 +1915,7 @@ msgid "Select {foo}"
 msgstr "Επιλογή {foo}"
 
 #: src/components/network-monitors-table/monitor-dialog.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Select a system"
 msgstr "Επιλέξτε ένα σύστημα"
 
@@ -1859,6 +2023,13 @@ msgstr "Κατάσταση"
 msgid "Sub State"
 msgstr "Υποκατάσταση"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Success"
+msgstr ""
+
 #: src/components/routes/system/charts/memory-charts.tsx
 msgid "Swap space used by the system"
 msgstr "Swap που χρησιμοποιείται από το σύστημα"
@@ -1883,6 +2054,7 @@ msgstr "Αλλαγή θέματος"
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
 #: src/components/routes/system/smart-table.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 #: src/lib/alerts.ts
@@ -1896,6 +2068,18 @@ msgstr "Ταχύτητες ανεμιστήρων συστήματος (RPM)"
 #: src/components/routes/system/charts/load-average-chart.tsx
 msgid "System load averages over time"
 msgstr "Μέσοι όροι φορτίου συστήματος με την πάροδο του χρόνου"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "System token created successfully"
+msgstr ""
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "System tokens & fingerprints"
+msgstr ""
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "System tokens authenticate individual agent connections. Configure a token for an existing system, or agents can auto-register using the universal token above."
+msgstr ""
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Systemd Services"
@@ -1995,8 +2179,25 @@ msgstr "Προς email"
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Token"
 msgstr "Διακριτικό"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Token cannot be empty"
+msgstr ""
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Token copied to clipboard"
+msgstr ""
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Token rotated successfully"
+msgstr ""
 
 #: src/components/command-palette.tsx
 #: src/components/routes/settings/layout.tsx
@@ -2114,9 +2315,17 @@ msgstr "Ενεργοποιείται όταν η χρήση οποιουδήπο
 msgid "Type"
 msgstr "Τύπος"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Unconfigured"
+msgstr ""
+
 #: src/lib/alerts.ts
 msgid "Unhealthy"
 msgstr "Μη υγιές"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Unique token used by the agent to authenticate with the hub."
+msgstr ""
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Unit file"
@@ -2138,6 +2347,11 @@ msgstr "Καθολικό διακριτικό"
 msgid "Unknown"
 msgstr "Άγνωστο"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Unknown system"
+msgstr ""
+
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Unlimited"
@@ -2157,6 +2371,10 @@ msgstr "Σε λειτουργία ({upSystemsLength})"
 msgid "Update"
 msgstr "Ενημέρωση"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Update credentials for system: {systemName}"
+msgstr ""
+
 #: src/components/containers-table/containers-table-columns.tsx
 #: src/components/network-monitors-table/network-monitors-columns.tsx
 #: src/components/routes/system/smart-table.tsx
@@ -2168,6 +2386,10 @@ msgstr "Ενημερώθηκε"
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Updated every 10 minutes."
 msgstr "Ενημερώνεται κάθε 10 λεπτά."
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Updated successfully"
+msgstr ""
 
 #: src/components/routes/system/network-sheet.tsx
 msgid "Upload"
@@ -2236,6 +2458,10 @@ msgstr "Ορατά πεδία"
 msgid "Waiting for enough records to display"
 msgstr "Αναμονή για αρκετές εγγραφές ώστε να εμφανιστούν"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Waiting for initial connection"
+msgstr ""
+
 #: src/components/routes/settings/general.tsx
 msgid "Want to help improve our translations? Check <0>Crowdin</0> for details."
 msgstr "Θέλετε να βοηθήσετε στη βελτίωση των μεταφράσεών μας; Δείτε το <0>Crowdin</0> για λεπτομέρειες."
@@ -2292,6 +2518,10 @@ msgstr "Διαμ. YAML"
 #: src/components/routes/settings/config-yaml.tsx
 msgid "YAML Configuration"
 msgstr "Διαμόρφωση YAML"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "YAML configuration copied"
+msgstr ""
 
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx

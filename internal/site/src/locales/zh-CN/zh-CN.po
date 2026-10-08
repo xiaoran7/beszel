@@ -36,6 +36,11 @@ msgstr "已选择 {0} / {1} 行"
 msgid "{0} selected"
 msgstr "已选择 {0} 个"
 
+#. placeholder {0}: unassignedSystems.length
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "{0} system(s) do not have a dedicated token configured."
+msgstr "检测到 {0} 个系统尚未配置专属令牌。"
+
 #: src/components/routes/system/info-bar.tsx
 msgid "{cores, plural, one {# core} other {# cores}}"
 msgstr "{cores, plural, one {# 核心} other {# 核心}}"
@@ -136,6 +141,19 @@ msgstr "活动状态"
 msgid "Add {foo}"
 msgstr "添加 {foo}"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Add system"
+msgstr "添加系统"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Add system token"
+msgstr "添加系统令牌"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Add token"
+msgstr "添加令牌"
+
 #: src/components/routes/settings/notifications.tsx
 msgid "Add URL"
 msgstr "添加 URL"
@@ -201,6 +219,10 @@ msgstr "您确定要删除 {name} 吗？"
 #: src/components/routes/settings/alerts-history-data-table.tsx
 msgid "Are you sure?"
 msgstr "您确定吗？"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Assign an authentication token and optional fingerprint to a system."
+msgstr "为系统分配连接鉴权令牌及可选硬件指纹。"
 
 #: src/components/copy-to-clipboard.tsx
 msgid "Automatic copy requires a secure context."
@@ -361,6 +383,8 @@ msgstr "可停止"
 #: src/components/network-monitors-table/network-monitors-table.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
 #: src/components/routes/settings/quiet-hours.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Cancel"
 msgstr "取消"
@@ -440,9 +464,17 @@ msgstr "清除"
 msgid "Clear all"
 msgstr "全部清除"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Clear fingerprint"
+msgstr "清空指纹"
+
 #: src/components/network-monitors-table/monitor-dialog.tsx
 msgid "Clear matches"
 msgstr "清除匹配项"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Clearing the fingerprint allows the agent to re-register on next connect."
+msgstr "清空指纹后，客户端代理可在下次连接时重新绑定新指纹。"
 
 #: src/components/containers-table/containers-table.tsx
 msgid "Click on a container to view more information."
@@ -464,10 +496,23 @@ msgstr "点击系统查看更多信息。"
 msgid "Click to copy"
 msgstr "点击复制"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Click to copy fingerprint"
+msgstr "点击复制指纹"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Click to copy token"
+msgstr "点击复制令牌"
+
 #: src/components/login/forgot-pass-form.tsx
 #: src/components/login/forgot-pass-form.tsx
 msgid "Command line instructions"
 msgstr "命令行说明"
+
+#. placeholder {0}: unassignedSystems[0].name
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Configure for {0}"
+msgstr "为 {0} 快速配置"
 
 #: src/components/routes/settings/notifications.tsx
 msgid "Configure how you receive alert notifications."
@@ -508,6 +553,16 @@ msgstr "容器健康"
 msgid "Continue"
 msgstr "继续"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Copied"
+msgstr "已复制"
+
 #: src/lib/utils.ts
 msgid "Copied to clipboard"
 msgstr "已复制到剪贴板"
@@ -528,6 +583,10 @@ msgstr "复制 docker run 命令"
 msgctxt "Environment variables"
 msgid "Copy env"
 msgstr "复制环境变量"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Copy fingerprint"
+msgstr "复制指纹"
 
 #: src/components/alerts/alerts-sheet.tsx
 msgctxt "Copy alerts from another system"
@@ -566,6 +625,11 @@ msgstr "复制下面的客户端<0>docker-compose.yml</0>内容，或使用<1>�
 #: src/components/network-monitors-table/network-monitors-columns.tsx
 msgid "Copy to system"
 msgstr "复制到系统"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Copy token"
+msgstr "复制令牌"
 
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Copy YAML"
@@ -620,6 +684,10 @@ msgstr "创建"
 #: src/components/login/auth-form.tsx
 msgid "Create account"
 msgstr "创建账户"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Create system first"
+msgstr "先创建系统"
 
 #. Context: date created
 #: src/components/alerts-history-columns.tsx
@@ -689,8 +757,12 @@ msgid "Delete"
 msgstr "删除"
 
 #: src/components/routes/settings/tokens-fingerprints.tsx
-msgid "Delete fingerprint"
-msgstr "删除指纹"
+#~ msgid "Delete fingerprint"
+#~ msgstr "删除指纹"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Delete record"
+msgstr "删除记录"
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Description"
@@ -780,6 +852,14 @@ msgstr "编辑"
 msgid "Edit {foo}"
 msgstr "编辑 {foo}"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Edit credentials"
+msgstr "编辑凭据"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Edit token & fingerprint"
+msgstr "编辑令牌与指纹"
+
 #: src/components/login/auth-form.tsx
 #: src/components/login/forgot-pass-form.tsx
 #: src/components/login/otp-forms.tsx
@@ -821,6 +901,10 @@ msgid "Enter your one-time password."
 msgstr "输入您的一次性密码。"
 
 #: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Environment variables copied"
+msgstr "环境变量已复制"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Ephemeral"
 msgstr "暂时"
 
@@ -837,6 +921,12 @@ msgstr "暂时"
 #: src/components/routes/settings/notifications.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Error"
@@ -950,8 +1040,22 @@ msgid "Filter..."
 msgstr "过滤..."
 
 #: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Fingerprint"
 msgstr "指纹"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Fingerprint (optional)"
+msgstr "指纹（可选）"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Fingerprint copied to clipboard"
+msgstr "指纹已复制到剪贴板"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Fingerprint reset"
+msgstr "指纹已重置"
 
 #: src/components/routes/system/smart-table.tsx
 msgid "Firmware"
@@ -988,6 +1092,10 @@ msgstr "全宽"
 #: src/components/routes/settings/layout.tsx
 msgid "General"
 msgstr "常规"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Generate new"
+msgstr "重新生成"
 
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Global"
@@ -1113,6 +1221,18 @@ msgstr "布局"
 msgid "Layout width"
 msgstr "布局宽度"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Leave empty to allow agent re-registration"
+msgstr "留空以允许代理下次重新注册"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Leave empty to bind on first connection"
+msgstr "留空将在首次连接时自动绑定"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Leave empty to let the agent auto-bind its hardware identifier upon first connection."
+msgstr "留空时，代理将在首次成功连接时自动记录并绑定硬件标识符。"
+
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Lifecycle"
 msgstr "生命周期"
@@ -1191,6 +1311,10 @@ msgstr "主进程 ID"
 #: src/components/routes/settings/layout.tsx
 msgid "Manage display and notification preferences."
 msgstr "管理显示和通知偏好。"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Manage per-system connection tokens and hardware fingerprints."
+msgstr "管理每个系统的连接令牌与客户端硬件特征指纹。"
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
@@ -1317,6 +1441,10 @@ msgstr "否"
 msgid "No detail data for this pool."
 msgstr "此存储池没有可用的详细数据。"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "No matching records found for \"{searchQuery}\""
+msgstr "未找到与 \"{searchQuery}\" 匹配的记录"
+
 #: src/components/command-palette.tsx
 #: src/components/systemd-table/systemd-table.tsx
 msgid "No results found."
@@ -1335,6 +1463,14 @@ msgstr "无结果。"
 #: src/components/routes/system/smart-table.tsx
 msgid "No S.M.A.R.T. attributes available for this device."
 msgstr "此设备没有可用的 S.M.A.R.T. 属性。"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "No system tokens configured"
+msgstr "暂无系统专属令牌"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "No systems available."
+msgstr "当前暂无可用系统。"
 
 #: src/components/network-monitors-table/monitor-dialog.tsx
 #: src/components/systems-table/systems-table.tsx
@@ -1521,6 +1657,10 @@ msgstr "请重新登录"
 msgid "Please see <0>the documentation</0> for instructions."
 msgstr "请参阅<0>文档</0>以获取说明。"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Please select a system"
+msgstr "请选择一个系统"
+
 #: src/components/login/login.tsx
 #~ msgid "Please sign in to your account"
 #~ msgstr "请登录您的账户"
@@ -1614,6 +1754,10 @@ msgstr "读取错误"
 msgid "Received"
 msgstr "接收"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Record deleted successfully"
+msgstr "记录已成功删除"
+
 #: src/components/containers-table/containers-table.tsx
 #: src/components/containers-table/containers-table.tsx
 #: src/components/routes/system/smart-table.tsx
@@ -1640,6 +1784,10 @@ msgstr "被需要"
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Requires"
 msgstr "需要"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Reset fingerprint"
+msgstr "重置指纹"
 
 #: src/components/login/forgot-pass-form.tsx
 msgid "Reset Password"
@@ -1677,6 +1825,7 @@ msgid "Root"
 msgstr "根"
 
 #: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Rotate token"
 msgstr "轮换令牌"
 
@@ -1696,6 +1845,11 @@ msgstr "S.M.A.R.T. 详情"
 msgid "S.M.A.R.T. Self-Test"
 msgstr "S.M.A.R.T. 自检"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Save"
+msgstr "保存"
+
 #: src/components/add-system.tsx
 #: src/components/network-monitors-table/monitor-dialog.tsx
 msgid "Save {foo}"
@@ -1713,6 +1867,11 @@ msgstr "保存设置"
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Saved in the database and does not expire until you disable it."
 msgstr "保存在数据库中的数据，在您禁用之前不会过期。"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Saving..."
+msgstr "保存中..."
 
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Schedule"
@@ -1739,6 +1898,10 @@ msgstr "搜索系统或设置..."
 msgid "Search systems"
 msgstr "搜索系统"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Search systems or tokens..."
+msgstr "搜索系统、令牌或指纹..."
+
 #: src/components/routes/settings/heartbeat.tsx
 msgid "Seconds between pings (default: 60)"
 msgstr "Ping 之间的秒数 (默认：60)"
@@ -1752,6 +1915,7 @@ msgid "Select {foo}"
 msgstr "选择 {foo}"
 
 #: src/components/network-monitors-table/monitor-dialog.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Select a system"
 msgstr "选择系统"
 
@@ -1859,6 +2023,13 @@ msgstr "状态"
 msgid "Sub State"
 msgstr "子状态"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Success"
+msgstr "成功"
+
 #: src/components/routes/system/charts/memory-charts.tsx
 msgid "Swap space used by the system"
 msgstr "系统使用的 SWAP 空间"
@@ -1883,6 +2054,7 @@ msgstr "切换主题"
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
 #: src/components/routes/system/smart-table.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 #: src/lib/alerts.ts
@@ -1896,6 +2068,18 @@ msgstr "系统风扇速度（RPM）"
 #: src/components/routes/system/charts/load-average-chart.tsx
 msgid "System load averages over time"
 msgstr "系统负载平均值随时间变化"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "System token created successfully"
+msgstr "系统令牌创建成功"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "System tokens & fingerprints"
+msgstr "系统专属令牌与指纹"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "System tokens authenticate individual agent connections. Configure a token for an existing system, or agents can auto-register using the universal token above."
+msgstr "系统专属令牌用于鉴权各个受控节点的 Agent 连接。您可以为已有系统配置专属令牌，也可使用上方通用令牌自注册。"
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Systemd Services"
@@ -1995,8 +2179,25 @@ msgstr "发送到电子邮件"
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Token"
 msgstr "令牌"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Token cannot be empty"
+msgstr "令牌不能为空"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Token copied to clipboard"
+msgstr "令牌已复制到剪贴板"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Token rotated successfully"
+msgstr "令牌轮换成功"
 
 #: src/components/command-palette.tsx
 #: src/components/routes/settings/layout.tsx
@@ -2114,9 +2315,17 @@ msgstr "当任何磁盘的使用率超过阈值时触发"
 msgid "Type"
 msgstr "类型"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Unconfigured"
+msgstr "未配置"
+
 #: src/lib/alerts.ts
 msgid "Unhealthy"
 msgstr "不健康"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Unique token used by the agent to authenticate with the hub."
+msgstr "客户端代理连接并鉴权中心所使用的唯一令牌。"
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Unit file"
@@ -2138,6 +2347,11 @@ msgstr "通用令牌"
 msgid "Unknown"
 msgstr "未知"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Unknown system"
+msgstr "未知系统"
+
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Unlimited"
@@ -2157,6 +2371,10 @@ msgstr "在线 ({upSystemsLength})"
 msgid "Update"
 msgstr "更新"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Update credentials for system: {systemName}"
+msgstr "更新系统凭据: {systemName}"
+
 #: src/components/containers-table/containers-table-columns.tsx
 #: src/components/network-monitors-table/network-monitors-columns.tsx
 #: src/components/routes/system/smart-table.tsx
@@ -2168,6 +2386,10 @@ msgstr "更新于"
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Updated every 10 minutes."
 msgstr "每 10 分钟更新一次。"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Updated successfully"
+msgstr "更新成功"
 
 #: src/components/routes/system/network-sheet.tsx
 msgid "Upload"
@@ -2236,6 +2458,10 @@ msgstr "可见列"
 msgid "Waiting for enough records to display"
 msgstr "正在收集足够的数据来显示"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Waiting for initial connection"
+msgstr "等待首次连接自动绑定"
+
 #: src/components/routes/settings/general.tsx
 msgid "Want to help improve our translations? Check <0>Crowdin</0> for details."
 msgstr "想帮助我们改进翻译吗？查看<0>Crowdin</0>以获取更多详细信息。"
@@ -2292,6 +2518,10 @@ msgstr "YAML 配置"
 #: src/components/routes/settings/config-yaml.tsx
 msgid "YAML Configuration"
 msgstr "YAML 配置"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "YAML configuration copied"
+msgstr "YAML 配置已复制"
 
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx

@@ -36,6 +36,11 @@ msgstr "Выбрано {0} из {1} строк."
 msgid "{0} selected"
 msgstr "Выбрано: {0}"
 
+#. placeholder {0}: unassignedSystems.length
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "{0} system(s) do not have a dedicated token configured."
+msgstr ""
+
 #: src/components/routes/system/info-bar.tsx
 msgid "{cores, plural, one {# core} other {# cores}}"
 msgstr "{cores, plural, one {# ядро} few {# ядра} many {# ядер} other {# ядер}}"
@@ -136,6 +141,19 @@ msgstr "Активное состояние"
 msgid "Add {foo}"
 msgstr "Добавить {foo}"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Add system"
+msgstr ""
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Add system token"
+msgstr ""
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Add token"
+msgstr ""
+
 #: src/components/routes/settings/notifications.tsx
 msgid "Add URL"
 msgstr "Добавить URL"
@@ -201,6 +219,10 @@ msgstr "Вы уверены, что хотите удалить {name}?"
 #: src/components/routes/settings/alerts-history-data-table.tsx
 msgid "Are you sure?"
 msgstr "Вы уверены?"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Assign an authentication token and optional fingerprint to a system."
+msgstr ""
 
 #: src/components/copy-to-clipboard.tsx
 msgid "Automatic copy requires a secure context."
@@ -361,6 +383,8 @@ msgstr "Может остановить"
 #: src/components/network-monitors-table/network-monitors-table.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
 #: src/components/routes/settings/quiet-hours.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Cancel"
 msgstr "Отмена"
@@ -440,9 +464,17 @@ msgstr "Очистить"
 msgid "Clear all"
 msgstr "Очистить всё"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Clear fingerprint"
+msgstr ""
+
 #: src/components/network-monitors-table/monitor-dialog.tsx
 msgid "Clear matches"
 msgstr "Очистить совпадения"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Clearing the fingerprint allows the agent to re-register on next connect."
+msgstr ""
 
 #: src/components/containers-table/containers-table.tsx
 msgid "Click on a container to view more information."
@@ -464,10 +496,23 @@ msgstr "Нажмите на систему для просмотра допол�
 msgid "Click to copy"
 msgstr "Нажмите, чтобы скопировать"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Click to copy fingerprint"
+msgstr ""
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Click to copy token"
+msgstr ""
+
 #: src/components/login/forgot-pass-form.tsx
 #: src/components/login/forgot-pass-form.tsx
 msgid "Command line instructions"
 msgstr "Инструкции командной строки"
+
+#. placeholder {0}: unassignedSystems[0].name
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Configure for {0}"
+msgstr ""
 
 #: src/components/routes/settings/notifications.tsx
 msgid "Configure how you receive alert notifications."
@@ -508,6 +553,16 @@ msgstr "Здоровье контейнера"
 msgid "Continue"
 msgstr "Продолжить"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Copied"
+msgstr ""
+
 #: src/lib/utils.ts
 msgid "Copied to clipboard"
 msgstr "Скопировано в буфер обмена"
@@ -528,6 +583,10 @@ msgstr "Копировать docker run"
 msgctxt "Environment variables"
 msgid "Copy env"
 msgstr "Копировать env"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Copy fingerprint"
+msgstr ""
 
 #: src/components/alerts/alerts-sheet.tsx
 msgctxt "Copy alerts from another system"
@@ -566,6 +625,11 @@ msgstr "Скопируйте содержимое <0>docker-compose.yml</0> дл
 #: src/components/network-monitors-table/network-monitors-columns.tsx
 msgid "Copy to system"
 msgstr "Копировать в систему"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Copy token"
+msgstr ""
 
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Copy YAML"
@@ -620,6 +684,10 @@ msgstr "Создать"
 #: src/components/login/auth-form.tsx
 msgid "Create account"
 msgstr "Создать аккаунт"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Create system first"
+msgstr ""
 
 #. Context: date created
 #: src/components/alerts-history-columns.tsx
@@ -689,8 +757,12 @@ msgid "Delete"
 msgstr "Удалить"
 
 #: src/components/routes/settings/tokens-fingerprints.tsx
-msgid "Delete fingerprint"
-msgstr "Удалить отпечаток"
+#~ msgid "Delete fingerprint"
+#~ msgstr "Удалить отпечаток"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Delete record"
+msgstr ""
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Description"
@@ -780,6 +852,14 @@ msgstr "Редактировать"
 msgid "Edit {foo}"
 msgstr "Редактировать {foo}"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Edit credentials"
+msgstr ""
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Edit token & fingerprint"
+msgstr ""
+
 #: src/components/login/auth-form.tsx
 #: src/components/login/forgot-pass-form.tsx
 #: src/components/login/otp-forms.tsx
@@ -821,6 +901,10 @@ msgid "Enter your one-time password."
 msgstr "Введите ваш одноразовый пароль."
 
 #: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Environment variables copied"
+msgstr ""
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Ephemeral"
 msgstr "Эфемерный"
 
@@ -837,6 +921,12 @@ msgstr "Эфемерный"
 #: src/components/routes/settings/notifications.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Error"
@@ -950,8 +1040,22 @@ msgid "Filter..."
 msgstr "Фильтр..."
 
 #: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Fingerprint"
 msgstr "Отпечаток"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Fingerprint (optional)"
+msgstr ""
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Fingerprint copied to clipboard"
+msgstr ""
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Fingerprint reset"
+msgstr ""
 
 #: src/components/routes/system/smart-table.tsx
 msgid "Firmware"
@@ -988,6 +1092,10 @@ msgstr "Полная"
 #: src/components/routes/settings/layout.tsx
 msgid "General"
 msgstr "Общие"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Generate new"
+msgstr ""
 
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Global"
@@ -1113,6 +1221,18 @@ msgstr "Макет"
 msgid "Layout width"
 msgstr "Ширина макета"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Leave empty to allow agent re-registration"
+msgstr ""
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Leave empty to bind on first connection"
+msgstr ""
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Leave empty to let the agent auto-bind its hardware identifier upon first connection."
+msgstr ""
+
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Lifecycle"
 msgstr "Жизненный цикл"
@@ -1191,6 +1311,10 @@ msgstr "Основной PID"
 #: src/components/routes/settings/layout.tsx
 msgid "Manage display and notification preferences."
 msgstr "Управляйте предпочтениями отображения и уведомлений."
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Manage per-system connection tokens and hardware fingerprints."
+msgstr ""
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
@@ -1317,6 +1441,10 @@ msgstr "Нет"
 msgid "No detail data for this pool."
 msgstr "Подробные данные для этого пула отсутствуют."
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "No matching records found for \"{searchQuery}\""
+msgstr ""
+
 #: src/components/command-palette.tsx
 #: src/components/systemd-table/systemd-table.tsx
 msgid "No results found."
@@ -1335,6 +1463,14 @@ msgstr "Нет результатов."
 #: src/components/routes/system/smart-table.tsx
 msgid "No S.M.A.R.T. attributes available for this device."
 msgstr "Для этого устройства нет доступных атрибутов S.M.A.R.T."
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "No system tokens configured"
+msgstr ""
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "No systems available."
+msgstr ""
 
 #: src/components/network-monitors-table/monitor-dialog.tsx
 #: src/components/systems-table/systems-table.tsx
@@ -1521,6 +1657,10 @@ msgstr "Пожалуйста, войдите снова"
 msgid "Please see <0>the documentation</0> for instructions."
 msgstr "Пожалуйста, смотрите <0>документацию</0> для получения инструкций."
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Please select a system"
+msgstr ""
+
 #: src/components/login/login.tsx
 #~ msgid "Please sign in to your account"
 #~ msgstr "Пожалуйста, войдите в свою учетную запись"
@@ -1614,6 +1754,10 @@ msgstr "Ошибки чтения"
 msgid "Received"
 msgstr "Получено"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Record deleted successfully"
+msgstr ""
+
 #: src/components/containers-table/containers-table.tsx
 #: src/components/containers-table/containers-table.tsx
 #: src/components/routes/system/smart-table.tsx
@@ -1640,6 +1784,10 @@ msgstr "Требуется для"
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Requires"
 msgstr "Требует"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Reset fingerprint"
+msgstr ""
 
 #: src/components/login/forgot-pass-form.tsx
 msgid "Reset Password"
@@ -1677,6 +1825,7 @@ msgid "Root"
 msgstr "Системный"
 
 #: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Rotate token"
 msgstr "Сменить токен"
 
@@ -1696,6 +1845,11 @@ msgstr "Детали S.M.A.R.T."
 msgid "S.M.A.R.T. Self-Test"
 msgstr "Запуск теста S.M.A.R.T."
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Save"
+msgstr ""
+
 #: src/components/add-system.tsx
 #: src/components/network-monitors-table/monitor-dialog.tsx
 msgid "Save {foo}"
@@ -1713,6 +1867,11 @@ msgstr "Сохранить настройки"
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Saved in the database and does not expire until you disable it."
 msgstr "Сохранено в базе данных и не истекает, пока вы его не отключите."
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Saving..."
+msgstr ""
 
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Schedule"
@@ -1739,6 +1898,10 @@ msgstr "Поиск систем или настроек..."
 msgid "Search systems"
 msgstr "Поиск систем"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Search systems or tokens..."
+msgstr ""
+
 #: src/components/routes/settings/heartbeat.tsx
 msgid "Seconds between pings (default: 60)"
 msgstr "Секунды между пингами (по умолчанию: 60)"
@@ -1752,6 +1915,7 @@ msgid "Select {foo}"
 msgstr "Выбрать {foo}"
 
 #: src/components/network-monitors-table/monitor-dialog.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Select a system"
 msgstr "Выберите систему"
 
@@ -1859,6 +2023,13 @@ msgstr "Статус"
 msgid "Sub State"
 msgstr "Подсостояние"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Success"
+msgstr ""
+
 #: src/components/routes/system/charts/memory-charts.tsx
 msgid "Swap space used by the system"
 msgstr "Размер файла подкачки системы"
@@ -1883,6 +2054,7 @@ msgstr "Переключить тему"
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
 #: src/components/routes/system/smart-table.tsx
 #: src/components/systems-table/systems-table-columns.tsx
 #: src/lib/alerts.ts
@@ -1896,6 +2068,18 @@ msgstr "Скорость вращения системных вентилято�
 #: src/components/routes/system/charts/load-average-chart.tsx
 msgid "System load averages over time"
 msgstr "Средняя загрузка системы по времени"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "System token created successfully"
+msgstr ""
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "System tokens & fingerprints"
+msgstr ""
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "System tokens authenticate individual agent connections. Configure a token for an existing system, or agents can auto-register using the universal token above."
+msgstr ""
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Systemd Services"
@@ -1995,8 +2179,25 @@ msgstr "На электронную почту"
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Token"
 msgstr "Токен"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Token cannot be empty"
+msgstr ""
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Token copied to clipboard"
+msgstr ""
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Token rotated successfully"
+msgstr ""
 
 #: src/components/command-palette.tsx
 #: src/components/routes/settings/layout.tsx
@@ -2114,9 +2315,17 @@ msgstr "Срабатывает, когда нагрузка на любой из
 msgid "Type"
 msgstr "Тип"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Unconfigured"
+msgstr ""
+
 #: src/lib/alerts.ts
 msgid "Unhealthy"
 msgstr "Нездоровый"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Unique token used by the agent to authenticate with the hub."
+msgstr ""
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Unit file"
@@ -2138,6 +2347,11 @@ msgstr "Универсальный токен"
 msgid "Unknown"
 msgstr "Неизвестно"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Unknown system"
+msgstr ""
+
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Unlimited"
@@ -2157,6 +2371,10 @@ msgstr "В сети ({upSystemsLength})"
 msgid "Update"
 msgstr "Обновить"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Update credentials for system: {systemName}"
+msgstr ""
+
 #: src/components/containers-table/containers-table-columns.tsx
 #: src/components/network-monitors-table/network-monitors-columns.tsx
 #: src/components/routes/system/smart-table.tsx
@@ -2168,6 +2386,10 @@ msgstr "Обновлено"
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Updated every 10 minutes."
 msgstr "Обновляется каждые 10 минут."
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Updated successfully"
+msgstr ""
 
 #: src/components/routes/system/network-sheet.tsx
 msgid "Upload"
@@ -2236,6 +2458,10 @@ msgstr "Видимые столбцы"
 msgid "Waiting for enough records to display"
 msgstr "Ожидание достаточного количества записей для отображения"
 
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "Waiting for initial connection"
+msgstr ""
+
 #: src/components/routes/settings/general.tsx
 msgid "Want to help improve our translations? Check <0>Crowdin</0> for details."
 msgstr "Хотите помочь нам улучшить наши переводы? Посетите <0>Crowdin</0> для получения более подробной информации."
@@ -2292,6 +2518,10 @@ msgstr "YAML конфиг"
 #: src/components/routes/settings/config-yaml.tsx
 msgid "YAML Configuration"
 msgstr "YAML конфигурация"
+
+#: src/components/routes/settings/tokens-fingerprints.tsx
+msgid "YAML configuration copied"
+msgstr ""
 
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
