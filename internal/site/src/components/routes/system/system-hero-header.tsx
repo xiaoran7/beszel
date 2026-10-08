@@ -124,7 +124,10 @@ export const SystemHeroHeader = memo(function SystemHeroHeader({
 			</div>
 
 			{/* Right: Authentic Arona Header Illustration from Reference 2 */}
-			<div className="relative hidden md:flex items-center justify-end z-10 shrink-0 h-32 w-72 lg:w-84 overflow-hidden rounded-2xl">
+			<div
+				className="relative hidden md:flex items-center justify-end z-10 shrink-0 h-32 w-72 lg:w-84 overflow-hidden rounded-2xl"
+				style={{ transform: "translateZ(0)" }}
+			>
 				<img
 					src="/assets/arona_header.png"
 					alt="Arona S.C.H.A.L.E."

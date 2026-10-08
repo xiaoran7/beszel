@@ -16,6 +16,7 @@ export const AronaCompanionPanel = memo(function AronaCompanionPanel() {
 	return (
 		<div
 			className="hidden 2xl:block absolute top-0 right-0 h-[876px] w-[852px] pointer-events-none select-none z-0 overflow-hidden"
+			style={{ transform: "translateZ(0)", willChange: "transform" }}
 			aria-hidden="true"
 		>
 			<img
