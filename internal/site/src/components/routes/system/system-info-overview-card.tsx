@@ -1,6 +1,7 @@
 import { memo, useMemo } from "react"
 import { FileTextIcon } from "lucide-react"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { connectionTypeLabels, type ConnectionType } from "@/lib/enums"
 import type { SystemRecord, SystemDetailsRecord } from "@/types"
 
 interface SystemInfoOverviewCardProps {
@@ -12,20 +13,33 @@ export const SystemInfoOverviewCard = memo(function SystemInfoOverviewCard({
 	system,
 	details,
 }: SystemInfoOverviewCardProps) {
-		const info = useMemo(() => {
-			const hostname = details?.hostname ?? system.info?.h ?? system.name
-			const os = details?.os_name ?? (system.info?.os ? `Linux ${system.info.os}` : (system.info?.o || "Linux"))
-			const kernel = details?.kernel ?? system.info?.k ?? "—"
-			const arch = details?.arch ?? (system.info?.m?.includes("aarch64") || system.info?.m?.includes("ARM") ? "aarch64" : "x86_64")
-			const cpu = details?.cpu ?? system.info?.m ?? "—"
-			const memory = details?.memory
-				? `${(details.memory / 1024 / 1024 / 1024).toFixed(1)} GB`
-				: system.info?.mp
-				? `Usage ${system.info.mp}%`
-				: "—"
-			const totalDisk = system.info?.dp ? `Usage ${system.info.dp}%` : "—"
-			const docker = details?.podman ? "Podman" : system.info?.p ? "Podman" : "Docker / Agent"
-			const agent = details?.version ?? (system.info?.v ? `v${system.info.v}` : "—")
+	const info = useMemo(() => {
+		const hostname = details?.hostname ?? system.info?.h ?? system.name
+		const os = details?.os_name ?? (system.info?.os ? `Linux ${system.info.os}` : (system.info?.o || "Linux"))
+		const kernel = details?.kernel ?? system.info?.k ?? "—"
+		const arch = details?.arch ?? (system.info?.m?.includes("aarch64") || system.info?.m?.includes("ARM") ? "aarch64" : "x86_64")
+		const cpu = details?.cpu ?? system.info?.m ?? "—"
+		const coresThreads = details?.cores
+			? `${details.cores} Cores / ${details.threads ?? details.cores} Threads`
+			: system.info?.t
+			? `${system.info.t} Threads`
+			: system.info?.c
+			? `${system.info.c} Cores`
+			: "—"
+		const memory = details?.memory
+			? `${(details.memory / 1024 / 1024 / 1024).toFixed(1)} GB`
+			: system.info?.mp
+			? `Usage ${system.info.mp}%`
+			: "—"
+		const totalDisk = system.info?.dp ? `Usage ${system.info.dp}%` : "—"
+		const docker = details?.podman ? "Podman" : system.info?.p ? "Podman" : "Docker / Agent"
+		const agent = details?.version ?? (system.info?.v ? `v${system.info.v}` : "—")
+		const connection = system.info?.ct
+			? connectionTypeLabels[system.info.ct as ConnectionType] || "Agent"
+			: "SSH / Agent"
+		const services = system.info?.sv && system.info.sv[0] > 0
+			? `${system.info.sv[0]} Units (${system.info.sv[1]} failed)`
+			: "—"
 
 		return {
 			hostname,
@@ -33,25 +47,28 @@ export const SystemInfoOverviewCard = memo(function SystemInfoOverviewCard({
 			kernel,
 			arch,
 			cpu,
+			coresThreads,
 			memory,
 			totalDisk,
 			docker,
+			services,
+			connection,
 			agent,
 		}
 	}, [system, details])
 
 	return (
 		<Card className="relative rounded-3xl border border-border/80 bg-card shadow-2xs hover:shadow-xs transition-all overflow-hidden select-none">
-				<CardHeader className="flex flex-row items-center justify-between pb-2 px-6 pt-5">
-					<div className="flex items-center gap-2.5">
-						<div className="flex items-center justify-center size-8 rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
-							<FileTextIcon className="size-4.5" />
-						</div>
-						<CardTitle className="text-base font-bold text-foreground">
-							System Information
-						</CardTitle>
+			<CardHeader className="flex flex-row items-center justify-between pb-2 px-6 pt-5">
+				<div className="flex items-center gap-2.5">
+					<div className="flex items-center justify-center size-8 rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
+						<FileTextIcon className="size-4.5" />
 					</div>
-				</CardHeader>
+					<CardTitle className="text-base font-bold text-foreground">
+						System Information
+					</CardTitle>
+				</div>
+			</CardHeader>
 
 			<CardContent className="relative z-10 px-6 pb-6 pt-2">
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-y-3.5 gap-x-8 text-xs">
@@ -62,6 +79,10 @@ export const SystemInfoOverviewCard = memo(function SystemInfoOverviewCard({
 					<div className="flex items-baseline justify-between border-b border-border/40 pb-2">
 						<span className="text-muted-foreground font-medium">Architecture</span>
 						<span className="font-semibold text-foreground font-mono">{info.arch}</span>
+					</div>
+					<div className="flex items-baseline justify-between border-b border-border/40 pb-2">
+						<span className="text-muted-foreground font-medium">Cores / Threads</span>
+						<span className="font-semibold text-foreground font-mono">{info.coresThreads}</span>
 					</div>
 					<div className="flex items-baseline justify-between border-b border-border/40 pb-2">
 						<span className="text-muted-foreground font-medium">Total Disk</span>
@@ -78,8 +99,12 @@ export const SystemInfoOverviewCard = memo(function SystemInfoOverviewCard({
 						</span>
 					</div>
 					<div className="flex items-baseline justify-between border-b border-border/40 pb-2">
-						<span className="text-muted-foreground font-medium">Docker</span>
+						<span className="text-muted-foreground font-medium">Docker / Workload</span>
 						<span className="font-semibold text-foreground font-mono">{info.docker}</span>
+					</div>
+					<div className="flex items-baseline justify-between border-b border-border/40 pb-2">
+						<span className="text-muted-foreground font-medium">Services (Systemd)</span>
+						<span className="font-semibold text-foreground font-mono">{info.services}</span>
 					</div>
 					<div className="flex items-baseline justify-between border-b border-border/40 pb-2">
 						<span className="text-muted-foreground font-medium">Kernel</span>
@@ -90,6 +115,10 @@ export const SystemInfoOverviewCard = memo(function SystemInfoOverviewCard({
 					<div className="flex items-baseline justify-between border-b border-border/40 pb-2">
 						<span className="text-muted-foreground font-medium">Memory</span>
 						<span className="font-semibold text-foreground font-mono">{info.memory}</span>
+					</div>
+					<div className="flex items-baseline justify-between border-b border-border/40 pb-2">
+						<span className="text-muted-foreground font-medium">Connection</span>
+						<span className="font-semibold text-foreground font-mono">{info.connection}</span>
 					</div>
 					<div className="flex items-baseline justify-between border-b border-border/40 pb-2">
 						<span className="text-muted-foreground font-medium">Agent Version</span>
