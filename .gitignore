@@ -23,8 +23,26 @@ dockerfile_agent_dev
 .cr-release-packages
 .tmp
 
-# AOCI agent host integration (machine-bound; do not commit)
+# ==============================================================================
+# AI Tooling & Local Cognition (纯本地辅助，严禁提交远端)
+# ==============================================================================
+# AOCI 全量本地认知资产与索引
+aoci.*
+.aoci/
 .mcp.json
 .mcp.json.backup.*
+AGENTS.md.backup.*
+
+# 本地 Agent 垫片与私有上下文覆盖
+AGENT.md
+agent.md
+*.local.md
+CLAUDE.local.md
+AGENTS.local.md
+
+# Claude 本地临时运行态
+.claude/worktrees/
 .claude/settings.json
 .claude/settings.json.backup.*
+.claude/settings.local.json
+.claude/scheduled_tasks.json
