@@ -11,7 +11,7 @@ export const CitySkylineCard = memo(function CitySkylineCard({ cityName }: CityS
 			<img
 				src="/assets/city_hk.png"
 				alt={cityName || "Hong Kong Skyline"}
-				className="w-full h-full object-cover object-center pointer-events-none drop-shadow-2xs"
+				className="w-full h-full object-cover object-center pointer-events-none drop-shadow-2xs transition-all duration-300 dark:opacity-45 dark:brightness-[0.6] dark:contrast-[1.1]"
 			/>
 		</Card>
 	)

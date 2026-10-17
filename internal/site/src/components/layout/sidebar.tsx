@@ -262,9 +262,9 @@ export const Sidebar = memo(({ mobileOpen, setMobileOpen, onOpenAlerts }: Sideba
 					</nav>
 
 					{/* Bottom City Skyline & Blue Archive / S.C.H.A.L.E Motto */}
-					<div className="relative mt-auto border-t border-border/50 overflow-hidden bg-gradient-to-b from-transparent to-sky-50/40 dark:to-sky-950/20">
+					<div className="relative mt-auto border-t border-border/50 dark:border-sky-900/35 overflow-hidden bg-gradient-to-b from-transparent to-sky-50/40 dark:from-transparent dark:to-sky-950/25">
 						<div className="relative z-10 px-4 pt-3 pb-3">
-							<p className="text-[11px] font-semibold text-sky-700/80 dark:text-sky-300/80 tracking-wide font-sans leading-tight">
+							<p className="text-[11px] font-semibold text-sky-700/80 dark:text-sky-300/85 tracking-wide font-sans leading-tight">
 								いつも、
 							</p>
 							<p className="text-[12px] font-bold text-sky-800 dark:text-sky-200 tracking-wide leading-tight mt-0.5">
@@ -273,17 +273,20 @@ export const Sidebar = memo(({ mobileOpen, setMobileOpen, onOpenAlerts }: Sideba
 							<p className="text-[9.5px] text-muted-foreground/80 mt-1 leading-tight font-medium">
 								A more peaceful infrastructure, together.
 							</p>
-							<div className="mt-2 pt-1.5 border-t border-sky-200/40 dark:border-sky-800/40 flex items-center justify-between text-[8.5px] font-bold text-sky-600/70 dark:text-sky-400/70 tracking-widest uppercase">
+							<div className="mt-2 pt-1.5 border-t border-sky-200/40 dark:border-sky-800/40 flex items-center justify-between text-[8.5px] font-bold text-sky-600/70 dark:text-sky-400/80 tracking-widest uppercase">
 								<span>S.C.H.A.L.E.</span>
 								<span>SYSTEMS</span>
 							</div>
 						</div>
-					<img
-						src="/assets/sidebar_footer.png"
-						alt="Skyline"
-						className="absolute bottom-0 left-0 right-0 w-full h-24 object-cover object-top opacity-20 pointer-events-none"
-					/>
-				</div>
+						{/* Light mode: subtle skyline silhouette; Dark mode: completely hidden to eliminate white haze rectangle */}
+						<img
+							src="/assets/sidebar_footer.png"
+							alt="Skyline"
+							className="absolute bottom-0 left-0 right-0 w-full h-24 object-cover object-top opacity-20 dark:opacity-0 pointer-events-none transition-opacity duration-200"
+						/>
+						{/* Dark mode: crisp nocturnal ambient glow at bottom */}
+						<div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-sky-900/20 to-transparent pointer-events-none hidden dark:block" />
+					</div>
 			</aside>
 		</>
 	)

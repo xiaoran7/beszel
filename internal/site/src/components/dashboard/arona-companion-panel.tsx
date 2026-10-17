@@ -2,15 +2,12 @@ import { memo } from "react"
 
 /**
  * KivotosPanoramicBackdrop:
- * Complete, seamless ambient layer from Reference Image 1.
- * Integrates:
- * 1. Japanese Slogan («いつも、どこでも。みんなの「あたりまえ」を支える。»)
- * 2. Kivotos City Skyline & Clock Tower
- * 3. Glass Window Mullion with «Small Servers, Big Tomorrows.»
- * 4. Arona Companion
- * 
- * Positioned fixed/absolute touching the topbar and right screen edge,
- * perfectly mirroring the reference artwork without any seams or sticker effects.
+ * Seamless ambient layer with full Light/Dark mode dual-adaptation.
+ *
+ * - Light Mode: Clean, high-key Aozora daylight panorama with full skyline & Arona companion.
+ * - Dark Mode: Seamless night-atmosphere transformation. Smooth multi-axis gradient mask
+ *   eliminates all rectangular clipping seams, while fine-tuned dark filters (brightness/contrast/hue)
+ *   render Arona as a gentle, quiet nighttime companion under moonlit terminal glow.
  */
 export const AronaCompanionPanel = memo(function AronaCompanionPanel() {
 	return (
@@ -22,9 +19,18 @@ export const AronaCompanionPanel = memo(function AronaCompanionPanel() {
 			<img
 				src="/assets/kivotos_ambient_backdrop.png"
 				alt=""
-				className="w-full h-full object-cover object-top-right pointer-events-none drop-shadow-xs"
+				className="w-full h-full object-cover object-top-right pointer-events-none drop-shadow-xs transition-all duration-300
+					dark:opacity-40
+					dark:brightness-[0.58]
+					dark:contrast-[1.12]
+					dark:saturate-[0.88]
+					dark:hue-rotate-[-8deg]
+					[mask-image:linear-gradient(to_right,transparent_0%,rgba(0,0,0,0.15)_25%,rgba(0,0,0,0.85)_55%,black_80%)]
+					dark:[mask-image:linear-gradient(to_right,transparent_0%,rgba(0,0,0,0.05)_45%,rgba(0,0,0,0.6)_70%,black_90%),linear-gradient(to_bottom,black_60%,rgba(0,0,0,0.4)_85%,transparent_100%)]
+					dark:[mask-composite:intersect]"
 			/>
+			{/* Night ambient rim glow */}
+			<div className="absolute inset-0 bg-gradient-to-l from-sky-950/20 via-transparent to-transparent hidden dark:block pointer-events-none" />
 		</div>
 	)
 })
-

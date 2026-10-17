@@ -131,7 +131,7 @@ export const SystemHeroHeader = memo(function SystemHeroHeader({
 				<img
 					src="/assets/arona_header.png"
 					alt="Arona S.C.H.A.L.E."
-					className="w-full h-full object-contain object-right pointer-events-none drop-shadow-xs"
+					className="w-full h-full object-contain object-right pointer-events-none drop-shadow-xs transition-all duration-300 dark:opacity-55 dark:brightness-[0.62] dark:contrast-[1.12] [mask-image:linear-gradient(to_right,transparent_0%,black_30%)]"
 				/>
 			</div>
 
