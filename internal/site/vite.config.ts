@@ -6,6 +6,20 @@ import { lingui } from "@lingui/vite-plugin"
 
 export default defineConfig({
 	base: "./",
+	server: {
+		proxy: {
+			"/api": {
+				target: "https://beszel.tannerlab.xyz",
+				changeOrigin: true,
+				secure: false,
+			},
+			"/_": {
+				target: "https://beszel.tannerlab.xyz",
+				changeOrigin: true,
+				secure: false,
+			},
+		},
+	},
 	plugins: [
 		react({
 			plugins: [["@lingui/swc-plugin", {}]],
