@@ -1,18 +1,20 @@
 import { memo, useMemo } from "react"
+import type { ComponentType } from "react"
 import {
-	ServerIcon,
 	GlobeIcon,
 	ArrowUpIcon,
 	ArrowDownIcon,
-	ActivityIcon,
 	ClockIcon,
 	RadioIcon,
 	CpuIcon,
+	MemoryStickIcon,
 	HardDriveIcon,
+	GaugeIcon,
 } from "lucide-react"
 import { SystemStatus } from "@/lib/enums"
 import {
 	formatBytes,
+	formatMicroseconds,
 	secondsToUptimeString,
 	getServerPublicIp,
 	getServerLocation,
@@ -25,25 +27,76 @@ import { getPagePath } from "@nanostores/router"
 import { ActionsButton } from "../systems-table/systems-table-columns"
 import AlertButton from "../alerts/alert-button"
 
+type BarType = "cpu" | "memory" | "disk" | "gpu" | "load"
+type QualityLevel = "good" | "warn" | "bad" | "idle"
+
+/** Probe latency thresholds in microseconds, mirroring the monitors table tiers. */
+const LATENCY_THRESHOLDS: Record<string, { warn: number; bad: number }> = {
+	icmp: { warn: 100_000, bad: 500_000 },
+	tcp: { warn: 500_000, bad: 2_000_000 },
+	http: { warn: 800_000, bad: 3_000_000 },
+	dns: { warn: 150_000, bad: 800_000 },
+}
+
+const QUALITY_SEGMENT_COLORS: Record<QualityLevel, string> = {
+	good: "bg-emerald-500 dark:bg-emerald-400 dark:shadow-[0_0_6px_rgba(52,211,153,0.45)]",
+	warn: "bg-amber-500 dark:bg-amber-400 dark:shadow-[0_0_6px_rgba(251,191,36,0.45)]",
+	bad: "bg-rose-500 dark:bg-rose-400 dark:shadow-[0_0_6px_rgba(251,113,133,0.45)]",
+	idle: "bg-slate-200/80 dark:bg-slate-800/80 border border-slate-300/40 dark:border-slate-700/50",
+}
+
+/** Format a gigabyte value the way the capacity rows expect (762 MB / 3.79 GB). */
+function formatCapacity(gb: number | undefined): string | undefined {
+	if (gb == null || !Number.isFinite(gb) || gb <= 0) return undefined
+	const { value, unit } = formatBytes(gb * 1024 ** 3)
+	const digits = value >= 100 ? 0 : value >= 10 ? 1 : 2
+	return `${value.toFixed(digits)} ${unit}`
+}
+
+/** Format a cumulative byte counter (529 GB / 1.02 TB). */
+function formatTraffic(bytes: number | undefined): string | undefined {
+	if (bytes == null || !Number.isFinite(bytes) || bytes <= 0) return undefined
+	const { value, unit } = formatBytes(bytes)
+	const digits = value >= 100 ? 0 : value >= 10 ? 1 : 2
+	return `${value.toFixed(digits)} ${unit}`
+}
+
+/** Format a per-second byte rate (2.21 KB/s). */
+function formatRate(bytesPerSec: number): string {
+	const { value, unit } = formatBytes(bytesPerSec, true)
+	const digits = value >= 100 ? 0 : value >= 10 ? 1 : 2
+	return `${value.toFixed(digits)} ${unit}`
+}
+
+function formatPercent(value: number): string {
+	return `${value >= 10 ? value.toFixed(1) : value.toFixed(2)}%`
+}
+
 interface SegmentedBlockBarProps {
 	label: string
 	value: number
+	valueText?: string
 	detail?: string
 	segments?: number
 	isOnline: boolean
-	type?: "cpu" | "memory" | "disk" | "gpu" | "quota"
+	type?: BarType
+	icon?: ComponentType<{ className?: string }>
 }
 
 /**
- * Segmented discrete LED block progress bar (Aozora HUD aesthetic)
+ * Segmented discrete LED block progress bar (Aozora HUD aesthetic).
+ * Header row carries the label and reading, the detail row shows absolute
+ * figures (used / total, load triplets), and the LED row shows utilization.
  */
 const SegmentedBlockBar = memo(function SegmentedBlockBar({
 	label,
 	value,
+	valueText,
 	detail,
 	segments = 10,
 	isOnline,
 	type = "cpu",
+	icon: Icon,
 }: SegmentedBlockBarProps) {
 	const clampedValue = Math.min(100, Math.max(0, value))
 	const filledCount = isOnline ? Math.round((clampedValue / 100) * segments) : 0
@@ -71,53 +124,60 @@ const SegmentedBlockBar = memo(function SegmentedBlockBar({
 	}, [isOnline, clampedValue, type])
 
 	return (
-		<div className="flex flex-col gap-1.5 w-full">
-			<div className="flex items-center justify-between text-xs">
-				<div className="flex items-center gap-2 min-w-0 flex-1">
-					<span className="font-mono font-bold text-foreground tracking-tight shrink-0 uppercase text-[11px]">
-						{label}
-					</span>
-					{detail && (
-						<span className="text-[11px] text-muted-foreground font-medium truncate">
-							{detail}
-						</span>
-					)}
+		<div className="flex flex-col gap-1 min-w-0">
+			<div className="flex items-center justify-between gap-2">
+				<div className="flex items-center gap-1.5 min-w-0">
+					{Icon && <Icon className="size-3.5 text-muted-foreground/80 shrink-0" />}
+					<span className="text-[11px] font-semibold text-foreground tracking-tight truncate">{label}</span>
 				</div>
-				<span className={cn("font-mono font-bold tabular-nums text-xs shrink-0 ml-2", textColorClass)}>
-					{isOnline ? `${clampedValue.toFixed(1)}%` : "—"}
+				<span className={cn("font-mono font-bold tabular-nums text-[13px] shrink-0", textColorClass)}>
+					{isOnline ? (valueText ?? formatPercent(clampedValue)) : "—"}
 				</span>
 			</div>
 
+			{detail && (
+				<span className="text-[10px] text-muted-foreground font-medium truncate leading-none" title={detail}>
+					{detail}
+				</span>
+			)}
+
 			{/* Discrete Segments Row */}
-			<div className="flex items-center gap-1 sm:gap-1.5 w-full">
-				{Array.from({ length: segments }).map((_, idx) => {
-					const isFilled = idx < filledCount
-					let segmentColor = activeColorClass
-
-					// Multi-step quota coloring for network quota bar
-					if (type === "quota" && isFilled) {
-						if (idx >= 8) {
-							segmentColor = "bg-rose-500 dark:bg-rose-400 dark:shadow-[0_0_8px_rgba(251,113,133,0.5)]"
-						} else if (idx >= 6) {
-							segmentColor = "bg-amber-500 dark:bg-amber-400 dark:shadow-[0_0_8px_rgba(251,191,36,0.5)]"
-						} else {
-							segmentColor = "bg-sky-500 dark:bg-sky-400 dark:shadow-[0_0_8px_rgba(56,189,248,0.5)]"
-						}
-					}
-
-					return (
-						<div
-							key={idx}
-							className={cn(
-								"h-2 sm:h-2.5 flex-1 rounded-[3px] transition-all duration-300",
-								isFilled
-									? segmentColor
-									: "bg-slate-200/80 dark:bg-slate-800/80 border border-slate-300/40 dark:border-slate-700/50"
-							)}
-						/>
-					)
-				})}
+			<div className="flex items-center gap-1 w-full">
+				{Array.from({ length: segments }).map((_, idx) => (
+					<div
+						key={idx}
+						className={cn(
+							"h-1.5 sm:h-2 flex-1 rounded-[2px] transition-all duration-300",
+							idx < filledCount
+								? activeColorClass
+								: "bg-slate-200/80 dark:bg-slate-800/80 border border-slate-300/40 dark:border-slate-700/50"
+						)}
+					/>
+				))}
 			</div>
+		</div>
+	)
+})
+
+/** A full-width strip of segments colored by a single quality tier. */
+const QualityBar = memo(function QualityBar({
+	level,
+	segments = 10,
+}: {
+	level: QualityLevel
+	segments?: number
+}) {
+	return (
+		<div className="flex items-center gap-[3px] w-full">
+			{Array.from({ length: segments }).map((_, idx) => (
+				<div
+					key={idx}
+					className={cn(
+						"h-1.5 flex-1 rounded-[2px] transition-colors duration-300",
+						QUALITY_SEGMENT_COLORS[level]
+					)}
+				/>
+			))}
 		</div>
 	)
 })
@@ -168,16 +228,16 @@ export const DenseServerCard = memo(function DenseServerCard({
 		return "Node"
 	}, [system.host, system.port])
 
-	// Network protocol tag (Tailnet, IPv4, IPv6)
+	// Network protocol tag (Tailnet, V4, V6)
 	const networkProtocols = useMemo(() => {
 		const tags: string[] = []
 		if (system.host?.startsWith("100.")) {
 			tags.push("Tailnet")
 		}
 		if (publicIp) {
-			tags.push(publicIp.includes(":") ? "IPv6" : "IPv4")
+			tags.push(publicIp.includes(":") ? "V6" : "V4")
 		} else if (system.host) {
-			tags.push(system.host.includes(":") ? "IPv6" : "IPv4")
+			tags.push(system.host.includes(":") ? "V6" : "V4")
 		}
 		return tags
 	}, [system.host, publicIp])
@@ -199,17 +259,32 @@ export const DenseServerCard = memo(function DenseServerCard({
 		return m.slice(0, 16)
 	}, [details?.cpu, system.info?.m])
 
-	// Memory usage detail
+	// Memory total (GB): live stats first, then the static details record (bytes)
+	const memTotalGb = liveStats?.m ?? (details?.memory ? details.memory / 1024 ** 3 : undefined)
+	// Used memory (GB): live value, otherwise derived from the real percentage × real total
+	const memUsedGb = liveStats?.mu ?? (memTotalGb != null ? (memory / 100) * memTotalGb : undefined)
 	const memDetail = useMemo(() => {
-		if (!isOnline) return "Memory"
-		return `Usage ${memory.toFixed(1)}%`
-	}, [isOnline, memory])
+		const used = formatCapacity(memUsedGb)
+		const total = formatCapacity(memTotalGb)
+		if (used && total) return `${used} / ${total}`
+		return total ? `Total ${total}` : undefined
+	}, [memUsedGb, memTotalGb])
 
-	// Disk usage detail
+	// Disk capacity (GB) comes from the live stats payload only
 	const diskDetail = useMemo(() => {
-		if (!isOnline) return "Root FS"
-		return `Root FS · Usage ${disk.toFixed(1)}%`
-	}, [isOnline, disk])
+		const used = formatCapacity(liveStats?.du)
+		const total = formatCapacity(liveStats?.d)
+		if (used && total) return `${used} / ${total}`
+		return total ? `Total ${total}` : "Root FS"
+	}, [liveStats?.du, liveStats?.d])
+
+	// Spec chip: "2C · 3.79G"
+	const specChip = useMemo(() => {
+		const parts: string[] = []
+		if (cores) parts.push(`${cores}C`)
+		if (memTotalGb) parts.push(`${memTotalGb >= 10 ? memTotalGb.toFixed(0) : memTotalGb.toFixed(1)}G`)
+		return parts.join(" · ")
+	}, [cores, memTotalGb])
 
 	// Load Average
 	const loadAverage = useMemo(() => {
@@ -228,68 +303,37 @@ export const DenseServerCard = memo(function DenseServerCard({
 		return { label: "Heavy", color: "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20" }
 	}, [loadAverage, cores, threads])
 
-	// Bidirectional Network Rates & Cumulative Traffic
+	// Bidirectional realtime rates and cumulative counters from the agent payload
 	const networkTelemetry = useMemo(() => {
 		if (!isOnline) {
-			return {
-				upRate: "—",
-				downRate: "—",
-				totalTraffic: "—",
-				bandwidthPercent: 0,
-			}
+			return { upRate: "—", downRate: "—", totalOut: "—", totalIn: "—" }
 		}
 
-		// Real per-second up/down split from the agent: stats.b = [sent bytes/s, recv bytes/s]
-		let sentBytesPerSec = 0
-		let recvBytesPerSec = 0
-		if (liveStats?.b && (liveStats.b[0] || liveStats.b[1])) {
-			sentBytesPerSec = liveStats.b[0]
-			recvBytesPerSec = liveStats.b[1]
-		} else if (system.info?.bb) {
-			// Record only stores the combined rate; keep the historical 35/65 split
-			sentBytesPerSec = Math.round(system.info.bb * 0.35)
-			recvBytesPerSec = Math.round(system.info.bb * 0.65)
-		} else if (system.info?.b) {
-			const bytesPerSec = (system.info.b * 1024 * 1024) / 60
-			sentBytesPerSec = Math.round(bytesPerSec * 0.35)
-			recvBytesPerSec = Math.round(bytesPerSec * 0.65)
-		}
+		// stats.b = [sent bytes/s, recv bytes/s]; omitted while both are zero
+		const sent = liveStats?.b?.[0]
+		const recv = liveStats?.b?.[1]
 
-		const formatRate = (bytes: number) => {
-			const { value, unit } = formatBytes(bytes, true)
-			return `${value >= 100 ? value.toFixed(0) : value.toFixed(1)} ${unit}`
-		}
-
-		// Cumulative traffic: sum per-interface totals when available, else estimate from rate and uptime
-		const uptimeSeconds = liveInfo?.u ?? system.info?.u ?? 0
-		let cumulativeBytes = 0
+		// stats.ni totals = [up bytes, down bytes, total up, total down] per interface
+		let totalOut: number | undefined
+		let totalIn: number | undefined
 		if (liveStats?.ni) {
+			let out = 0
+			let inbound = 0
 			for (const totals of Object.values(liveStats.ni)) {
-				cumulativeBytes += (totals?.[2] ?? 0) + (totals?.[3] ?? 0)
+				out += totals?.[2] ?? 0
+				inbound += totals?.[3] ?? 0
 			}
+			totalOut = out
+			totalIn = inbound
 		}
-		if (!cumulativeBytes) {
-			const rate = sentBytesPerSec + recvBytesPerSec
-			cumulativeBytes = Math.max(
-				1024 * 1024 * 1024,
-				rate * 3600 * Math.min(Math.max(uptimeSeconds / 3600, 1), 720)
-			)
-		}
-		const totalFormatted = formatBytes(cumulativeBytes, false)
-
-		const combinedRate = sentBytesPerSec + recvBytesPerSec
-		const bandwidthPercent = Math.min(
-			100,
-			Math.max(combinedRate > 0 ? 4 : 0, Math.round((Math.log10(Math.max(1024, combinedRate)) / 7) * 100))
-		)
 
 		return {
-			upRate: formatRate(sentBytesPerSec),
-			downRate: formatRate(recvBytesPerSec),
-			totalTraffic: `${totalFormatted.value >= 100 ? totalFormatted.value.toFixed(0) : totalFormatted.value.toFixed(1)} ${totalFormatted.unit}`,
-			bandwidthPercent,
+			upRate: liveStats ? formatRate(sent ?? 0) : "—",
+			downRate: liveStats ? formatRate(recv ?? 0) : "—",
+			totalOut: formatTraffic(totalOut) ?? "—",
+			totalIn: formatTraffic(totalIn) ?? "—",
 		}
-	}, [isOnline, liveStats?.b, liveStats?.ni, liveInfo?.u, system.info?.bb, system.info?.b, system.info?.u])
+	}, [isOnline, liveStats])
 
 	// Uptime String
 	const uptimeString = useMemo(() => {
@@ -422,17 +466,24 @@ export const DenseServerCard = memo(function DenseServerCard({
 
 			{/* Card Body Content */}
 			<div className="p-4 pt-1 flex flex-col flex-1 justify-between gap-3.5">
-				{/* 1. Server Name & Public / Mesh IP Identity */}
+				{/* 1. Server Name, Spec Chip & Public / Mesh IP Identity */}
 				<div>
 					<div className="flex items-baseline justify-between gap-2">
 						<h3 className="text-[16px] font-extrabold text-foreground tracking-tight group-hover:text-primary transition-colors truncate leading-snug">
 							{system.name}
 						</h3>
-						{system.info?.v && (
-							<span className="text-[10px] font-mono font-semibold text-muted-foreground/80 shrink-0">
-								v{system.info.v}
-							</span>
-						)}
+						<div className="flex items-center gap-1.5 shrink-0">
+							{specChip && (
+								<span className="text-[10px] font-mono font-bold text-sky-600 dark:text-sky-400 bg-sky-500/10 border border-sky-500/15 rounded-md px-1.5 py-0.5 tabular-nums">
+									{specChip}
+								</span>
+							)}
+							{system.info?.v && (
+								<span className="text-[10px] font-mono font-semibold text-muted-foreground/80">
+									v{system.info.v}
+								</span>
+							)}
+						</div>
 					</div>
 
 					<div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium truncate mt-0.5">
@@ -449,107 +500,122 @@ export const DenseServerCard = memo(function DenseServerCard({
 					</div>
 				</div>
 
-				{/* 2. High-Density Segmented Block Progress Bars (CPU, RAM, DISK, GPU) */}
-				<div className="flex flex-col gap-3 p-3 rounded-2xl bg-secondary/35 dark:bg-slate-900/35 border border-border/50">
+				{/* 2. Resource Matrix: CPU / Memory / Disk / Load (2×2 grid) */}
+				<div className="grid grid-cols-2 gap-x-4 gap-y-3 p-3 rounded-2xl bg-secondary/35 dark:bg-slate-900/35 border border-border/50">
 					<SegmentedBlockBar
 						label="CPU"
 						value={Number(cpu) || 0}
 						detail={`${cores ?? "—"} Cores · ${cpuBrand}`}
 						isOnline={isOnline}
 						type="cpu"
+						icon={CpuIcon}
 					/>
 					<SegmentedBlockBar
-						label="RAM"
+						label="Memory"
 						value={Number(memory) || 0}
 						detail={memDetail}
 						isOnline={isOnline}
 						type="memory"
+						icon={MemoryStickIcon}
 					/>
 					<SegmentedBlockBar
-						label="DISK"
+						label="Disk"
 						value={Number(disk) || 0}
 						detail={diskDetail}
 						isOnline={isOnline}
 						type="disk"
+						icon={HardDriveIcon}
+					/>
+					<SegmentedBlockBar
+						label="Load"
+						value={loadAverage ? Math.min(100, (loadAverage[0] / (cores || threads || 1)) * 100) : 0}
+						valueText={loadAverage ? loadAverage[0].toFixed(2) : undefined}
+						detail={loadAverage ? loadAverage.map((v) => v.toFixed(2)).join(" / ") : undefined}
+						isOnline={isOnline}
+						type="load"
+						icon={GaugeIcon}
 					/>
 					{gpu !== null && (
-						<SegmentedBlockBar
-							label="GPU"
-							value={Number(gpu) || 0}
-							detail="Hardware Acceleration"
-							isOnline={isOnline}
-							type="gpu"
-						/>
+						<div className="col-span-2">
+							<SegmentedBlockBar
+								label="GPU"
+								value={Number(gpu) || 0}
+								detail="Hardware Acceleration"
+								isOnline={isOnline}
+								type="gpu"
+							/>
+						</div>
 					)}
 
-					{/* Load Average Micro-HUD */}
-					{loadAverage && (
-						<div className="flex items-center justify-between pt-2 border-t border-border/40 text-[11px]">
-							<div className="flex items-center gap-1.5 text-muted-foreground">
-								<ActivityIcon className="size-3 text-sky-500 shrink-0" />
-								<span className="font-mono font-semibold text-foreground">Load Avg</span>
-								<span className="font-mono tabular-nums text-muted-foreground">
-									{loadAverage.map((v) => v.toFixed(2)).join(" · ")}
-								</span>
-							</div>
-							{loadLevel && (
-								<span className={cn("px-2 py-0.2 rounded-full text-[9px] font-bold border", loadLevel.color)}>
-									{loadLevel.label}
-								</span>
-							)}
+					{/* Load level badge spans the grid footer */}
+					{loadLevel && (
+						<div className="col-span-2 flex items-center justify-end -mt-1">
+							<span className={cn("px-2 py-0.2 rounded-full text-[9px] font-bold border", loadLevel.color)}>
+								{loadLevel.label}
+							</span>
 						</div>
 					)}
 				</div>
 
-				{/* 3. Bidirectional Real-time Bandwidth & Cumulative Traffic Box */}
+				{/* 3. Realtime Network Rates & Cumulative Inbound / Outbound Traffic */}
 				<div className="flex flex-col gap-2 p-2.5 rounded-2xl bg-secondary/25 dark:bg-slate-900/25 border border-border/40">
-					<div className="grid grid-cols-2 gap-2 text-xs">
-						{/* Real-time Outbound / Upload */}
+					<div className="grid grid-cols-2 gap-2">
+						{/* Realtime Outbound / Upload */}
 						<div className="flex items-center gap-1.5 min-w-0">
 							<div className="flex items-center justify-center size-5.5 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 shrink-0">
 								<ArrowUpIcon className="size-3" strokeWidth={2.5} />
 							</div>
 							<div className="flex flex-col min-w-0">
-								<span className="text-[10px] text-muted-foreground font-medium">Out (↑)</span>
-								<span className="font-mono font-bold text-foreground tabular-nums text-[11px] truncate">
+								<span className="text-[10px] text-muted-foreground font-medium leading-none">Uplink ↑</span>
+								<span className="font-mono font-bold text-foreground tabular-nums text-[11px] truncate mt-0.5">
 									{networkTelemetry.upRate}
 								</span>
 							</div>
+							{liveStats && (
+								<span className="size-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0 ms-auto" title="Realtime" />
+							)}
 						</div>
 
-						{/* Real-time Inbound / Download */}
+						{/* Realtime Inbound / Download */}
 						<div className="flex items-center gap-1.5 min-w-0">
 							<div className="flex items-center justify-center size-5.5 rounded-md bg-sky-500/15 text-sky-600 dark:text-sky-400 shrink-0">
 								<ArrowDownIcon className="size-3" strokeWidth={2.5} />
 							</div>
 							<div className="flex flex-col min-w-0">
-								<span className="text-[10px] text-muted-foreground font-medium">In (↓)</span>
-								<span className="font-mono font-bold text-foreground tabular-nums text-[11px] truncate">
+								<span className="text-[10px] text-muted-foreground font-medium leading-none">Downlink ↓</span>
+								<span className="font-mono font-bold text-foreground tabular-nums text-[11px] truncate mt-0.5">
 									{networkTelemetry.downRate}
 								</span>
 							</div>
+							{liveStats && (
+								<span className="size-1.5 rounded-full bg-sky-500 animate-pulse shrink-0 ms-auto" title="Realtime" />
+							)}
 						</div>
 					</div>
 
-					{/* Traffic Quota / Capacity Segmented Bar */}
-					<div className="pt-1.5 border-t border-border/30">
-						<SegmentedBlockBar
-							label="Throughput"
-							value={networkTelemetry.bandwidthPercent}
-							detail={`Σ ${networkTelemetry.totalTraffic}`}
-							segments={10}
-							isOnline={isOnline}
-							type="quota"
-						/>
+					{/* Cumulative counters since boot, per direction */}
+					<div className="grid grid-cols-2 gap-2 pt-1.5 border-t border-border/30 text-[11px]">
+						<div className="flex items-center justify-between gap-1 min-w-0">
+							<span className="text-muted-foreground font-medium">Outbound</span>
+							<span className="font-mono font-semibold text-foreground tabular-nums truncate">
+								{networkTelemetry.totalOut}
+							</span>
+						</div>
+						<div className="flex items-center justify-between gap-1 min-w-0">
+							<span className="text-muted-foreground font-medium">Inbound</span>
+							<span className="font-mono font-semibold text-foreground tabular-nums truncate">
+								{networkTelemetry.totalIn}
+							</span>
+						</div>
 					</div>
 				</div>
 
 				{/* 4. Multi-Carrier / Network Latency & Quality Matrix */}
-				<div className="flex flex-col gap-1.5 p-2.5 rounded-2xl bg-secondary/20 dark:bg-slate-900/20 border border-border/40">
+				<div className="flex flex-col gap-2 p-2.5 rounded-2xl bg-secondary/20 dark:bg-slate-900/20 border border-border/40">
 					<div className="flex items-center justify-between text-[11px]">
 						<div className="flex items-center gap-1 text-muted-foreground font-semibold">
 							<RadioIcon className="size-3 text-sky-500 shrink-0" />
-							<span>Network Latency Matrix</span>
+							<span>Latency &amp; Quality</span>
 						</div>
 						<span className="text-[10px] text-muted-foreground/70">
 							{systemMonitors.length > 0
@@ -558,41 +624,47 @@ export const DenseServerCard = memo(function DenseServerCard({
 						</span>
 					</div>
 
-					<div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-1">
+					<div className="flex flex-col gap-2 pt-0.5">
 						{systemMonitors.length > 0 ? (
 							systemMonitors.map((mon) => {
 								// Prefer the per-second probe result; fall back to the 60s record
 								const live = liveMonitorStats?.[mon.id]
 								const latencyUs = live?.res_avg ?? mon.res
-								const latencyMs = Math.round(latencyUs / 1000)
-								const loss = live ? Math.round(live.loss * 10) / 10 : (mon.loss1h || 0)
-								const isHealthy = loss === 0
+								const loss = live ? Math.round(live.loss * 10) / 10 : mon.loss1h || 0
+
+								const thresholds = LATENCY_THRESHOLDS[mon.protocol] ?? LATENCY_THRESHOLDS.icmp
+								const latencyLevel: QualityLevel = !latencyUs
+									? "idle"
+									: latencyUs > thresholds.bad
+									? "bad"
+									: latencyUs > thresholds.warn
+									? "warn"
+									: "good"
+								const lossLevel: QualityLevel = loss > 5 ? "bad" : loss > 0 ? "warn" : "good"
+
 								return (
-									<div
-										key={mon.id}
-										className="flex items-center justify-between px-2 py-1 rounded-lg bg-background/60 dark:bg-slate-900/60 border border-border/40 text-[10px]"
-									>
-										<span className="font-medium text-foreground truncate max-w-[85px]" title={mon.target}>
-											{mon.target}
-										</span>
-										<div className="flex items-center gap-1 font-mono tabular-nums shrink-0">
-											<span
-												className={cn(
-													"size-1.5 rounded-full shrink-0",
-													isHealthy ? "bg-emerald-500" : loss < 20 ? "bg-amber-500" : "bg-rose-500"
-												)}
-											/>
-											<span className="font-semibold text-foreground">
-												{latencyUs ? `${latencyMs}ms` : "—"}
+									<div key={mon.id} className="flex flex-col gap-1">
+										<div className="flex items-center justify-between gap-2 text-[10px]">
+											<span className="font-medium text-foreground truncate" title={mon.target}>
+												{mon.target}
 											</span>
-											<span className="text-[9px] text-muted-foreground">({loss}%)</span>
+											<div className="flex items-center gap-2 font-mono tabular-nums shrink-0">
+												<span className="font-semibold text-foreground">
+													{latencyUs ? formatMicroseconds(latencyUs) : "—"}
+												</span>
+												<span className="text-muted-foreground w-10 text-right">{loss}%</span>
+											</div>
+										</div>
+										<div className="grid grid-cols-2 gap-2">
+											<QualityBar level={latencyLevel} />
+											<QualityBar level={lossLevel} />
 										</div>
 									</div>
 								)
 							})
 						) : (
 							/* No probes configured: report the realtime stream's own state instead of inventing latency */
-							<div className="col-span-full flex items-center justify-between px-2.5 py-1 rounded-lg bg-background/60 dark:bg-slate-900/60 border border-border/40 text-[10px]">
+							<div className="flex items-center justify-between px-2.5 py-1 rounded-lg bg-background/60 dark:bg-slate-900/60 border border-border/40 text-[10px]">
 								<div className="flex items-center gap-1.5">
 									<span
 										className={cn(

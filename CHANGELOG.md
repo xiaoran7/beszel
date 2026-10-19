@@ -6,6 +6,13 @@ All notable changes to this project will be documented in this file.
 
 ### Added & Refined
 
+- **Server Card Data Density Expansion (Reference-Aligned Layout)**:
+  - 资源区重排为 2×2 网格：CPU、内存、磁盘、负载各自独立展示百分比、绝对值与分段 LED 条；CPU 显示核心数与型号，内存/磁盘显示真实「已用 / 总量」，负载显示 1m/5m/15m 三值与相对核心数的使用率条。
+  - 卡片标题行新增规格徽章（如 `2C · 3.8G`），直接呈现几核几 G。
+  - 网络区拆分为「实时上下行速率」与「自启动以来的累计出站 / 入站流量」两组，全部来自 Agent 真实计数器，不再按比例拆分推算。
+  - 延迟矩阵升级为「延迟 + 质量」双条：每个探针显示延迟值与丢包率，并按协议阈值（ICMP / TCP / HTTP / DNS）以绿 / 黄 / 红分段条呈现质量等级，与监控表格的判定标准保持一致。
+  - 协议徽章精简为 `V4` / `V6` 风格，与位置徽章并列。
+  - 明确边界：Beszel 后端没有流量配额与到期时间字段，本次未虚构这两项；待后端补数据后再接入。
 - **Per-Second Realtime Dashboard Telemetry (`rt_metrics`)**:
   - 首页看板接入 Hub 的 `rt_metrics` 每秒实时推送流（`useRealtimeSystems`），彻底解决卡片指标长期停留在 60 秒落库快照、看着"不动"的问题。
   - 高密度矩阵卡片与经典仪表盘卡片均优先渲染每秒实时 `stats` / `info`：CPU、内存、磁盘、GPU 使用率、负载均值、运行时间与上下行速率全部实时跳动。
