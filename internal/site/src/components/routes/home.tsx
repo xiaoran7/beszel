@@ -1,10 +1,18 @@
 import { memo, useState, useMemo, useEffect } from "react"
 import { useStore } from "@nanostores/react"
-import { LayoutGridIcon, LayoutListIcon, PlusIcon, ServerIcon } from "lucide-react"
+import {
+	LayoutGridIcon,
+	LayoutListIcon,
+	LayoutTemplateIcon,
+	PlusIcon,
+	ServerIcon,
+} from "lucide-react"
 import { $systems, $upSystems, $downSystems } from "@/lib/stores"
 import { SystemStatus } from "@/lib/enums"
 import * as systemsManager from "@/lib/systemsManager"
+import { useNetworkMonitors } from "@/lib/use-network-monitors"
 import { DashboardMetricsHeader } from "../dashboard/dashboard-metrics-header"
+import { DenseServerCard } from "../dashboard/dense-server-card"
 import { ServerGridCard } from "../dashboard/server-grid-card"
 import { AddServerCard } from "../dashboard/add-server-card"
 import { RecentAlertsBar } from "../dashboard/recent-alerts-bar"
@@ -24,10 +32,24 @@ export default memo(function Home() {
 	const realSystems = useStore($systems)
 	const upSystems = useStore($upSystems)
 	const downSystems = useStore($downSystems)
+	const { monitors } = useNetworkMonitors({})
 
-	const [viewMode, setViewMode] = useState<"grid" | "table">("grid")
+	const [viewMode, setViewMode] = useState<"dense" | "grid" | "table">(() => {
+		try {
+			return (localStorage.getItem("beszel-dashboard-view-mode") as "dense" | "grid" | "table") || "dense"
+		} catch {
+			return "dense"
+		}
+	})
 	const [sortBy, setSortBy] = useState<"name" | "status" | "cpu" | "memory">("name")
 	const [addDialogOpen, setAddDialogOpen] = useState(false)
+
+	const handleViewModeChange = (mode: "dense" | "grid" | "table") => {
+		setViewMode(mode)
+		try {
+			localStorage.setItem("beszel-dashboard-view-mode", mode)
+		} catch {}
+	}
 
 	useEffect(() => {
 		document.title = "Dashboard / Beszel"
@@ -46,9 +68,9 @@ export default memo(function Home() {
 			copy.sort((a, b) => a.name.localeCompare(b.name))
 		} else if (sortBy === "status") {
 			copy.sort((a, b) => (a.status === SystemStatus.Up ? -1 : 1))
-			} else if (sortBy === "cpu") {
-				copy.sort((a, b) => ((b.info?.cpu ?? b.info?.cpu_percent ?? 0) - (a.info?.cpu ?? a.info?.cpu_percent ?? 0)))
-			} else if (sortBy === "memory") {
+		} else if (sortBy === "cpu") {
+			copy.sort((a, b) => ((b.info?.cpu ?? b.info?.cpu_percent ?? 0) - (a.info?.cpu ?? a.info?.cpu_percent ?? 0)))
+		} else if (sortBy === "memory") {
 			copy.sort((a, b) => ((b.info?.mp ?? 0) - (a.info?.mp ?? 0)))
 		}
 
@@ -82,7 +104,7 @@ export default memo(function Home() {
 							Server Overview
 						</h2>
 						<p className="text-xs text-muted-foreground font-medium mt-0.5">
-							Real-time status and performance metrics
+							Real-time status and performance telemetry
 						</p>
 					</div>
 
@@ -123,29 +145,41 @@ export default memo(function Home() {
 							</DropdownMenuContent>
 						</DropdownMenu>
 
-						{/* Grid / Table Toggle */}
+						{/* 3-Mode View Switcher: Dense Matrix / Classic Gauges / Table */}
 						<div className="flex items-center p-0.5 rounded-xl bg-secondary/60 border border-border/70">
 							<button
 								type="button"
-								onClick={() => setViewMode("grid")}
+								onClick={() => handleViewModeChange("dense")}
+								className={`p-1.5 rounded-lg text-xs transition-all ${
+									viewMode === "dense"
+										? "bg-card text-sky-600 dark:text-sky-400 font-bold shadow-2xs"
+										: "text-muted-foreground hover:text-foreground"
+								}`}
+								title="Matrix View (Aozora High-Density Matrix)"
+							>
+								<LayoutTemplateIcon className="size-4" />
+							</button>
+							<button
+								type="button"
+								onClick={() => handleViewModeChange("grid")}
 								className={`p-1.5 rounded-lg text-xs transition-all ${
 									viewMode === "grid"
 										? "bg-card text-sky-600 dark:text-sky-400 font-bold shadow-2xs"
 										: "text-muted-foreground hover:text-foreground"
 								}`}
-								title="Grid View"
+								title="Gauge View (Classic Radial Gauges)"
 							>
 								<LayoutGridIcon className="size-4" />
 							</button>
 							<button
 								type="button"
-								onClick={() => setViewMode("table")}
+								onClick={() => handleViewModeChange("table")}
 								className={`p-1.5 rounded-lg text-xs transition-all ${
 									viewMode === "table"
 										? "bg-card text-sky-600 dark:text-sky-400 font-bold shadow-2xs"
 										: "text-muted-foreground hover:text-foreground"
 								}`}
-								title="Table View"
+								title="Table View (Compact Table)"
 							>
 								<LayoutListIcon className="size-4" />
 							</button>
@@ -153,8 +187,37 @@ export default memo(function Home() {
 					</div>
 				</div>
 
-				{/* 3. Server List (Grid or Table) */}
-				{viewMode === "grid" ? (
+				{/* 3. Server List (Dense Matrix, Classic Grid, or Table) */}
+				{viewMode === "dense" ? (
+					displaySystems.length > 0 ? (
+						<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 xl:gap-4.5">
+							{displaySystems.map((system) => (
+								<DenseServerCard key={system.id} system={system} monitors={monitors} />
+							))}
+							{/* "+ Add Server" Tile */}
+							<AddServerCard />
+						</div>
+					) : (
+						/* Empty State */
+						<div className="flex flex-col items-center justify-center p-12 text-center rounded-3xl bg-card border border-border/80 shadow-2xs">
+							<div className="size-14 rounded-2xl bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center mb-4">
+								<ServerIcon className="size-7" />
+							</div>
+							<h3 className="text-lg font-bold text-foreground">No servers connected yet</h3>
+							<p className="text-xs text-muted-foreground mt-1 max-w-sm">
+								Install the Beszel agent on your servers to start monitoring real-time metrics in the Schale control center.
+							</p>
+							<Button
+								onClick={() => setAddDialogOpen(true)}
+								className="mt-5 rounded-2xl gap-2 bg-primary text-primary-foreground font-semibold px-5"
+							>
+								<PlusIcon className="size-4" />
+								<span>Add First Server</span>
+							</Button>
+							<AddSystemDialog open={addDialogOpen} setOpen={setAddDialogOpen} />
+						</div>
+					)
+				) : viewMode === "grid" ? (
 					displaySystems.length > 0 ? (
 						<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 xl:gap-4.5">
 							{displaySystems.map((system) => (
@@ -189,10 +252,9 @@ export default memo(function Home() {
 					</div>
 				)}
 
-					{/* 4. Bottom Recent Alerts Bar */}
-					{displaySystems.length > 0 && <RecentAlertsBar />}
+				{/* 4. Bottom Recent Alerts Bar */}
+				{displaySystems.length > 0 && <RecentAlertsBar />}
 			</div>
 		</div>
 	)
 })
-

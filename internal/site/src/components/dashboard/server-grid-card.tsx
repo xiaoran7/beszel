@@ -3,7 +3,7 @@ import { ServerIcon, GlobeIcon } from "lucide-react"
 import { RadialGauge } from "../ui/radial-gauge"
 import { SparklineChart } from "../ui/sparkline-chart"
 import { SystemStatus } from "@/lib/enums"
-import { formatBytes, secondsToUptimeString, getServerPublicIp } from "@/lib/utils"
+import { formatBytes, secondsToUptimeString, getServerPublicIp, getServerLocation } from "@/lib/utils"
 import type { SystemRecord } from "@/types"
 import { $router, navigate } from "../router"
 import { getPagePath } from "@nanostores/router"
@@ -45,9 +45,11 @@ export const ServerGridCard = memo(function ServerGridCard({ system }: ServerGri
 		return secondsToUptimeString(system.info.u)
 	}, [isOnline, system.info?.u])
 
-		const publicIp = useMemo(() => {
-			return getServerPublicIp(system.host)
-		}, [system.host])
+	const location = useMemo(() => getServerLocation(system.host, system.name), [system.host, system.name])
+
+	const publicIp = useMemo(() => {
+		return getServerPublicIp(system.host)
+	}, [system.host])
 
 		// Subtitle: Real host address or port
 		const subtitle = useMemo(() => {
@@ -138,8 +140,13 @@ export const ServerGridCard = memo(function ServerGridCard({ system }: ServerGri
 							<ServerIcon className="size-4.5" />
 						</div>
 							<div className="flex flex-col min-w-0 flex-1">
-								<h3 className="text-[15px] font-bold text-foreground tracking-tight group-hover:text-primary transition-colors truncate leading-snug">
-									{system.name}
+								<h3 className="text-[15px] font-bold text-foreground tracking-tight group-hover:text-primary transition-colors truncate leading-snug flex items-center gap-1.5">
+									{location?.flag && (
+										<span className="text-xs shrink-0 select-none" title={location.city}>
+											{location.flag}
+										</span>
+									)}
+									<span className="truncate">{system.name}</span>
 								</h3>
 								<div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium truncate mt-0.5">
 									{publicIp && (

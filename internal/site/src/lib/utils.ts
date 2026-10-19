@@ -538,16 +538,65 @@ export function secondsToUptimeString(seconds: number): string {
 /**
  * Server IP Resolution: Map internal Tailscale mesh IPs to verified public IPs
  */
-export const SERVER_IP_MAP: Record<string, { publicIp: string; location: string }> = {
-	"100.72.34.104": { publicIp: "34.84.62.138", location: "Tokyo, JP" },
-	"100.91.224.45": { publicIp: "107.175.236.156", location: "New York, US" },
-	"100.101.2.4": { publicIp: "8.148.11.79", location: "Hangzhou, CN" },
-	"100.70.173.50": { publicIp: "34.104.162.153", location: "Tokyo Old, JP" },
+export interface ServerLocationInfo {
+	code: string
+	flag: string
+	city: string
+}
+
+export const SERVER_IP_MAP: Record<string, { publicIp: string; location: string; code?: string; flag?: string }> = {
+	"100.72.34.104": { publicIp: "34.84.62.138", location: "Tokyo, JP", code: "JP", flag: "🇯🇵" },
+	"100.107.77.33": { publicIp: "", location: "Los Angeles, US", code: "US", flag: "🇺🇸" },
+	"100.91.224.45": { publicIp: "107.175.236.156", location: "New York, US", code: "US", flag: "🇺🇸" },
+	"100.67.242.121": { publicIp: "", location: "Montreal, CA", code: "CA", flag: "🇨🇦" },
+	"100.117.175.55": { publicIp: "", location: "Beijing, CN", code: "CN", flag: "🇨🇳" },
+	"100.101.2.4": { publicIp: "8.148.11.79", location: "Hangzhou, CN", code: "CN", flag: "🇨🇳" },
+	"100.70.173.50": { publicIp: "34.104.162.153", location: "Tokyo Old, JP", code: "JP", flag: "🇯🇵" },
 }
 
 export function getServerPublicIp(host: string): string | undefined {
 	if (!host) return undefined
 	const cleanHost = host.split(":")[0].trim()
-	return SERVER_IP_MAP[cleanHost]?.publicIp
+	return SERVER_IP_MAP[cleanHost]?.publicIp || undefined
+}
+
+export function getServerLocation(host?: string, name?: string): ServerLocationInfo {
+	if (!host && !name) return { code: "NODE", flag: "🌐", city: "Global" }
+	const cleanHost = host ? host.split(":")[0].trim() : ""
+	const mapped = SERVER_IP_MAP[cleanHost]
+	if (mapped && mapped.code && mapped.flag) {
+		const city = mapped.location.split(",")[0].trim()
+		return { code: mapped.code, flag: mapped.flag, city }
+	}
+
+	const target = ((name || "") + " " + cleanHost).toLowerCase()
+	if (target.includes("tokyo") || target.includes("japan") || target.includes("jp-") || target.includes("-jp") || target.includes(".jp")) {
+		return { code: "JP", flag: "🇯🇵", city: "Tokyo" }
+	}
+	if (target.includes("zenix") || target.includes("los angeles") || target.includes("lax") || target.includes("racknerd") || target.includes("new york") || target.includes("nyc") || target.includes("us-") || target.includes("-us") || target.includes("america")) {
+		return { code: "US", flag: "🇺🇸", city: "United States" }
+	}
+	if (target.includes("montreal") || target.includes("canada") || target.includes("ca-") || target.includes("-ca") || target.includes("toronto")) {
+		return { code: "CA", flag: "🇨🇦", city: "Montreal" }
+	}
+	if (target.includes("huawei") || target.includes("beijing") || target.includes("hangzhou") || target.includes("shanghai") || target.includes("china") || target.includes("cn-") || target.includes("-cn") || target.includes("tencent") || target.includes("aliyun")) {
+		return { code: "CN", flag: "🇨🇳", city: "China" }
+	}
+	if (target.includes("hongkong") || target.includes("hk-") || target.includes("-hk") || target.includes("hkg")) {
+		return { code: "HK", flag: "🇭🇰", city: "Hong Kong" }
+	}
+	if (target.includes("singapore") || target.includes("sg-") || target.includes("-sg") || target.includes("sin")) {
+		return { code: "SG", flag: "🇸🇬", city: "Singapore" }
+	}
+	if (target.includes("frankfurt") || target.includes("germany") || target.includes("de-") || target.includes("-de")) {
+		return { code: "DE", flag: "🇩🇪", city: "Frankfurt" }
+	}
+	if (target.includes("london") || target.includes("uk-") || target.includes("-uk") || target.includes("britain")) {
+		return { code: "UK", flag: "🇬🇧", city: "London" }
+	}
+	if (target.includes("seoul") || target.includes("korea") || target.includes("kr-") || target.includes("-kr")) {
+		return { code: "KR", flag: "🇰🇷", city: "Seoul" }
+	}
+	return { code: "NODE", flag: "🌐", city: "Global" }
 }
 
