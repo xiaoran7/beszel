@@ -4,7 +4,8 @@ import { RadialGauge } from "../ui/radial-gauge"
 import { SparklineChart } from "../ui/sparkline-chart"
 import { SystemStatus } from "@/lib/enums"
 import { formatBytes, secondsToUptimeString, getServerPublicIp, getServerLocation } from "@/lib/utils"
-import type { SystemRecord } from "@/types"
+import type { SystemRecord, SystemDetailsRecord } from "@/types"
+import type { RealtimeSystemMetrics } from "@/lib/use-realtime-systems"
 import { $router, navigate } from "../router"
 import { getPagePath } from "@nanostores/router"
 import { ActionsButton } from "../systems-table/systems-table-columns"
@@ -12,20 +13,33 @@ import AlertButton from "../alerts/alert-button"
 
 interface ServerGridCardProps {
 	system: SystemRecord
+	realtime?: RealtimeSystemMetrics
+	details?: SystemDetailsRecord
 }
 
-export const ServerGridCard = memo(function ServerGridCard({ system }: ServerGridCardProps) {
+export const ServerGridCard = memo(function ServerGridCard({ system, realtime, details }: ServerGridCardProps) {
 	const isOnline = system.status === SystemStatus.Up
 	const isPaused = system.status === SystemStatus.Paused
 
-	// Real stats directly from PocketBase SystemRecord info
-	const cpu = isOnline ? (system.info?.cpu ?? system.info?.cpu_percent ?? system.info?.c_p ?? 0) : 0
-	const memory = isOnline ? (system.info?.mp ?? 0) : 0
-	const disk = isOnline ? (system.info?.dp ?? 0) : 0
-	const gpu = isOnline && system.info?.g !== undefined ? system.info.g : null
+	// Real stats: prefer the per-second realtime payload, fall back to the 60s record
+	const liveStats = isOnline ? realtime?.stats : undefined
+	const liveInfo = isOnline ? realtime?.info : undefined
+	const cpu = isOnline ? (liveStats?.cpu ?? system.info?.cpu ?? system.info?.cpu_percent ?? system.info?.c_p ?? 0) : 0
+	const memory = isOnline ? (liveStats?.mp ?? system.info?.mp ?? 0) : 0
+	const disk = isOnline ? (liveStats?.dp ?? system.info?.dp ?? 0) : 0
+	const gpu = isOnline
+		? (liveInfo?.g ?? (liveStats?.g ? Math.max(...Object.values(liveStats.g).map((d) => d.u ?? 0)) : system.info?.g))
+		: null
 
 		const network = useMemo(() => {
 			if (!isOnline) return { value: "—", unit: "", percent: 0 }
+			const bytesPerSec = liveStats?.b ? liveStats.b[0] + liveStats.b[1] : undefined
+			if (bytesPerSec !== undefined) {
+				const { value, unit } = formatBytes(bytesPerSec, true)
+				const formattedVal = value >= 100 ? value.toFixed(0) : value.toFixed(1)
+				const pct = Math.min(100, Math.max(bytesPerSec > 0 ? 4 : 0, Math.round((Math.log10(Math.max(1024, bytesPerSec)) / 7) * 100)))
+				return { value: formattedVal, unit, percent: pct }
+			}
 			if (system.info?.bb) {
 				const { value, unit } = formatBytes(system.info.bb, true)
 				const formattedVal = value >= 100 ? value.toFixed(0) : value.toFixed(1)
@@ -38,12 +52,14 @@ export const ServerGridCard = memo(function ServerGridCard({ system }: ServerGri
 				return { value: formattedVal, unit: "Mbps", percent: Math.min(100, Math.max(15, Math.round(mbps))) }
 			}
 			return { value: "—", unit: "", percent: 0 }
-		}, [isOnline, system.info?.bb, system.info?.b])
+		}, [isOnline, liveStats?.b, system.info?.bb, system.info?.b])
 
 	const uptimeString = useMemo(() => {
-		if (!isOnline || !system.info?.u) return isOnline ? "Active" : "—"
-		return secondsToUptimeString(system.info.u)
-	}, [isOnline, system.info?.u])
+		const uptime = liveInfo?.u ?? system.info?.u
+		if (!isOnline) return "—"
+		if (!uptime) return "Active"
+		return secondsToUptimeString(uptime)
+	}, [isOnline, liveInfo?.u, system.info?.u])
 
 	const location = useMemo(() => getServerLocation(system.host, system.name), [system.host, system.name])
 
@@ -59,18 +75,21 @@ export const ServerGridCard = memo(function ServerGridCard({ system }: ServerGri
 			return "Node"
 		}, [system.host, system.port])
 
-	// Tags extracted dynamically from real system.info
+	// Tags extracted dynamically from system_details (modern agents) with system.info fallback
 	const tags = useMemo(() => {
 		const t: string[] = []
-		if (system.info?.os) {
+		if (details?.os_name) {
+			t.push(details.os_name)
+		} else if (system.info?.os) {
 			t.push(`Linux ${system.info.os}`)
 		} else if (system.info?.o) {
 			t.push(system.info.o)
 		}
 
-		if (system.info?.m) {
+		const cpuModel = details?.cpu || system.info?.m
+		if (cpuModel) {
 			// Extract short CPU brand (e.g. AMD, Intel, Apple, ARM)
-			const m = system.info.m
+			const m = cpuModel
 			if (m.includes("EPYC")) t.push("AMD EPYC")
 			else if (m.includes("Ryzen")) t.push("AMD Ryzen")
 			else if (m.includes("Xeon")) t.push("Intel Xeon")
@@ -80,11 +99,12 @@ export const ServerGridCard = memo(function ServerGridCard({ system }: ServerGri
 			else t.push(m.slice(0, 14))
 		}
 
-		if (system.info?.c) {
-			t.push(`${system.info.c} Cores`)
+		const cores = details?.cores || system.info?.c
+		if (cores) {
+			t.push(`${cores} Cores`)
 		}
 
-		if (system.info?.p) {
+		if (details?.podman ?? system.info?.p) {
 			t.push("Podman")
 		}
 
@@ -101,7 +121,7 @@ export const ServerGridCard = memo(function ServerGridCard({ system }: ServerGri
 		}
 
 		return t
-	}, [system.info, gpu])
+	}, [details, system.info, gpu])
 
 	// Dynamic wave history from real CPU and memory metrics
 	const sparklineData = useMemo(() => {

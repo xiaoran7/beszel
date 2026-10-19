@@ -6,13 +6,20 @@ All notable changes to this project will be documented in this file.
 
 ### Added & Refined
 
+- **Per-Second Realtime Dashboard Telemetry (`rt_metrics`)**:
+  - 首页看板接入 Hub 的 `rt_metrics` 每秒实时推送流（`useRealtimeSystems`），彻底解决卡片指标长期停留在 60 秒落库快照、看着"不动"的问题。
+  - 高密度矩阵卡片与经典仪表盘卡片均优先渲染每秒实时 `stats` / `info`：CPU、内存、磁盘、GPU 使用率、负载均值、运行时间与上下行速率全部实时跳动。
+  - 双向带宽改为消费 Agent 上报的真实 `stats.b = [发送字节/秒, 接收字节/秒]`，不再按固定 35/65 比例推算；累积流量优先累加各网卡真实累计计数（`stats.ni`）。
+  - 网络延迟矩阵直接消费实时 `Monitors` 探针结果（微秒级 `res_avg` 与实时丢包率），无探针时如实展示实时流连接状态，不再显示虚构的 `< 2ms RTT`。
+  - 新增 `useSystemDetails`：现代 Agent 不再把核心数、线程数、CPU 型号写入 `systems.info`，卡片改从 `system_details` 集合读取并本地缓存，保证核心数、CPU 品牌与操作系统标签准确。
+  - 订阅按需管理：仅对在线且 Agent 版本支持 1 秒窗口的系统建立订阅；切换到表格视图或浏览器标签页隐藏时自动释放全部订阅，避免 Hub 空转与流量浪费。
 - **Aozora High-Density Matrix Card & Tri-Mode Layout Switcher (`DenseServerCard`)**:
   - 新增高密度矩阵仪表盘卡片（`DenseServerCard`），融合 Nezha / ServerStatus 等经典探针丰富的指标密度，同时严格秉持 Aozora UI（70% 现代产品设计 + 20% 轻二次元世界观 + 10% 几何微装饰）设计准则与 60 FPS 性能铁律。
   - 顶部融合 Kivotos 城市天际线二次元画风横幅，采用平滑向下透明渐变遮罩（`mask-image: linear-gradient(to bottom, black 30%, transparent 100%)`）与夜间微光滤镜（`dark:opacity-35 dark:brightness-[0.55]`），使艺术立绘自然消融于卡片底色中，无论日夜均保持通透与舒适。
   - 核心资源采用分段方块矩阵条（Segmented LED Block Bars）：为 CPU（含核心数与型号）、内存、Root FS 磁盘、GPU 硬件加速提供离散 10 段 LED 状态条，动态色彩阶梯（<60% 青空绿、60%-85% 暖黄、>=85% 预警红），深色模式下附带柔和霓虹微光阴影。
   - 深度集成系统负载微型 HUD（Load Average 1m / 5m / 15m）与自适应负载状态徽章（Optimal / Normal / Heavy）。
-  - 双向实时上下行带宽速率（Out ↑ / In ↓）与累积流量定额矩阵（Traffic Quota），精确度量网络吞吐。
-  - 多线路 / 节点网络延迟与质量矩阵（Network Latency Matrix）：联动 PocketBase `network_monitors` 数据源，实时展示各探测目标延迟（ms）与丢包率（Loss %），无监控探针时自适应展示遥测心跳（Telemetry Heartbeat）。
+  - 双向实时上下行带宽速率（Out ↑ / In ↓）与吞吐矩阵（Throughput），精确度量网络吞吐。
+  - 多线路 / 节点网络延迟与质量矩阵（Network Latency Matrix）：联动 PocketBase `network_monitors` 数据源，实时展示各探测目标延迟（ms）与丢包率（Loss %）。
   - 卡片顶部支持国旗与地理位置徽章（如 `🇯🇵 JP · Tokyo`）、网络协议标签（Tailnet / IPv4 / IPv6）、在线状态及快捷告警与操作菜单；卡片底部展示连续运行时间（Uptime）与架构微标签。
   - 首页工具栏引入三模式自由切换器（3-Mode Layout Switcher）：支持高密度矩阵视图（Dense Matrix）、经典仪表盘视图（Classic Gauges）与精炼表格视图（Compact Table），并持久化记忆用户偏好至 `localStorage`。
 - **Dark Mode Visual Harmony & Illustration Dual-Adaptation**:

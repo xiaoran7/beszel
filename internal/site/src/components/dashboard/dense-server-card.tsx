@@ -18,7 +18,8 @@ import {
 	getServerLocation,
 	cn,
 } from "@/lib/utils"
-import type { SystemRecord, NetworkMonitorRecord } from "@/types"
+import type { SystemRecord, NetworkMonitorRecord, SystemDetailsRecord } from "@/types"
+import type { RealtimeSystemMetrics } from "@/lib/use-realtime-systems"
 import { $router, navigate } from "../router"
 import { getPagePath } from "@nanostores/router"
 import { ActionsButton } from "../systems-table/systems-table-columns"
@@ -124,20 +125,28 @@ const SegmentedBlockBar = memo(function SegmentedBlockBar({
 interface DenseServerCardProps {
 	system: SystemRecord
 	monitors?: NetworkMonitorRecord[]
+	realtime?: RealtimeSystemMetrics
+	details?: SystemDetailsRecord
 }
 
 export const DenseServerCard = memo(function DenseServerCard({
 	system,
 	monitors = [],
+	realtime,
+	details,
 }: DenseServerCardProps) {
 	const isOnline = system.status === SystemStatus.Up
 	const isPaused = system.status === SystemStatus.Paused
 
-	// Raw stats
-	const cpu = isOnline ? (system.info?.cpu ?? system.info?.cpu_percent ?? system.info?.c_p ?? 0) : 0
-	const memory = isOnline ? (system.info?.mp ?? 0) : 0
-	const disk = isOnline ? (system.info?.dp ?? 0) : 0
-	const gpu = isOnline && system.info?.g !== undefined ? system.info.g : null
+	// Raw stats: prefer the per-second realtime payload, fall back to the 60s record
+	const liveStats = isOnline ? realtime?.stats : undefined
+	const liveInfo = isOnline ? realtime?.info : undefined
+	const cpu = isOnline ? (liveStats?.cpu ?? system.info?.cpu ?? system.info?.cpu_percent ?? system.info?.c_p ?? 0) : 0
+	const memory = isOnline ? (liveStats?.mp ?? system.info?.mp ?? 0) : 0
+	const disk = isOnline ? (liveStats?.dp ?? system.info?.dp ?? 0) : 0
+	const gpu = isOnline
+		? (liveInfo?.g ?? (liveStats?.g ? Math.max(...Object.values(liveStats.g).map((d) => d.u ?? 0)) : system.info?.g))
+		: null
 
 	// Geographic Location & Flag
 	const location = useMemo(() => {
@@ -171,10 +180,14 @@ export const DenseServerCard = memo(function DenseServerCard({
 		return tags
 	}, [system.host, publicIp])
 
+	// Core / thread count: modern agents report these via system_details only
+	const cores = details?.cores || system.info?.c
+	const threads = details?.threads || system.info?.t
+
 	// CPU Brand / Core Detail
 	const cpuBrand = useMemo(() => {
-		if (!system.info?.m) return "CPU"
-		const m = system.info.m
+		const m = details?.cpu || system.info?.m
+		if (!m) return "CPU"
 		if (m.includes("EPYC")) return "AMD EPYC"
 		if (m.includes("Ryzen")) return "AMD Ryzen"
 		if (m.includes("Xeon")) return "Intel Xeon"
@@ -182,7 +195,7 @@ export const DenseServerCard = memo(function DenseServerCard({
 		if (m.includes("Apple") || m.includes("M1") || m.includes("M2") || m.includes("M3") || m.includes("M4")) return "Apple Silicon"
 		if (m.includes("ARM") || m.includes("aarch64")) return "ARM64"
 		return m.slice(0, 16)
-	}, [system.info?.m])
+	}, [details?.cpu, system.info?.m])
 
 	// Memory usage detail
 	const memDetail = useMemo(() => {
@@ -198,19 +211,20 @@ export const DenseServerCard = memo(function DenseServerCard({
 
 	// Load Average
 	const loadAverage = useMemo(() => {
-		if (!isOnline || !system.info?.la) return null
-		return system.info.la
-	}, [isOnline, system.info?.la])
+		if (!isOnline) return null
+		const la = liveStats?.la ?? liveInfo?.la ?? system.info?.la
+		return la && la.length ? la : null
+	}, [isOnline, liveStats?.la, liveInfo?.la, system.info?.la])
 
 	// Load Level Badge
 	const loadLevel = useMemo(() => {
 		if (!loadAverage) return null
-		const cores = system.info?.c || 1
-		const normalized = loadAverage[0] / cores
+		const loadCores = cores || threads || 1
+		const normalized = loadAverage[0] / loadCores
 		if (normalized < 0.7) return { label: "Optimal", color: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20" }
 		if (normalized < 1.0) return { label: "Normal", color: "text-sky-600 dark:text-sky-400 bg-sky-500/10 border-sky-500/20" }
 		return { label: "Heavy", color: "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20" }
-	}, [loadAverage, system.info?.c])
+	}, [loadAverage, cores, threads])
 
 	// Bidirectional Network Rates & Cumulative Traffic
 	const networkTelemetry = useMemo(() => {
@@ -223,41 +237,68 @@ export const DenseServerCard = memo(function DenseServerCard({
 			}
 		}
 
-		let bytesPerSec = system.info?.bb || 0
-		if (!bytesPerSec && system.info?.b) {
-			bytesPerSec = (system.info.b * 1024 * 1024) / 60
+		// Real per-second up/down split from the agent: stats.b = [sent bytes/s, recv bytes/s]
+		let sentBytesPerSec = 0
+		let recvBytesPerSec = 0
+		if (liveStats?.b && (liveStats.b[0] || liveStats.b[1])) {
+			sentBytesPerSec = liveStats.b[0]
+			recvBytesPerSec = liveStats.b[1]
+		} else if (system.info?.bb) {
+			// Record only stores the combined rate; keep the historical 35/65 split
+			sentBytesPerSec = Math.round(system.info.bb * 0.35)
+			recvBytesPerSec = Math.round(system.info.bb * 0.65)
+		} else if (system.info?.b) {
+			const bytesPerSec = (system.info.b * 1024 * 1024) / 60
+			sentBytesPerSec = Math.round(bytesPerSec * 0.35)
+			recvBytesPerSec = Math.round(bytesPerSec * 0.65)
 		}
 
-		// Calculate realistic up/down split
-		const upBytes = Math.round(bytesPerSec * 0.35)
-		const downBytes = Math.round(bytesPerSec * 0.65)
+		const formatRate = (bytes: number) => {
+			const { value, unit } = formatBytes(bytes, true)
+			return `${value >= 100 ? value.toFixed(0) : value.toFixed(1)} ${unit}`
+		}
 
-		const upFormatted = formatBytes(upBytes, true)
-		const downFormatted = formatBytes(downBytes, true)
+		// Cumulative traffic: sum per-interface totals when available, else estimate from rate and uptime
+		const uptimeSeconds = liveInfo?.u ?? system.info?.u ?? 0
+		let cumulativeBytes = 0
+		if (liveStats?.ni) {
+			for (const totals of Object.values(liveStats.ni)) {
+				cumulativeBytes += (totals?.[2] ?? 0) + (totals?.[3] ?? 0)
+			}
+		}
+		if (!cumulativeBytes) {
+			const rate = sentBytesPerSec + recvBytesPerSec
+			cumulativeBytes = Math.max(
+				1024 * 1024 * 1024,
+				rate * 3600 * Math.min(Math.max(uptimeSeconds / 3600, 1), 720)
+			)
+		}
+		const totalFormatted = formatBytes(cumulativeBytes, false)
 
-		// Cumulative estimated traffic based on node uptime
-		const uptimeHours = (system.info?.u || 3600) / 3600
-		const estimatedBytes = Math.max(1024 * 1024 * 1024, bytesPerSec * 3600 * Math.min(uptimeHours, 720))
-		const totalTrafficFormatted = formatBytes(estimatedBytes, false)
-
+		const combinedRate = sentBytesPerSec + recvBytesPerSec
 		const bandwidthPercent = Math.min(
 			100,
-			Math.max(12, Math.round((Math.log10(Math.max(1024, bytesPerSec)) / 7) * 100))
+			Math.max(combinedRate > 0 ? 4 : 0, Math.round((Math.log10(Math.max(1024, combinedRate)) / 7) * 100))
 		)
 
 		return {
-			upRate: `${upFormatted.value.toFixed(1)} ${upFormatted.unit}/s`,
-			downRate: `${downFormatted.value.toFixed(1)} ${downFormatted.unit}/s`,
-			totalTraffic: `${totalTrafficFormatted.value.toFixed(1)} ${totalTrafficFormatted.unit}`,
+			upRate: formatRate(sentBytesPerSec),
+			downRate: formatRate(recvBytesPerSec),
+			totalTraffic: `${totalFormatted.value >= 100 ? totalFormatted.value.toFixed(0) : totalFormatted.value.toFixed(1)} ${totalFormatted.unit}`,
 			bandwidthPercent,
 		}
-	}, [isOnline, system.info?.bb, system.info?.b, system.info?.u])
+	}, [isOnline, liveStats?.b, liveStats?.ni, liveInfo?.u, system.info?.bb, system.info?.b, system.info?.u])
 
 	// Uptime String
 	const uptimeString = useMemo(() => {
-		if (!isOnline || !system.info?.u) return isOnline ? "Active" : "—"
-		return secondsToUptimeString(system.info.u)
-	}, [isOnline, system.info?.u])
+		const uptime = liveInfo?.u ?? system.info?.u
+		if (!isOnline) return "—"
+		if (!uptime) return "Active"
+		return secondsToUptimeString(uptime)
+	}, [isOnline, liveInfo?.u, system.info?.u])
+
+	// Live monitor latency from the realtime payload, keyed by monitor id
+	const liveMonitorStats = isOnline ? realtime?.Monitors : undefined
 
 	// Filter monitors for this system
 	const systemMonitors = useMemo(() => {
@@ -281,23 +322,24 @@ export const DenseServerCard = memo(function DenseServerCard({
 
 	// OS Info
 	const osString = useMemo(() => {
+		if (details?.os_name) return details.os_name
 		if (system.info?.os) return `Linux ${system.info.os}`
 		if (system.info?.o) return system.info.o
 		return "Linux"
-	}, [system.info?.os, system.info?.o])
+	}, [details?.os_name, system.info?.os, system.info?.o])
 
 	// Tags
 	const tags = useMemo(() => {
 		const t: string[] = []
 		t.push(osString)
 		if (cpuBrand) t.push(cpuBrand)
-		if (system.info?.c) t.push(`${system.info.c} Cores`)
-		if (system.info?.p) t.push("Podman")
+		if (cores) t.push(`${cores} Cores`)
+		if (details?.podman ?? system.info?.p) t.push("Podman")
 		else t.push("Docker")
 		if (system.info?.sv) t.push(`Systemd (${system.info.sv[0]})`)
 		if (gpu !== null) t.push("GPU")
 		return t
-	}, [osString, cpuBrand, system.info?.c, system.info?.p, system.info?.sv, gpu])
+	}, [osString, cpuBrand, cores, details?.podman, system.info?.p, system.info?.sv, gpu])
 
 	const handleCardClick = () => {
 		navigate(getPagePath($router, "system", { id: system.id }))
@@ -410,7 +452,7 @@ export const DenseServerCard = memo(function DenseServerCard({
 					<SegmentedBlockBar
 						label="CPU"
 						value={Number(cpu) || 0}
-						detail={`${system.info?.c ?? "—"} Cores · ${cpuBrand}`}
+						detail={`${cores ?? "—"} Cores · ${cpuBrand}`}
 						isOnline={isOnline}
 						type="cpu"
 					/>
@@ -490,9 +532,9 @@ export const DenseServerCard = memo(function DenseServerCard({
 					{/* Traffic Quota / Capacity Segmented Bar */}
 					<div className="pt-1.5 border-t border-border/30">
 						<SegmentedBlockBar
-							label="Traffic"
+							label="Throughput"
 							value={networkTelemetry.bandwidthPercent}
-							detail={`Cumulative ${networkTelemetry.totalTraffic}`}
+							detail={`Σ ${networkTelemetry.totalTraffic}`}
 							segments={10}
 							isOnline={isOnline}
 							type="quota"
@@ -508,15 +550,20 @@ export const DenseServerCard = memo(function DenseServerCard({
 							<span>Network Latency Matrix</span>
 						</div>
 						<span className="text-[10px] text-muted-foreground/70">
-							{systemMonitors.length > 0 ? `${systemMonitors.length} Nodes` : "Agent Probe"}
+							{systemMonitors.length > 0
+								? `${systemMonitors.length} ${systemMonitors.length === 1 ? "Probe" : "Probes"}`
+								: "No Probes"}
 						</span>
 					</div>
 
 					<div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-1">
 						{systemMonitors.length > 0 ? (
 							systemMonitors.map((mon) => {
-								const latencyMs = Math.round(mon.res / 1000)
-								const loss = mon.loss || 0
+								// Prefer the per-second probe result; fall back to the 60s record
+								const live = liveMonitorStats?.[mon.id]
+								const latencyUs = live?.res_avg ?? mon.res
+								const latencyMs = Math.round(latencyUs / 1000)
+								const loss = live ? Math.round(live.loss * 10) / 10 : (mon.loss1h || 0)
 								const isHealthy = loss === 0
 								return (
 									<div
@@ -533,23 +580,31 @@ export const DenseServerCard = memo(function DenseServerCard({
 													isHealthy ? "bg-emerald-500" : loss < 20 ? "bg-amber-500" : "bg-rose-500"
 												)}
 											/>
-											<span className="font-semibold text-foreground">{latencyMs}ms</span>
+											<span className="font-semibold text-foreground">
+												{latencyUs ? `${latencyMs}ms` : "—"}
+											</span>
 											<span className="text-[9px] text-muted-foreground">({loss}%)</span>
 										</div>
 									</div>
 								)
 							})
 						) : (
-							/* Fallback Heartbeat Quality indicator */
+							/* No probes configured: report the realtime stream's own state instead of inventing latency */
 							<div className="col-span-full flex items-center justify-between px-2.5 py-1 rounded-lg bg-background/60 dark:bg-slate-900/60 border border-border/40 text-[10px]">
 								<div className="flex items-center gap-1.5">
-									<span className="size-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-									<span className="text-muted-foreground font-medium">Telemetry Heartbeat</span>
+									<span
+										className={cn(
+											"size-1.5 rounded-full shrink-0",
+											realtime ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground/50"
+										)}
+									/>
+									<span className="text-muted-foreground font-medium">
+										{realtime ? "Live telemetry" : "Awaiting telemetry"}
+									</span>
 								</div>
-								<div className="flex items-center gap-2 font-mono tabular-nums">
-									<span className="text-emerald-600 dark:text-emerald-400 font-bold">&lt; 2ms RTT</span>
-									<span className="text-muted-foreground/70">Loss: 0.0%</span>
-								</div>
+								<span className="font-mono tabular-nums text-muted-foreground/70">
+									{realtime ? "1s interval" : "No probes configured"}
+								</span>
 							</div>
 						)}
 					</div>

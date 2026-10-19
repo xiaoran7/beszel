@@ -11,6 +11,8 @@ import { $systems, $upSystems, $downSystems } from "@/lib/stores"
 import { SystemStatus } from "@/lib/enums"
 import * as systemsManager from "@/lib/systemsManager"
 import { useNetworkMonitors } from "@/lib/use-network-monitors"
+import { useRealtimeSystems } from "@/lib/use-realtime-systems"
+import { useSystemDetails } from "@/lib/use-system-details"
 import { DashboardMetricsHeader } from "../dashboard/dashboard-metrics-header"
 import { DenseServerCard } from "../dashboard/dense-server-card"
 import { ServerGridCard } from "../dashboard/server-grid-card"
@@ -33,6 +35,9 @@ export default memo(function Home() {
 	const upSystems = useStore($upSystems)
 	const downSystems = useStore($downSystems)
 	const { monitors } = useNetworkMonitors({})
+	// Table view renders no live gauges, so only stream while a card view is active
+	const { metrics: realtimeMetrics } = useRealtimeSystems({ enabled: viewMode !== "table" })
+	const systemDetails = useSystemDetails()
 
 	const [viewMode, setViewMode] = useState<"dense" | "grid" | "table">(() => {
 		try {
@@ -192,7 +197,13 @@ export default memo(function Home() {
 					displaySystems.length > 0 ? (
 						<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 xl:gap-4.5">
 							{displaySystems.map((system) => (
-								<DenseServerCard key={system.id} system={system} monitors={monitors} />
+								<DenseServerCard
+									key={system.id}
+									system={system}
+									monitors={monitors}
+									realtime={realtimeMetrics[system.id]}
+									details={systemDetails[system.id]}
+								/>
 							))}
 							{/* "+ Add Server" Tile */}
 							<AddServerCard />
@@ -221,7 +232,12 @@ export default memo(function Home() {
 					displaySystems.length > 0 ? (
 						<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 xl:gap-4.5">
 							{displaySystems.map((system) => (
-								<ServerGridCard key={system.id} system={system} />
+								<ServerGridCard
+									key={system.id}
+									system={system}
+									realtime={realtimeMetrics[system.id]}
+									details={systemDetails[system.id]}
+								/>
 							))}
 							{/* "+ Add Server" Tile */}
 							<AddServerCard />
