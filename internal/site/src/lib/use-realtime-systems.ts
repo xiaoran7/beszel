@@ -107,16 +107,21 @@ export function useRealtimeSystems(options: UseRealtimeSystemsOptions = {}) {
 
 		let cancelled = false
 		const retryTimers: ReturnType<typeof setTimeout>[] = []
+		// Ids whose subscribe promise is owned by this effect run. Released on
+		// cleanup so a re-run can subscribe them again instead of being skipped.
+		const myPending = new Set<string>()
 
 		const subscribeToSystem = (id: string) => {
 			if (cancelled || active.has(id) || pendingIds.has(id)) return
 			pendingIds.add(id)
+			myPending.add(id)
 			pb.realtime
 				.subscribe("rt_metrics", (data: RealtimeSystemMetrics) => queueMetrics(id, data), {
 					query: { system: id },
 				})
 				.then((unsubscribe) => {
 					pendingIds.delete(id)
+					myPending.delete(id)
 					if (cancelled) {
 						unsubscribe()
 					} else {
@@ -125,6 +130,7 @@ export function useRealtimeSystems(options: UseRealtimeSystemsOptions = {}) {
 				})
 				.catch((error) => {
 					pendingIds.delete(id)
+					myPending.delete(id)
 					console.error(`Failed to subscribe to realtime metrics for ${id}:`, error)
 					// A hub restart or a network blip should not silence this system for
 					// the rest of the session.
@@ -141,6 +147,7 @@ export function useRealtimeSystems(options: UseRealtimeSystemsOptions = {}) {
 		return () => {
 			cancelled = true
 			for (const timer of retryTimers) clearTimeout(timer)
+			for (const id of myPending) pendingIds.delete(id)
 		}
 	}, [enabled, isVisible, idsKey])
 
