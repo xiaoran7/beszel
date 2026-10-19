@@ -35,9 +35,6 @@ export default memo(function Home() {
 	const upSystems = useStore($upSystems)
 	const downSystems = useStore($downSystems)
 	const { monitors } = useNetworkMonitors({})
-	// Table view renders no live gauges, so only stream while a card view is active
-	const { metrics: realtimeMetrics } = useRealtimeSystems({ enabled: viewMode !== "table" })
-	const systemDetails = useSystemDetails()
 
 	const [viewMode, setViewMode] = useState<"dense" | "grid" | "table">(() => {
 		try {
@@ -84,6 +81,12 @@ export default memo(function Home() {
 
 	const upCount = Object.keys(upSystems).length
 	const downCount = Object.keys(downSystems).length
+
+	const displaySystemIds = useMemo(() => displaySystems.map((system) => system.id), [displaySystems])
+
+	// Table view renders no live gauges, so only stream while a card view is active
+	const { metrics: realtimeMetrics } = useRealtimeSystems({ enabled: viewMode !== "table" })
+	const systemDetails = useSystemDetails(displaySystemIds)
 
 	return (
 		<div className="relative w-full min-h-[calc(100vh-4rem)] pb-12">
