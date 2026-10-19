@@ -54,12 +54,8 @@ export const SystemKpiCards = memo(function SystemKpiCards({ system, details }: 
 					<ClockIcon className="size-6" />
 				</div>
 				<div className="flex flex-col min-w-0">
-					<span className="text-xs font-medium text-muted-foreground">
-						Uptime
-					</span>
-					<span className="text-lg font-bold tracking-tight text-foreground truncate mt-0.5">
-						{uptimeString}
-					</span>
+					<span className="text-xs font-medium text-muted-foreground">Uptime</span>
+					<span className="text-lg font-bold tracking-tight text-foreground truncate mt-0.5">{uptimeString}</span>
 					<span className="text-[11px] text-muted-foreground/80 mt-0.5 truncate">
 						{system.status === "up" ? "Running continuously" : "System Offline"}
 					</span>
@@ -72,15 +68,11 @@ export const SystemKpiCards = memo(function SystemKpiCards({ system, details }: 
 					<ActivityIcon className="size-6" />
 				</div>
 				<div className="flex flex-col min-w-0">
-					<span className="text-xs font-medium text-muted-foreground">
-						Load Average
-					</span>
+					<span className="text-xs font-medium text-muted-foreground">Load Average</span>
 					<span className="text-lg font-bold tracking-tight text-foreground truncate mt-0.5 font-mono">
 						{loadString}
 					</span>
-					<span className="text-[11px] text-muted-foreground/80 mt-0.5">
-						1 / 5 / 15 minutes
-					</span>
+					<span className="text-[11px] text-muted-foreground/80 mt-0.5">1 / 5 / 15 minutes</span>
 				</div>
 			</div>
 
@@ -90,12 +82,8 @@ export const SystemKpiCards = memo(function SystemKpiCards({ system, details }: 
 					<ThermometerIcon className="size-6" />
 				</div>
 				<div className="flex flex-col min-w-0">
-					<span className="text-xs font-medium text-muted-foreground">
-						CPU Temperature
-					</span>
-					<span className="text-lg font-bold tracking-tight text-foreground truncate mt-0.5">
-						{tempString}
-					</span>
+					<span className="text-xs font-medium text-muted-foreground">CPU Temperature</span>
+					<span className="text-lg font-bold tracking-tight text-foreground truncate mt-0.5">{tempString}</span>
 					<span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5 flex items-center gap-1">
 						<span className="size-1.5 rounded-full bg-emerald-500" />
 						{tempString !== "—" ? "Monitored" : "Not available"}
@@ -103,31 +91,34 @@ export const SystemKpiCards = memo(function SystemKpiCards({ system, details }: 
 				</div>
 			</div>
 
-				{/* KPI 4: Host Address */}
-				<div className="flex items-center gap-4 p-4.5 rounded-2xl bg-card border border-border/80 shadow-2xs hover:border-sky-300/60 transition-all">
-					<div className="flex items-center justify-center size-12 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 shrink-0">
-						<GlobeIcon className="size-6" />
-					</div>
-					<div className="flex flex-col min-w-0">
-						<span className="text-xs font-medium text-muted-foreground">
-							Public & Mesh IP
-						</span>
-						<span className="text-lg font-bold tracking-tight text-foreground truncate mt-0.5 font-mono" title={publicInfo?.publicIp ?? hostAddress}>
-							{publicInfo?.publicIp ?? hostAddress}
-						</span>
-						<span className="text-[11px] text-muted-foreground/90 font-medium mt-0.5 flex items-center gap-1.5 truncate">
-							{publicInfo ? (
-								<>
-									<span className="text-sky-600 dark:text-sky-400 font-semibold">{publicInfo.location}</span>
-									<span className="text-muted-foreground/40">·</span>
-									<span className="font-mono text-muted-foreground truncate" title={`Tailnet: ${hostAddress}`}>Mesh: {hostAddress}</span>
-								</>
-							) : (
-								<span>Node Location</span>
-							)}
-						</span>
-					</div>
+			{/* KPI 4: Host Address */}
+			<div className="flex items-center gap-4 p-4.5 rounded-2xl bg-card border border-border/80 shadow-2xs hover:border-sky-300/60 transition-all">
+				<div className="flex items-center justify-center size-12 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 shrink-0">
+					<GlobeIcon className="size-6" />
 				</div>
+				<div className="flex flex-col min-w-0">
+					<span className="text-xs font-medium text-muted-foreground">Public & Mesh IP</span>
+					<span
+						className="text-lg font-bold tracking-tight text-foreground truncate mt-0.5 font-mono"
+						title={publicInfo?.publicIp || hostAddress}
+					>
+						{publicInfo?.publicIp || hostAddress}
+					</span>
+					<span className="text-[11px] text-muted-foreground/90 font-medium mt-0.5 flex items-center gap-1.5 truncate">
+						{publicInfo ? (
+							<>
+								<span className="text-sky-600 dark:text-sky-400 font-semibold">{publicInfo.location}</span>
+								<span className="text-muted-foreground/40">·</span>
+								<span className="font-mono text-muted-foreground truncate" title={`Tailnet: ${hostAddress}`}>
+									Mesh: {hostAddress}
+								</span>
+							</>
+						) : (
+							<span>Node Location</span>
+						)}
+					</span>
+				</div>
+			</div>
 		</div>
 	)
 })

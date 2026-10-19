@@ -5,6 +5,7 @@ import { toast } from "@/components/ui/use-toast"
 import { dynamicActivate, getLocale } from "@/lib/i18n"
 import type { ChartTimes, UserSettings } from "@/types"
 import { $alerts, $allSystemsById, $allSystemsByName, $userSettings } from "./stores"
+import { clearSystemDetailsCache } from "./use-system-details"
 import { chartTimeData, debounce } from "./utils"
 
 /** PocketBase JS Client */
@@ -48,6 +49,7 @@ export function logOut() {
 	$allSystemsById.set({})
 	$alerts.set({})
 	$userSettings.set({} as UserSettings)
+	clearSystemDetailsCache()
 	sessionStorage.setItem("lo", "t") // prevent auto login on logout
 	pb.authStore.clear()
 	pb.realtime.unsubscribe()

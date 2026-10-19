@@ -496,7 +496,12 @@ export function parseFilterGroups(value: string): string[][] {
 	return value
 		.toLowerCase()
 		.split(",")
-		.map((group) => group.trim().split(" ").filter((term) => term.length > 0))
+		.map((group) =>
+			group
+				.trim()
+				.split(" ")
+				.filter((term) => term.length > 0)
+		)
 		.filter((terms) => terms.length > 0)
 }
 
@@ -536,7 +541,9 @@ export function secondsToUptimeString(seconds: number): string {
 }
 
 /**
- * Server IP Resolution: Map internal Tailscale mesh IPs to verified public IPs
+ * Server IP Resolution: map known Tailscale mesh IPs to verified public IPs and
+ * location badges. This is deployment inventory, not application logic: hosts
+ * that are not listed fall back to the name heuristics in `getServerLocation`.
  */
 export interface ServerLocationInfo {
 	code: string
@@ -557,46 +564,55 @@ export const SERVER_IP_MAP: Record<string, { publicIp: string; location: string;
 export function getServerPublicIp(host: string): string | undefined {
 	if (!host) return undefined
 	const cleanHost = host.split(":")[0].trim()
+	// Entries may intentionally carry an empty publicIp; callers fall back on the host
 	return SERVER_IP_MAP[cleanHost]?.publicIp || undefined
+}
+
+/**
+ * Region keywords matched as whole tokens against the system name and host.
+ * Token matching keeps short codes (`de-`, `sin`, `lax`) from matching
+ * unrelated words such as `node-1`, `business-db` or `relaxed-proxy`.
+ */
+const LOCATION_KEYWORDS: { info: ServerLocationInfo; tokens: string[] }[] = [
+	{ info: { code: "JP", flag: "🇯🇵", city: "Tokyo" }, tokens: ["tokyo", "japan", "jp"] },
+	{
+		info: { code: "US", flag: "🇺🇸", city: "United States" },
+		tokens: ["zenix", "losangeles", "lax", "racknerd", "newyork", "nyc", "us", "america", "usa"],
+	},
+	{ info: { code: "CA", flag: "🇨🇦", city: "Montreal" }, tokens: ["montreal", "canada", "toronto", "ca"] },
+	{
+		info: { code: "CN", flag: "🇨🇳", city: "China" },
+		tokens: ["huawei", "beijing", "hangzhou", "shanghai", "china", "cn", "tencent", "aliyun"],
+	},
+	{ info: { code: "HK", flag: "🇭🇰", city: "Hong Kong" }, tokens: ["hongkong", "hk", "hkg"] },
+	{ info: { code: "SG", flag: "🇸🇬", city: "Singapore" }, tokens: ["singapore", "sg", "sin"] },
+	{ info: { code: "DE", flag: "🇩🇪", city: "Frankfurt" }, tokens: ["frankfurt", "germany", "de"] },
+	{ info: { code: "UK", flag: "🇬🇧", city: "London" }, tokens: ["london", "uk", "britain"] },
+	{ info: { code: "KR", flag: "🇰🇷", city: "Seoul" }, tokens: ["seoul", "korea", "kr"] },
+]
+
+/** Split a name/host into lowercase word tokens: `jp-tokyo-01` → `jp`, `tokyo`, `01`. */
+function tokenizeLocationSource(value: string): Set<string> {
+	const tokens = new Set<string>()
+	for (const part of value.toLowerCase().split(/[^a-z0-9]+/)) {
+		if (part) tokens.add(part)
+	}
+	return tokens
 }
 
 export function getServerLocation(host?: string, name?: string): ServerLocationInfo {
 	if (!host && !name) return { code: "NODE", flag: "🌐", city: "Global" }
 	const cleanHost = host ? host.split(":")[0].trim() : ""
 	const mapped = SERVER_IP_MAP[cleanHost]
-	if (mapped && mapped.code && mapped.flag) {
+	if (mapped?.code && mapped.flag) {
 		const city = mapped.location.split(",")[0].trim()
 		return { code: mapped.code, flag: mapped.flag, city }
 	}
 
-	const target = ((name || "") + " " + cleanHost).toLowerCase()
-	if (target.includes("tokyo") || target.includes("japan") || target.includes("jp-") || target.includes("-jp") || target.includes(".jp")) {
-		return { code: "JP", flag: "🇯🇵", city: "Tokyo" }
-	}
-	if (target.includes("zenix") || target.includes("los angeles") || target.includes("lax") || target.includes("racknerd") || target.includes("new york") || target.includes("nyc") || target.includes("us-") || target.includes("-us") || target.includes("america")) {
-		return { code: "US", flag: "🇺🇸", city: "United States" }
-	}
-	if (target.includes("montreal") || target.includes("canada") || target.includes("ca-") || target.includes("-ca") || target.includes("toronto")) {
-		return { code: "CA", flag: "🇨🇦", city: "Montreal" }
-	}
-	if (target.includes("huawei") || target.includes("beijing") || target.includes("hangzhou") || target.includes("shanghai") || target.includes("china") || target.includes("cn-") || target.includes("-cn") || target.includes("tencent") || target.includes("aliyun")) {
-		return { code: "CN", flag: "🇨🇳", city: "China" }
-	}
-	if (target.includes("hongkong") || target.includes("hk-") || target.includes("-hk") || target.includes("hkg")) {
-		return { code: "HK", flag: "🇭🇰", city: "Hong Kong" }
-	}
-	if (target.includes("singapore") || target.includes("sg-") || target.includes("-sg") || target.includes("sin")) {
-		return { code: "SG", flag: "🇸🇬", city: "Singapore" }
-	}
-	if (target.includes("frankfurt") || target.includes("germany") || target.includes("de-") || target.includes("-de")) {
-		return { code: "DE", flag: "🇩🇪", city: "Frankfurt" }
-	}
-	if (target.includes("london") || target.includes("uk-") || target.includes("-uk") || target.includes("britain")) {
-		return { code: "UK", flag: "🇬🇧", city: "London" }
-	}
-	if (target.includes("seoul") || target.includes("korea") || target.includes("kr-") || target.includes("-kr")) {
-		return { code: "KR", flag: "🇰🇷", city: "Seoul" }
+	const source = `${name ?? ""} ${cleanHost}`
+	const tokens = tokenizeLocationSource(source)
+	for (const { info, tokens: keywords } of LOCATION_KEYWORDS) {
+		if (keywords.some((keyword) => tokens.has(keyword))) return info
 	}
 	return { code: "NODE", flag: "🌐", city: "Global" }
 }
-

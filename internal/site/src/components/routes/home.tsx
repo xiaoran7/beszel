@@ -1,14 +1,9 @@
 import { memo, useState, useMemo, useEffect } from "react"
 import { useStore } from "@nanostores/react"
-import {
-	LayoutGridIcon,
-	LayoutListIcon,
-	LayoutTemplateIcon,
-	PlusIcon,
-	ServerIcon,
-} from "lucide-react"
+import { LayoutGridIcon, LayoutListIcon, LayoutTemplateIcon, PlusIcon, ServerIcon } from "lucide-react"
 import { $systems, $upSystems, $downSystems } from "@/lib/stores"
 import { SystemStatus } from "@/lib/enums"
+import type { NetworkMonitorRecord } from "@/types"
 import * as systemsManager from "@/lib/systemsManager"
 import { useNetworkMonitors } from "@/lib/use-network-monitors"
 import { useRealtimeSystems } from "@/lib/use-realtime-systems"
@@ -22,23 +17,28 @@ import { AronaCompanionPanel } from "../dashboard/arona-companion-panel"
 import SystemsTable from "../systems-table/systems-table"
 import { AddSystemDialog } from "../add-system"
 import { ActiveAlerts } from "../active-alerts"
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
+
+const VIEW_MODES = ["dense", "grid", "table"] as const
+type ViewMode = (typeof VIEW_MODES)[number]
+
+/** Latency matrix on a card shows at most this many probes. */
+const MAX_CARD_MONITORS = 3
+
+function isViewMode(value: string | null): value is ViewMode {
+	return value !== null && (VIEW_MODES as readonly string[]).includes(value)
+}
 
 export default memo(function Home() {
 	const realSystems = useStore($systems)
 	const upSystems = useStore($upSystems)
 	const downSystems = useStore($downSystems)
-	const { monitors } = useNetworkMonitors({})
 
-	const [viewMode, setViewMode] = useState<"dense" | "grid" | "table">(() => {
+	const [viewMode, setViewMode] = useState<ViewMode>(() => {
 		try {
-			return (localStorage.getItem("beszel-dashboard-view-mode") as "dense" | "grid" | "table") || "dense"
+			const stored = localStorage.getItem("beszel-dashboard-view-mode")
+			return isViewMode(stored) ? stored : "dense"
 		} catch {
 			return "dense"
 		}
@@ -46,7 +46,10 @@ export default memo(function Home() {
 	const [sortBy, setSortBy] = useState<"name" | "status" | "cpu" | "memory">("name")
 	const [addDialogOpen, setAddDialogOpen] = useState(false)
 
-	const handleViewModeChange = (mode: "dense" | "grid" | "table") => {
+	// Only the card views render latency matrices, so skip the monitor feed otherwise
+	const { monitors } = useNetworkMonitors({ enabled: viewMode !== "table" })
+
+	const handleViewModeChange = (mode: ViewMode) => {
 		setViewMode(mode)
 		try {
 			localStorage.setItem("beszel-dashboard-view-mode", mode)
@@ -69,15 +72,31 @@ export default memo(function Home() {
 		if (sortBy === "name") {
 			copy.sort((a, b) => a.name.localeCompare(b.name))
 		} else if (sortBy === "status") {
-			copy.sort((a, b) => (a.status === SystemStatus.Up ? -1 : 1))
+			// Online first; a comparator must return 0 for equal ranks or sorting is unstable
+			copy.sort((a, b) => Number(b.status === SystemStatus.Up) - Number(a.status === SystemStatus.Up))
 		} else if (sortBy === "cpu") {
-			copy.sort((a, b) => ((b.info?.cpu ?? b.info?.cpu_percent ?? 0) - (a.info?.cpu ?? a.info?.cpu_percent ?? 0)))
+			copy.sort((a, b) => (b.info?.cpu ?? 0) - (a.info?.cpu ?? 0))
 		} else if (sortBy === "memory") {
-			copy.sort((a, b) => ((b.info?.mp ?? 0) - (a.info?.mp ?? 0)))
+			copy.sort((a, b) => (b.info?.mp ?? 0) - (a.info?.mp ?? 0))
 		}
 
 		return copy
 	}, [realSystems, sortBy])
+
+	// Group monitors once here instead of letting every card filter the full list
+	const monitorsBySystem = useMemo(() => {
+		const grouped: Record<string, NetworkMonitorRecord[]> = {}
+		for (const monitor of monitors) {
+			if (!monitor.enabled) continue
+			const list = grouped[monitor.system]
+			if (list) {
+				if (list.length < MAX_CARD_MONITORS) list.push(monitor)
+			} else {
+				grouped[monitor.system] = [monitor]
+			}
+		}
+		return grouped
+	}, [monitors])
 
 	const upCount = Object.keys(upSystems).length
 	const downCount = Object.keys(downSystems).length
@@ -96,11 +115,7 @@ export default memo(function Home() {
 			{/* Main Interactive Content Workspace */}
 			<div className="relative z-10 w-full p-4 md:p-6 lg:p-7 2xl:pr-[310px] flex flex-col gap-6">
 				{/* 1. Sensei Morning Welcome & 4 Metric Cards */}
-				<DashboardMetricsHeader
-					systems={displaySystems}
-					upCount={upCount}
-					downCount={downCount}
-				/>
+				<DashboardMetricsHeader systems={displaySystems} upCount={upCount} downCount={downCount} />
 
 				{/* Active Alerts Banner if any */}
 				<ActiveAlerts />
@@ -108,9 +123,7 @@ export default memo(function Home() {
 				{/* 2. Server Overview Toolbar */}
 				<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
 					<div>
-						<h2 className="text-xl font-bold tracking-tight text-foreground font-sans">
-							Server Overview
-						</h2>
+						<h2 className="text-xl font-bold tracking-tight text-foreground font-sans">Server Overview</h2>
 						<p className="text-xs text-muted-foreground font-medium mt-0.5">
 							Real-time status and performance telemetry
 						</p>
@@ -130,10 +143,10 @@ export default memo(function Home() {
 										{sortBy === "name"
 											? "Name (A → Z)"
 											: sortBy === "status"
-											? "Status"
-											: sortBy === "cpu"
-											? "CPU Usage"
-											: "Memory Usage"}
+												? "Status"
+												: sortBy === "cpu"
+													? "CPU Usage"
+													: "Memory Usage"}
 									</span>
 								</Button>
 							</DropdownMenuTrigger>
@@ -203,7 +216,7 @@ export default memo(function Home() {
 								<DenseServerCard
 									key={system.id}
 									system={system}
-									monitors={monitors}
+									monitors={monitorsBySystem[system.id]}
 									realtime={realtimeMetrics[system.id]}
 									details={systemDetails[system.id]}
 								/>
@@ -219,7 +232,8 @@ export default memo(function Home() {
 							</div>
 							<h3 className="text-lg font-bold text-foreground">No servers connected yet</h3>
 							<p className="text-xs text-muted-foreground mt-1 max-w-sm">
-								Install the Beszel agent on your servers to start monitoring real-time metrics in the Schale control center.
+								Install the Beszel agent on your servers to start monitoring real-time metrics in the Schale control
+								center.
 							</p>
 							<Button
 								onClick={() => setAddDialogOpen(true)}
@@ -253,7 +267,8 @@ export default memo(function Home() {
 							</div>
 							<h3 className="text-lg font-bold text-foreground">No servers connected yet</h3>
 							<p className="text-xs text-muted-foreground mt-1 max-w-sm">
-								Install the Beszel agent on your servers to start monitoring real-time metrics in the Schale control center.
+								Install the Beszel agent on your servers to start monitoring real-time metrics in the Schale control
+								center.
 							</p>
 							<Button
 								onClick={() => setAddDialogOpen(true)}

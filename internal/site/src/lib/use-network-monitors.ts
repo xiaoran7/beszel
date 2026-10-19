@@ -78,10 +78,12 @@ const NETWORK_MONITOR_FIELDS =
 
 interface UseNetworkMonitorsProps {
 	systemId?: string
+	/** Set false to skip the fetch and realtime subscription (e.g. when no card shows monitors). */
+	enabled?: boolean
 }
 
 export function useNetworkMonitors(props: UseNetworkMonitorsProps) {
-	const { systemId } = props
+	const { systemId, enabled = true } = props
 
 	const [monitors, setMonitors] = useState<NetworkMonitorRecord[]>([])
 	const [isLoading, setIsLoading] = useState(true)
@@ -90,6 +92,10 @@ export function useNetworkMonitors(props: UseNetworkMonitorsProps) {
 
 	// initial load
 	useEffect(() => {
+		if (!enabled) {
+			setIsLoading(false)
+			return
+		}
 		let cancelled = false
 		setIsLoading(true)
 		setMonitors([])
@@ -101,10 +107,11 @@ export function useNetworkMonitors(props: UseNetworkMonitorsProps) {
 		return () => {
 			cancelled = true
 		}
-	}, [systemId])
+	}, [systemId, enabled])
 
 	// subscribe to updates
 	useEffect(() => {
+		if (!enabled) return
 		let unsubscribe: (() => void) | undefined
 
 		function flushPendingMonitorEvents() {
@@ -149,7 +156,7 @@ export function useNetworkMonitors(props: UseNetworkMonitorsProps) {
 			pendingMonitorEvents.current.clear()
 			unsubscribe?.()
 		}
-	}, [systemId])
+	}, [systemId, enabled])
 
 	return { monitors, isLoading }
 }

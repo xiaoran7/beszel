@@ -11,7 +11,6 @@ import {
 	HardDriveIcon,
 	GaugeIcon,
 } from "lucide-react"
-import { SystemStatus } from "@/lib/enums"
 import {
 	formatBytes,
 	formatMicroseconds,
@@ -20,8 +19,16 @@ import {
 	getServerLocation,
 	cn,
 } from "@/lib/utils"
+import { Unit } from "@/lib/enums"
+import { $userSettings } from "@/lib/stores"
+import { useStore } from "@nanostores/react"
+import {
+	deriveSystemCardStats,
+	formatSpecChip,
+	getCpuBrandLabel,
+	type RealtimeSystemMetrics,
+} from "@/lib/system-card-stats"
 import type { SystemRecord, NetworkMonitorRecord, SystemDetailsRecord } from "@/types"
-import type { RealtimeSystemMetrics } from "@/lib/use-realtime-systems"
 import { $router, navigate } from "../router"
 import { getPagePath } from "@nanostores/router"
 import { ActionsButton } from "../systems-table/systems-table-columns"
@@ -38,11 +45,25 @@ const LATENCY_THRESHOLDS: Record<string, { warn: number; bad: number }> = {
 	dns: { warn: 150_000, bad: 800_000 },
 }
 
+/** Loss tiers, matching `responseTimeCell`/loss columns in the monitors table. */
+const LOSS_WARN_PCT = 0
+const LOSS_BAD_PCT = 20
+
 const QUALITY_SEGMENT_COLORS: Record<QualityLevel, string> = {
 	good: "bg-emerald-500 dark:bg-emerald-400 dark:shadow-[0_0_6px_rgba(52,211,153,0.45)]",
 	warn: "bg-amber-500 dark:bg-amber-400 dark:shadow-[0_0_6px_rgba(251,191,36,0.45)]",
 	bad: "bg-rose-500 dark:bg-rose-400 dark:shadow-[0_0_6px_rgba(251,113,133,0.45)]",
 	idle: "bg-slate-200/80 dark:bg-slate-800/80 border border-slate-300/40 dark:border-slate-700/50",
+}
+
+/** Shared empty-segment class; the filled class is chosen once per bar. */
+const EMPTY_SEGMENT_CLASS = "bg-slate-200/80 dark:bg-slate-800/80 border border-slate-300/40 dark:border-slate-700/50"
+
+/** Segment indexes never change for the default 10-block bar; reuse one array. */
+const SEGMENT_INDEXES = Array.from({ length: 10 }, (_, index) => index)
+
+function segmentIndexes(count: number) {
+	return count === 10 ? SEGMENT_INDEXES : Array.from({ length: count }, (_, index) => index)
 }
 
 /** Format a gigabyte value the way the capacity rows expect (762 MB / 3.79 GB). */
@@ -54,18 +75,18 @@ function formatCapacity(gb: number | undefined): string | undefined {
 }
 
 /** Format a cumulative byte counter (529 GB / 1.02 TB). */
-function formatTraffic(bytes: number | undefined): string | undefined {
+function formatTraffic(bytes: number | undefined, unit = Unit.Bytes): string | undefined {
 	if (bytes == null || !Number.isFinite(bytes) || bytes <= 0) return undefined
-	const { value, unit } = formatBytes(bytes)
-	const digits = value >= 100 ? 0 : value >= 10 ? 1 : 2
-	return `${value.toFixed(digits)} ${unit}`
+	const formatted = formatBytes(bytes, false, unit)
+	const digits = formatted.value >= 100 ? 0 : formatted.value >= 10 ? 1 : 2
+	return `${formatted.value.toFixed(digits)} ${formatted.unit}`
 }
 
 /** Format a per-second byte rate (2.21 KB/s). */
-function formatRate(bytesPerSec: number): string {
-	const { value, unit } = formatBytes(bytesPerSec, true)
-	const digits = value >= 100 ? 0 : value >= 10 ? 1 : 2
-	return `${value.toFixed(digits)} ${unit}`
+function formatRate(bytesPerSec: number, unit = Unit.Bytes): string {
+	const formatted = formatBytes(bytesPerSec, true, unit)
+	const digits = formatted.value >= 100 ? 0 : formatted.value >= 10 ? 1 : 2
+	return `${formatted.value.toFixed(digits)} ${formatted.unit}`
 }
 
 function formatPercent(value: number): string {
@@ -101,8 +122,8 @@ const SegmentedBlockBar = memo(function SegmentedBlockBar({
 	const clampedValue = Math.min(100, Math.max(0, value))
 	const filledCount = isOnline ? Math.round((clampedValue / 100) * segments) : 0
 
-	// Determine color scheme based on utilization threshold
-	const activeColorClass = useMemo(() => {
+	// One class string per bar instead of one `cn()` call per segment
+	const filledClass = useMemo(() => {
 		if (type === "gpu") {
 			return "bg-pink-500 dark:bg-pink-400 dark:shadow-[0_0_8px_rgba(236,72,153,0.5)]"
 		}
@@ -143,14 +164,12 @@ const SegmentedBlockBar = memo(function SegmentedBlockBar({
 
 			{/* Discrete Segments Row */}
 			<div className="flex items-center gap-1 w-full">
-				{Array.from({ length: segments }).map((_, idx) => (
+				{segmentIndexes(segments).map((idx) => (
 					<div
 						key={idx}
 						className={cn(
-							"h-1.5 sm:h-2 flex-1 rounded-[2px] transition-all duration-300",
-							idx < filledCount
-								? activeColorClass
-								: "bg-slate-200/80 dark:bg-slate-800/80 border border-slate-300/40 dark:border-slate-700/50"
+							"h-1.5 sm:h-2 flex-1 rounded-[2px] transition-colors duration-300",
+							idx < filledCount ? filledClass : EMPTY_SEGMENT_CLASS
 						)}
 					/>
 				))}
@@ -160,22 +179,13 @@ const SegmentedBlockBar = memo(function SegmentedBlockBar({
 })
 
 /** A full-width strip of segments colored by a single quality tier. */
-const QualityBar = memo(function QualityBar({
-	level,
-	segments = 10,
-}: {
-	level: QualityLevel
-	segments?: number
-}) {
+const QualityBar = memo(function QualityBar({ level, segments = 10 }: { level: QualityLevel; segments?: number }) {
 	return (
 		<div className="flex items-center gap-[3px] w-full">
-			{Array.from({ length: segments }).map((_, idx) => (
+			{segmentIndexes(segments).map((idx) => (
 				<div
 					key={idx}
-					className={cn(
-						"h-1.5 flex-1 rounded-[2px] transition-colors duration-300",
-						QUALITY_SEGMENT_COLORS[level]
-					)}
+					className={cn("h-1.5 flex-1 rounded-[2px] transition-colors duration-300", QUALITY_SEGMENT_COLORS[level])}
 				/>
 			))}
 		</div>
@@ -184,6 +194,7 @@ const QualityBar = memo(function QualityBar({
 
 interface DenseServerCardProps {
 	system: SystemRecord
+	/** This system's enabled probes, pre-filtered by the caller. */
 	monitors?: NetworkMonitorRecord[]
 	realtime?: RealtimeSystemMetrics
 	details?: SystemDetailsRecord
@@ -195,20 +206,29 @@ export const DenseServerCard = memo(function DenseServerCard({
 	realtime,
 	details,
 }: DenseServerCardProps) {
-	const isOnline = system.status === SystemStatus.Up
-	const isPaused = system.status === SystemStatus.Paused
-
-	// Raw stats: prefer the per-second realtime payload, fall back to the 60s record
-	const liveStats = isOnline ? realtime?.stats : undefined
-	const liveInfo = isOnline ? realtime?.info : undefined
-	const cpu = isOnline ? (liveStats?.cpu ?? system.info?.cpu ?? system.info?.cpu_percent ?? system.info?.c_p ?? 0) : 0
-	const memory = isOnline ? (liveStats?.mp ?? system.info?.mp ?? 0) : 0
-	const disk = isOnline ? (liveStats?.dp ?? system.info?.dp ?? 0) : 0
-	// GPU: 0 is a valid idle reading, so only null/undefined means "no GPU reported"
-	const gpuUsages = liveStats?.g ? Object.values(liveStats.g).map((d) => d.u ?? 0) : []
-	const gpu = isOnline
-		? (liveInfo?.g ?? (gpuUsages.length ? Math.max(...gpuUsages) : system.info?.g) ?? null)
-		: null
+	const unitNet = useStore($userSettings, { keys: ["unitNet"] }).unitNet
+	const stats = deriveSystemCardStats(system, realtime, details)
+	const {
+		isOnline,
+		isPaused,
+		liveStats,
+		cpu,
+		memory,
+		disk,
+		gpu,
+		cores,
+		threads,
+		loadAverage,
+		uptimeSeconds,
+		memTotalGb,
+		memUsedGb,
+		diskTotalGb,
+		diskUsedGb,
+		sentBytesPerSec,
+		recvBytesPerSec,
+		totalOutBytes,
+		totalInBytes,
+	} = stats
 
 	// Geographic Location & Flag
 	const location = useMemo(() => {
@@ -242,27 +262,11 @@ export const DenseServerCard = memo(function DenseServerCard({
 		return tags
 	}, [system.host, publicIp])
 
-	// Core / thread count: modern agents report these via system_details only
-	const cores = details?.cores || system.info?.c
-	const threads = details?.threads || system.info?.t
-
 	// CPU Brand / Core Detail
 	const cpuBrand = useMemo(() => {
-		const m = details?.cpu || system.info?.m
-		if (!m) return "CPU"
-		if (m.includes("EPYC")) return "AMD EPYC"
-		if (m.includes("Ryzen")) return "AMD Ryzen"
-		if (m.includes("Xeon")) return "Intel Xeon"
-		if (m.includes("Intel")) return "Intel"
-		if (m.includes("Apple") || m.includes("M1") || m.includes("M2") || m.includes("M3") || m.includes("M4")) return "Apple Silicon"
-		if (m.includes("ARM") || m.includes("aarch64")) return "ARM64"
-		return m.slice(0, 16)
+		return getCpuBrandLabel(details?.cpu || system.info?.m) ?? "CPU"
 	}, [details?.cpu, system.info?.m])
 
-	// Memory total (GB): live stats first, then the static details record (bytes)
-	const memTotalGb = liveStats?.m ?? (details?.memory ? details.memory / 1024 ** 3 : undefined)
-	// Used memory (GB): live value, otherwise derived from the real percentage × real total
-	const memUsedGb = liveStats?.mu ?? (memTotalGb != null ? (memory / 100) * memTotalGb : undefined)
 	const memDetail = useMemo(() => {
 		const used = formatCapacity(memUsedGb)
 		const total = formatCapacity(memTotalGb)
@@ -270,36 +274,28 @@ export const DenseServerCard = memo(function DenseServerCard({
 		return total ? `Total ${total}` : undefined
 	}, [memUsedGb, memTotalGb])
 
-	// Disk capacity (GB) comes from the live stats payload only
 	const diskDetail = useMemo(() => {
-		const used = formatCapacity(liveStats?.du)
-		const total = formatCapacity(liveStats?.d)
+		const used = formatCapacity(diskUsedGb)
+		const total = formatCapacity(diskTotalGb)
 		if (used && total) return `${used} / ${total}`
 		return total ? `Total ${total}` : "Root FS"
-	}, [liveStats?.du, liveStats?.d])
+	}, [diskUsedGb, diskTotalGb])
 
 	// Spec chip: "2C · 3.79G"
-	const specChip = useMemo(() => {
-		const parts: string[] = []
-		if (cores) parts.push(`${cores}C`)
-		if (memTotalGb) parts.push(`${memTotalGb >= 10 ? memTotalGb.toFixed(0) : memTotalGb.toFixed(1)}G`)
-		return parts.join(" · ")
-	}, [cores, memTotalGb])
-
-	// Load Average
-	const loadAverage = useMemo(() => {
-		if (!isOnline) return null
-		const la = liveStats?.la ?? liveInfo?.la ?? system.info?.la
-		return la && la.length ? la : null
-	}, [isOnline, liveStats?.la, liveInfo?.la, system.info?.la])
+	const specChip = useMemo(() => formatSpecChip(cores, memTotalGb), [cores, memTotalGb])
 
 	// Load Level Badge
 	const loadLevel = useMemo(() => {
 		if (!loadAverage) return null
 		const loadCores = cores || threads || 1
 		const normalized = loadAverage[0] / loadCores
-		if (normalized < 0.7) return { label: "Optimal", color: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20" }
-		if (normalized < 1.0) return { label: "Normal", color: "text-sky-600 dark:text-sky-400 bg-sky-500/10 border-sky-500/20" }
+		if (normalized < 0.7)
+			return {
+				label: "Optimal",
+				color: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+			}
+		if (normalized < 1.0)
+			return { label: "Normal", color: "text-sky-600 dark:text-sky-400 bg-sky-500/10 border-sky-500/20" }
 		return { label: "Heavy", color: "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20" }
 	}, [loadAverage, cores, threads])
 
@@ -308,48 +304,23 @@ export const DenseServerCard = memo(function DenseServerCard({
 		if (!isOnline) {
 			return { upRate: "—", downRate: "—", totalOut: "—", totalIn: "—" }
 		}
-
-		// stats.b = [sent bytes/s, recv bytes/s]; omitted while both are zero
-		const sent = liveStats?.b?.[0]
-		const recv = liveStats?.b?.[1]
-
-		// stats.ni totals = [up bytes, down bytes, total up, total down] per interface
-		let totalOut: number | undefined
-		let totalIn: number | undefined
-		if (liveStats?.ni) {
-			let out = 0
-			let inbound = 0
-			for (const totals of Object.values(liveStats.ni)) {
-				out += totals?.[2] ?? 0
-				inbound += totals?.[3] ?? 0
-			}
-			totalOut = out
-			totalIn = inbound
-		}
-
 		return {
-			upRate: liveStats ? formatRate(sent ?? 0) : "—",
-			downRate: liveStats ? formatRate(recv ?? 0) : "—",
-			totalOut: formatTraffic(totalOut) ?? "—",
-			totalIn: formatTraffic(totalIn) ?? "—",
+			upRate: sentBytesPerSec === undefined ? "—" : formatRate(sentBytesPerSec, unitNet),
+			downRate: recvBytesPerSec === undefined ? "—" : formatRate(recvBytesPerSec, unitNet),
+			totalOut: formatTraffic(totalOutBytes, unitNet) ?? "—",
+			totalIn: formatTraffic(totalInBytes, unitNet) ?? "—",
 		}
-	}, [isOnline, liveStats])
+	}, [isOnline, sentBytesPerSec, recvBytesPerSec, totalOutBytes, totalInBytes, unitNet])
 
 	// Uptime String
 	const uptimeString = useMemo(() => {
-		const uptime = liveInfo?.u ?? system.info?.u
 		if (!isOnline) return "—"
-		if (!uptime) return "Active"
-		return secondsToUptimeString(uptime)
-	}, [isOnline, liveInfo?.u, system.info?.u])
+		if (uptimeSeconds === undefined) return "Active"
+		return secondsToUptimeString(uptimeSeconds)
+	}, [isOnline, uptimeSeconds])
 
 	// Live monitor latency from the realtime payload, keyed by monitor id
 	const liveMonitorStats = isOnline ? realtime?.Monitors : undefined
-
-	// Filter monitors for this system
-	const systemMonitors = useMemo(() => {
-		return monitors.filter((m) => m.system === system.id && m.enabled).slice(0, 3)
-	}, [monitors, system.id])
 
 	// Deterministic Anime Banner Art selection
 	const bannerImage = useMemo(() => {
@@ -392,10 +363,20 @@ export const DenseServerCard = memo(function DenseServerCard({
 	}
 
 	return (
-		<div
-			onClick={handleCardClick}
-			className="group relative flex flex-col justify-between rounded-3xl bg-card border border-border/80 hover:border-sky-400/60 hover:shadow-lg hover:shadow-sky-500/8 transition-all duration-200 select-none cursor-pointer overflow-hidden"
-			style={{ transform: "translateZ(0)", willChange: "transform" }}
+		// The card is a navigation target, so it renders as an anchor. Nested action
+		// buttons stop propagation so they never trigger the card navigation.
+		<a
+			href={getPagePath($router, "system", { id: system.id })}
+			onClick={(event) => {
+				event.preventDefault()
+				if (event.ctrlKey || event.metaKey) {
+					window.open(event.currentTarget.href, "_blank")
+					return
+				}
+				handleCardClick()
+			}}
+			className="group relative flex flex-col justify-between rounded-3xl bg-card border border-border/80 hover:border-sky-400/60 hover:shadow-lg hover:shadow-sky-500/8 transition-all duration-200 select-none cursor-pointer overflow-hidden focus-visible:outline-2 focus-visible:outline-sky-500/60"
+			style={{ transform: "translateZ(0)" }}
 		>
 			{/* Top Anime Header Banner with Smooth Downward Gradient Mask */}
 			<div className="relative h-22 w-full overflow-hidden shrink-0">
@@ -416,7 +397,7 @@ export const DenseServerCard = memo(function DenseServerCard({
 					{/* Left: Location & Network Protocol Pills */}
 					<div className="flex items-center gap-1.5 flex-wrap max-w-[65%]">
 						<span
-							className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-background/85 dark:bg-slate-900/85 border border-border/80 text-[10px] font-extrabold text-foreground shadow-2xs backdrop-blur-none"
+							className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-background/85 dark:bg-slate-900/85 border border-border/80 text-[10px] font-extrabold text-foreground shadow-2xs"
 							title={location.city}
 						>
 							<span className="text-xs">{location.flag}</span>
@@ -428,7 +409,7 @@ export const DenseServerCard = memo(function DenseServerCard({
 						{networkProtocols.map((proto, idx) => (
 							<span
 								key={idx}
-								className="px-2 py-0.5 rounded-full bg-background/80 dark:bg-slate-900/80 border border-border/70 text-[9px] font-bold text-sky-600 dark:text-sky-400 shadow-2xs backdrop-blur-none"
+								className="px-2 py-0.5 rounded-full bg-background/80 dark:bg-slate-900/80 border border-border/70 text-[9px] font-bold text-sky-600 dark:text-sky-400 shadow-2xs"
 							>
 								{proto}
 							</span>
@@ -436,6 +417,8 @@ export const DenseServerCard = memo(function DenseServerCard({
 					</div>
 
 					{/* Right: Status Badge & Actions */}
+					{/** biome-ignore lint/a11y/noStaticElementInteractions: wrapper only stops card navigation from the nested action buttons */}
+					{/** biome-ignore lint/a11y/useKeyWithClickEvents: same wrapper, no keyboard affordance of its own */}
 					<div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
 						<span
 							className={cn(
@@ -443,8 +426,8 @@ export const DenseServerCard = memo(function DenseServerCard({
 								isOnline
 									? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
 									: isPaused
-									? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20"
-									: "bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+										? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+										: "bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/20"
 							)}
 						>
 							<span
@@ -479,16 +462,17 @@ export const DenseServerCard = memo(function DenseServerCard({
 								</span>
 							)}
 							{system.info?.v && (
-								<span className="text-[10px] font-mono font-semibold text-muted-foreground/80">
-									v{system.info.v}
-								</span>
+								<span className="text-[10px] font-mono font-semibold text-muted-foreground/80">v{system.info.v}</span>
 							)}
 						</div>
 					</div>
 
 					<div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium truncate mt-0.5">
 						{publicIp && (
-							<span className="inline-flex items-center gap-1 text-sky-600 dark:text-sky-400 font-semibold shrink-0" title={`Public: ${publicIp}`}>
+							<span
+								className="inline-flex items-center gap-1 text-sky-600 dark:text-sky-400 font-semibold shrink-0"
+								title={`Public: ${publicIp}`}
+							>
 								<GlobeIcon className="size-3 shrink-0" />
 								<span className="tabular-nums font-mono">{publicIp}</span>
 							</span>
@@ -572,7 +556,10 @@ export const DenseServerCard = memo(function DenseServerCard({
 								</span>
 							</div>
 							{liveStats && (
-								<span className="size-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0 ms-auto" title="Realtime" />
+								<span
+									className="size-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0 ms-auto"
+									title="Realtime"
+								/>
 							)}
 						</div>
 
@@ -618,15 +605,13 @@ export const DenseServerCard = memo(function DenseServerCard({
 							<span>Latency &amp; Quality</span>
 						</div>
 						<span className="text-[10px] text-muted-foreground/70">
-							{systemMonitors.length > 0
-								? `${systemMonitors.length} ${systemMonitors.length === 1 ? "Probe" : "Probes"}`
-								: "No Probes"}
+							{monitors.length > 0 ? `${monitors.length} ${monitors.length === 1 ? "Probe" : "Probes"}` : "No Probes"}
 						</span>
 					</div>
 
 					<div className="flex flex-col gap-2 pt-0.5">
-						{systemMonitors.length > 0 ? (
-							systemMonitors.map((mon) => {
+						{monitors.length > 0 ? (
+							monitors.map((mon) => {
 								// Prefer the per-second probe result; fall back to the 60s record
 								const live = liveMonitorStats?.[mon.id]
 								const latencyUs = live?.res_avg ?? mon.res
@@ -636,11 +621,11 @@ export const DenseServerCard = memo(function DenseServerCard({
 								const latencyLevel: QualityLevel = !latencyUs
 									? "idle"
 									: latencyUs > thresholds.bad
-									? "bad"
-									: latencyUs > thresholds.warn
-									? "warn"
-									: "good"
-								const lossLevel: QualityLevel = loss > 5 ? "bad" : loss > 0 ? "warn" : "good"
+										? "bad"
+										: latencyUs > thresholds.warn
+											? "warn"
+											: "good"
+								const lossLevel: QualityLevel = loss > LOSS_BAD_PCT ? "bad" : loss > LOSS_WARN_PCT ? "warn" : "good"
 
 								return (
 									<div key={mon.id} className="flex flex-col gap-1">
@@ -713,6 +698,6 @@ export const DenseServerCard = memo(function DenseServerCard({
 					</div>
 				</div>
 			</div>
-		</div>
+		</a>
 	)
 })

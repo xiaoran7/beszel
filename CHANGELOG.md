@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Dashboard Card Correctness & Render-Cost Pass**:
+  - 修复经典仪表盘卡片在 `stats.g` 为空对象时显示 `-Infinity%` GPU 仪表的问题（`Math.max()` 对空数组返回 `-Infinity`，且该值会绕过 `??` 回退链）。
+  - 修复在线服务器当前秒无流量时网络仪表回退到 60 秒旧快照的问题：`stats.b` 在双向速率均为 0 时会被后端省略，现在按「有实时载荷即为 0 B/s」处理，不再伪造 ≥15% 的占用环。
+  - 修复 uptime 为 0 时被当作「未上报」而显示 `Active` 的问题。
+  - 修复 `getServerLocation` 的子串误匹配：`node-1`、`code-server` 被识别为德国，`business-db` 被识别为新加坡，`relaxed-proxy` 被识别为洛杉矶；改为按词元（token）整词匹配。
+  - 修复 `system-kpi-cards` 在 `publicIp` 为空字符串时用 `??` 无法回退、导致「Public & Mesh IP」显示空白的问题。
+  - 修复实时指标订阅把类型参数传给非泛型 `RealtimeSubscription.subscribe` 导致的 `TS2558`。
+  - 修复 `useSystemDetails` 的失败/新增系统不重试问题（新增详情行或网络抖动后会永久停留在 `— Cores`），并新增登出时的缓存清理，避免同标签页切换账号后复用上一账号的详情。
+  - 修复实时订阅在 Hub 重启/瞬时失败后整场会话静默失效的问题，改为 5 秒后重试。
+  - 修复切到表格视图或标签页隐藏后，离线/已删除系统仍保留陈旧实时数据、卡片继续显示绿色「Live telemetry」的问题。
+  - 修复状态排序比较器只返回 `-1/1`、从不返回 `0` 导致的非一致比较。
+  - 修复 `localStorage` 中非法视图模式值会让三个切换按钮全部失效、且表格视图仍在后台维持实时订阅的问题，改为校验后回退到 `dense`。
+- **Performance**:
+  - 新增 `system-card-stats` 共享派生模块，消除两张卡片各自复制一份的 CPU/内存/磁盘/GPU/uptime/网络回退链——重复实现正是 `-Infinity` 只出现在其中一份的根因。
+  - 实时指标改为每帧（`requestAnimationFrame`）合并一次状态更新，避免 N 台在线服务器每秒触发 N 次整页重渲染。
+  - 网络探针改由首页一次性按系统分组并截取前 3 个，替代每张卡片各自 `filter` 全量列表；表格视图下不再订阅 `network_monitors`。
+  - 分段 LED 条复用模块级索引数组与单次颜色类计算，取代每次渲染 10 次 `cn()` 调用与数组分配；`transition-all` 收窄为 `transition-colors`。
+  - 移除卡片根节点无动画收益的常驻 `will-change: transform`（保留 `translateZ(0)`），并删除无效果的 `backdrop-blur-none` 死代码。
+  - 卡片改为语义化 `<a href>` 并支持键盘与 Ctrl/Cmd+点击新标签页打开，同时消除 a11y 交互告警。
+  - 网络速率与累计流量改为遵循用户的 `unitNet`（Bytes/Bits）偏好，与系统表格一致。
+  - 延迟质量条改用监控表格同源的丢包阈值常量（>20% 红、>0% 黄），修正 CHANGELOG 此前「与表格判定一致」的表述。
+
 ### Added & Refined
 
 - **Server Card Data Density Expansion (Reference-Aligned Layout)**:

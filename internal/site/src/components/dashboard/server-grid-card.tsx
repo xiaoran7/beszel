@@ -1,11 +1,12 @@
 import { memo, useMemo } from "react"
+import { useStore } from "@nanostores/react"
 import { ServerIcon, GlobeIcon } from "lucide-react"
 import { RadialGauge } from "../ui/radial-gauge"
 import { SparklineChart } from "../ui/sparkline-chart"
-import { SystemStatus } from "@/lib/enums"
 import { formatBytes, secondsToUptimeString, getServerPublicIp, getServerLocation } from "@/lib/utils"
+import { deriveSystemCardStats, getCpuBrandLabel, type RealtimeSystemMetrics } from "@/lib/system-card-stats"
+import { $userSettings } from "@/lib/stores"
 import type { SystemRecord, SystemDetailsRecord } from "@/types"
-import type { RealtimeSystemMetrics } from "@/lib/use-realtime-systems"
 import { $router, navigate } from "../router"
 import { getPagePath } from "@nanostores/router"
 import { ActionsButton } from "../systems-table/systems-table-columns"
@@ -18,51 +19,42 @@ interface ServerGridCardProps {
 }
 
 export const ServerGridCard = memo(function ServerGridCard({ system, realtime, details }: ServerGridCardProps) {
-	const isOnline = system.status === SystemStatus.Up
-	const isPaused = system.status === SystemStatus.Paused
+	const unitNet = useStore($userSettings, { keys: ["unitNet"] }).unitNet
+	const stats = deriveSystemCardStats(system, realtime, details)
+	const { isOnline, isPaused, cpu, memory, disk, gpu, cores, uptimeSeconds } = stats
 
-	// Real stats: prefer the per-second realtime payload, fall back to the 60s record
-	const liveStats = isOnline ? realtime?.stats : undefined
-	const liveInfo = isOnline ? realtime?.info : undefined
-	const cpu = isOnline ? (liveStats?.cpu ?? system.info?.cpu ?? system.info?.cpu_percent ?? system.info?.c_p ?? 0) : 0
-	const memory = isOnline ? (liveStats?.mp ?? system.info?.mp ?? 0) : 0
-	const disk = isOnline ? (liveStats?.dp ?? system.info?.dp ?? 0) : 0
-	// GPU: 0 is a valid idle reading, so only null/undefined means "no GPU reported"
-	const gpu = isOnline
-		? (liveInfo?.g ??
-			(liveStats?.g ? Math.max(...Object.values(liveStats.g).map((d) => d.u ?? 0)) : system.info?.g) ??
-			null)
-		: null
-
-		const network = useMemo(() => {
-			if (!isOnline) return { value: "—", unit: "", percent: 0 }
-			const bytesPerSec = liveStats?.b ? liveStats.b[0] + liveStats.b[1] : undefined
-			if (bytesPerSec !== undefined) {
-				const { value, unit } = formatBytes(bytesPerSec, true)
-				const formattedVal = value >= 100 ? value.toFixed(0) : value.toFixed(1)
-				const pct = Math.min(100, Math.max(bytesPerSec > 0 ? 4 : 0, Math.round((Math.log10(Math.max(1024, bytesPerSec)) / 7) * 100)))
-				return { value: formattedVal, unit, percent: pct }
-			}
-			if (system.info?.bb) {
-				const { value, unit } = formatBytes(system.info.bb, true)
-				const formattedVal = value >= 100 ? value.toFixed(0) : value.toFixed(1)
-				const pct = Math.min(100, Math.max(15, Math.round((Math.log10(Math.max(1024, system.info.bb)) / 7) * 100)))
-				return { value: formattedVal, unit, percent: pct }
-			}
-			if (system.info?.b) {
-				const mbps = system.info.b / 1024 / 1024
-				const formattedVal = mbps >= 100 ? mbps.toFixed(0) : mbps.toFixed(1)
-				return { value: formattedVal, unit: "Mbps", percent: Math.min(100, Math.max(15, Math.round(mbps))) }
-			}
-			return { value: "—", unit: "", percent: 0 }
-		}, [isOnline, liveStats?.b, system.info?.bb, system.info?.b])
+	const network = useMemo(() => {
+		if (!isOnline) return { value: "—", unit: "", percent: 0 }
+		const bytesPerSec =
+			stats.sentBytesPerSec !== undefined ? stats.sentBytesPerSec + (stats.recvBytesPerSec ?? 0) : undefined
+		if (bytesPerSec !== undefined) {
+			const { value, unit } = formatBytes(bytesPerSec, true, unitNet)
+			const formattedVal = value >= 100 ? value.toFixed(0) : value.toFixed(1)
+			const pct = Math.min(
+				100,
+				Math.max(bytesPerSec > 0 ? 4 : 0, Math.round((Math.log10(Math.max(1024, bytesPerSec)) / 7) * 100))
+			)
+			return { value: formattedVal, unit, percent: pct }
+		}
+		if (system.info?.bb) {
+			const { value, unit } = formatBytes(system.info.bb, true, unitNet)
+			const formattedVal = value >= 100 ? value.toFixed(0) : value.toFixed(1)
+			const pct = Math.min(100, Math.max(15, Math.round((Math.log10(Math.max(1024, system.info.bb)) / 7) * 100)))
+			return { value: formattedVal, unit, percent: pct }
+		}
+		if (system.info?.b) {
+			const mbps = system.info.b / 1024 / 1024
+			const formattedVal = mbps >= 100 ? mbps.toFixed(0) : mbps.toFixed(1)
+			return { value: formattedVal, unit: "Mbps", percent: Math.min(100, Math.max(15, Math.round(mbps))) }
+		}
+		return { value: "—", unit: "", percent: 0 }
+	}, [isOnline, stats.sentBytesPerSec, stats.recvBytesPerSec, system.info?.bb, system.info?.b, unitNet])
 
 	const uptimeString = useMemo(() => {
-		const uptime = liveInfo?.u ?? system.info?.u
 		if (!isOnline) return "—"
-		if (!uptime) return "Active"
-		return secondsToUptimeString(uptime)
-	}, [isOnline, liveInfo?.u, system.info?.u])
+		if (uptimeSeconds === undefined) return "Active"
+		return secondsToUptimeString(uptimeSeconds)
+	}, [isOnline, uptimeSeconds])
 
 	const location = useMemo(() => getServerLocation(system.host, system.name), [system.host, system.name])
 
@@ -70,13 +62,13 @@ export const ServerGridCard = memo(function ServerGridCard({ system, realtime, d
 		return getServerPublicIp(system.host)
 	}, [system.host])
 
-		// Subtitle: Real host address or port
-		const subtitle = useMemo(() => {
-			if (system.host) {
-				return system.port ? `${system.host}:${system.port}` : system.host
-			}
-			return "Node"
-		}, [system.host, system.port])
+	// Subtitle: Real host address or port
+	const subtitle = useMemo(() => {
+		if (system.host) {
+			return system.port ? `${system.host}:${system.port}` : system.host
+		}
+		return "Node"
+	}, [system.host, system.port])
 
 	// Tags extracted dynamically from system_details (modern agents) with system.info fallback
 	const tags = useMemo(() => {
@@ -89,20 +81,9 @@ export const ServerGridCard = memo(function ServerGridCard({ system, realtime, d
 			t.push(system.info.o)
 		}
 
-		const cpuModel = details?.cpu || system.info?.m
-		if (cpuModel) {
-			// Extract short CPU brand (e.g. AMD, Intel, Apple, ARM)
-			const m = cpuModel
-			if (m.includes("EPYC")) t.push("AMD EPYC")
-			else if (m.includes("Ryzen")) t.push("AMD Ryzen")
-			else if (m.includes("Xeon")) t.push("Intel Xeon")
-			else if (m.includes("Intel")) t.push("Intel")
-			else if (m.includes("Apple") || m.includes("M1") || m.includes("M2") || m.includes("M3") || m.includes("M4")) t.push("Apple Silicon")
-			else if (m.includes("ARM") || m.includes("aarch64")) t.push("ARM64")
-			else t.push(m.slice(0, 14))
-		}
+		const brand = getCpuBrandLabel(details?.cpu || system.info?.m, 14)
+		if (brand) t.push(brand)
 
-		const cores = details?.cores || system.info?.c
 		if (cores) {
 			t.push(`${cores} Cores`)
 		}
@@ -124,7 +105,7 @@ export const ServerGridCard = memo(function ServerGridCard({ system, realtime, d
 		}
 
 		return t
-	}, [details, system.info, gpu])
+	}, [details, system.info, gpu, cores])
 
 	// Dynamic wave history from real CPU and memory metrics
 	const sparklineData = useMemo(() => {
@@ -132,7 +113,7 @@ export const ServerGridCard = memo(function ServerGridCard({ system, realtime, d
 		const baseCpu = typeof cpu === "number" ? Math.max(0.5, cpu) : 0.5
 		const baseMem = typeof memory === "number" ? memory : 0
 		// Compound load reflecting both CPU activity and baseline memory load
-		const factor = (baseCpu * 0.7) + (baseMem * 0.1)
+		const factor = baseCpu * 0.7 + baseMem * 0.1
 		return [
 			Math.max(1, factor * 0.8),
 			Math.max(1, factor * 1.15),
@@ -151,9 +132,17 @@ export const ServerGridCard = memo(function ServerGridCard({ system, realtime, d
 	}
 
 	return (
-		<div
-			onClick={handleCardClick}
-			className="group relative flex flex-col justify-between p-4.5 rounded-3xl bg-card border border-border/80 hover:border-sky-400/60 hover:shadow-lg hover:shadow-sky-500/8 transition-all duration-200 select-none cursor-pointer"
+		<a
+			href={getPagePath($router, "system", { id: system.id })}
+			onClick={(event) => {
+				event.preventDefault()
+				if (event.ctrlKey || event.metaKey) {
+					window.open(event.currentTarget.href, "_blank")
+					return
+				}
+				handleCardClick()
+			}}
+			className="group relative flex flex-col justify-between p-4.5 rounded-3xl bg-card border border-border/80 hover:border-sky-400/60 hover:shadow-lg hover:shadow-sky-500/8 transition-all duration-200 select-none cursor-pointer focus-visible:outline-2 focus-visible:outline-sky-500/60"
 		>
 			<div>
 				{/* Card Header: Icon, Name, Status Badge, Actions */}
@@ -162,30 +151,35 @@ export const ServerGridCard = memo(function ServerGridCard({ system, realtime, d
 						<div className="flex items-center justify-center size-9.5 rounded-2xl bg-gradient-to-tr from-sky-500/15 to-blue-500/10 text-sky-600 dark:text-sky-400 shrink-0 border border-sky-200/40 dark:border-sky-800/40 shadow-2xs">
 							<ServerIcon className="size-4.5" />
 						</div>
-							<div className="flex flex-col min-w-0 flex-1">
-								<h3 className="text-[15px] font-bold text-foreground tracking-tight group-hover:text-primary transition-colors truncate leading-snug flex items-center gap-1.5">
-									{location?.flag && (
-										<span className="text-xs shrink-0 select-none" title={location.city}>
-											{location.flag}
-										</span>
-									)}
-									<span className="truncate">{system.name}</span>
-								</h3>
-								<div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium truncate mt-0.5">
-									{publicIp && (
-										<span className="inline-flex items-center gap-0.5 text-sky-600 dark:text-sky-400 font-semibold shrink-0" title={`Public IP: ${publicIp}`}>
-											<GlobeIcon className="size-3 shrink-0" />
-											<span className="tabular-nums">{publicIp}</span>
-										</span>
-									)}
-									{publicIp && <span className="text-muted-foreground/40 shrink-0">·</span>}
-									<span className="truncate tabular-nums" title={`Internal / Tailnet: ${subtitle}`}>
-										{subtitle}
+						<div className="flex flex-col min-w-0 flex-1">
+							<h3 className="text-[15px] font-bold text-foreground tracking-tight group-hover:text-primary transition-colors truncate leading-snug flex items-center gap-1.5">
+								{location?.flag && (
+									<span className="text-xs shrink-0 select-none" title={location.city}>
+										{location.flag}
 									</span>
-								</div>
+								)}
+								<span className="truncate">{system.name}</span>
+							</h3>
+							<div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium truncate mt-0.5">
+								{publicIp && (
+									<span
+										className="inline-flex items-center gap-0.5 text-sky-600 dark:text-sky-400 font-semibold shrink-0"
+										title={`Public IP: ${publicIp}`}
+									>
+										<GlobeIcon className="size-3 shrink-0" />
+										<span className="tabular-nums">{publicIp}</span>
+									</span>
+								)}
+								{publicIp && <span className="text-muted-foreground/40 shrink-0">·</span>}
+								<span className="truncate tabular-nums" title={`Internal / Tailnet: ${subtitle}`}>
+									{subtitle}
+								</span>
 							</div>
+						</div>
 					</div>
 
+					{/** biome-ignore lint/a11y/noStaticElementInteractions: wrapper only stops card navigation from the nested action buttons */}
+					{/** biome-ignore lint/a11y/useKeyWithClickEvents: same wrapper, no keyboard affordance of its own */}
 					<div className="flex items-center gap-1.5 shrink-0 pt-0.5" onClick={(e) => e.stopPropagation()}>
 						{/* Status Badge */}
 						<span
@@ -193,8 +187,8 @@ export const ServerGridCard = memo(function ServerGridCard({ system, realtime, d
 								isOnline
 									? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
 									: isPaused
-									? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20"
-									: "bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+										? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+										: "bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/20"
 							}`}
 						>
 							<span
@@ -213,66 +207,63 @@ export const ServerGridCard = memo(function ServerGridCard({ system, realtime, d
 					</div>
 				</div>
 
-					{/* Radial Gauges (4 or 5 columns if GPU present) */}
-					<div className={`grid ${gpu !== null ? "grid-cols-5" : "grid-cols-4"} gap-1.5 my-4 py-2.5 px-1 rounded-2xl bg-secondary/40 border border-border/40`}>
+				{/* Radial Gauges (4 or 5 columns if GPU present) */}
+				<div
+					className={`grid ${gpu !== null ? "grid-cols-5" : "grid-cols-4"} gap-1.5 my-4 py-2.5 px-1 rounded-2xl bg-secondary/40 border border-border/40`}
+				>
+					<RadialGauge
+						value={isOnline ? `${Math.round(Number(cpu))}%` : "—"}
+						percent={Number(cpu) || 0}
+						label="CPU"
+						size={48}
+						strokeWidth={4}
+						color={isOnline ? "#0ea5e9" : "#94a3b8"}
+					/>
+					<RadialGauge
+						value={isOnline ? `${Math.round(Number(memory))}%` : "—"}
+						percent={Number(memory) || 0}
+						label="Memory"
+						size={48}
+						strokeWidth={4}
+						color={isOnline ? "#10b981" : "#94a3b8"}
+					/>
+					<RadialGauge
+						value={isOnline ? `${Math.round(Number(disk))}%` : "—"}
+						percent={Number(disk) || 0}
+						label="Disk"
+						size={48}
+						strokeWidth={4}
+						color={isOnline ? "#f59e0b" : "#94a3b8"}
+					/>
+					<RadialGauge
+						value={network.value}
+						unit={network.unit}
+						percent={network.percent}
+						label="Network"
+						size={48}
+						strokeWidth={4}
+						color={isOnline ? "#8b5cf6" : "#94a3b8"}
+					/>
+					{gpu !== null && (
 						<RadialGauge
-							value={isOnline ? `${Math.round(Number(cpu))}%` : "—"}
-							percent={Number(cpu) || 0}
-							label="CPU"
+							value={isOnline ? `${Math.round(Number(gpu))}%` : "—"}
+							percent={Number(gpu) || 0}
+							label="GPU"
 							size={48}
 							strokeWidth={4}
-							color={isOnline ? "#0ea5e9" : "#94a3b8"}
+							color={isOnline ? "#ec4899" : "#94a3b8"}
 						/>
-						<RadialGauge
-							value={isOnline ? `${Math.round(Number(memory))}%` : "—"}
-							percent={Number(memory) || 0}
-							label="Memory"
-							size={48}
-							strokeWidth={4}
-							color={isOnline ? "#10b981" : "#94a3b8"}
-						/>
-						<RadialGauge
-							value={isOnline ? `${Math.round(Number(disk))}%` : "—"}
-							percent={Number(disk) || 0}
-							label="Disk"
-							size={48}
-							strokeWidth={4}
-							color={isOnline ? "#f59e0b" : "#94a3b8"}
-						/>
-						<RadialGauge
-							value={network.value}
-							unit={network.unit}
-							percent={network.percent}
-							label="Network"
-							size={48}
-							strokeWidth={4}
-							color={isOnline ? "#8b5cf6" : "#94a3b8"}
-						/>
-						{gpu !== null && (
-							<RadialGauge
-								value={isOnline ? `${Math.round(Number(gpu))}%` : "—"}
-								percent={Number(gpu) || 0}
-								label="GPU"
-								size={48}
-								strokeWidth={4}
-								color={isOnline ? "#ec4899" : "#94a3b8"}
-							/>
-						)}
-					</div>
+					)}
+				</div>
 
 				{/* Sparkline & Status/Uptime */}
 				<div className="flex items-center gap-3 my-2">
 					<div className="flex-1 min-w-0">
-						<SparklineChart
-							data={sparklineData}
-							color="#0ea5e9"
-							height={38}
-							isOffline={!isOnline}
-						/>
+						<SparklineChart data={sparklineData} color="#0ea5e9" height={38} isOffline={!isOnline} />
 					</div>
 					<div className="flex flex-col text-right shrink-0 min-w-[72px]">
 						<span className="text-xs font-bold text-foreground tabular-nums">
-							{system.info?.v ? `v${system.info.v}` : (isOnline ? "Active" : "Down")}
+							{system.info?.v ? `v${system.info.v}` : isOnline ? "Active" : "Down"}
 						</span>
 						<span className="text-[10px] text-muted-foreground font-medium">Agent</span>
 					</div>
@@ -296,7 +287,6 @@ export const ServerGridCard = memo(function ServerGridCard({ system, realtime, d
 					</span>
 				))}
 			</div>
-		</div>
+		</a>
 	)
 })
-
