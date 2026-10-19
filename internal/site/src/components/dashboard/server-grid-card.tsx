@@ -27,8 +27,11 @@ export const ServerGridCard = memo(function ServerGridCard({ system, realtime, d
 	const cpu = isOnline ? (liveStats?.cpu ?? system.info?.cpu ?? system.info?.cpu_percent ?? system.info?.c_p ?? 0) : 0
 	const memory = isOnline ? (liveStats?.mp ?? system.info?.mp ?? 0) : 0
 	const disk = isOnline ? (liveStats?.dp ?? system.info?.dp ?? 0) : 0
+	// GPU: 0 is a valid idle reading, so only null/undefined means "no GPU reported"
 	const gpu = isOnline
-		? (liveInfo?.g ?? (liveStats?.g ? Math.max(...Object.values(liveStats.g).map((d) => d.u ?? 0)) : system.info?.g))
+		? (liveInfo?.g ??
+			(liveStats?.g ? Math.max(...Object.values(liveStats.g).map((d) => d.u ?? 0)) : system.info?.g) ??
+			null)
 		: null
 
 		const network = useMemo(() => {
