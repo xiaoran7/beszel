@@ -145,10 +145,9 @@ export const DenseServerCard = memo(function DenseServerCard({
 	const memory = isOnline ? (liveStats?.mp ?? system.info?.mp ?? 0) : 0
 	const disk = isOnline ? (liveStats?.dp ?? system.info?.dp ?? 0) : 0
 	// GPU: 0 is a valid idle reading, so only null/undefined means "no GPU reported"
+	const gpuUsages = liveStats?.g ? Object.values(liveStats.g).map((d) => d.u ?? 0) : []
 	const gpu = isOnline
-		? (liveInfo?.g ??
-			(liveStats?.g ? Math.max(...Object.values(liveStats.g).map((d) => d.u ?? 0)) : system.info?.g) ??
-			null)
+		? (liveInfo?.g ?? (gpuUsages.length ? Math.max(...gpuUsages) : system.info?.g) ?? null)
 		: null
 
 	// Geographic Location & Flag
