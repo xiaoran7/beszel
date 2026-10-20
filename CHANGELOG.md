@@ -6,6 +6,23 @@ All notable changes to this project will be documented in this file.
 
 ### Deployed
 
+- **生产部署 cbbdc9de & accf7071（上游后端逻辑合并 & 横向滚动交互优化）**:
+  - 目标：东京主力机 `beszel-hub` 容器，镜像 `beszel:schale`。自 `34007dcee626`（`f7adff67`）升级至 `ff64ce5397f2`（`accf7071`，含 `cbbdc9de` 上游后端同步逻辑）。
+  - 后端功能同步：
+    - Agent 端：多发行版软件包更新缓存探测（APT、DNF4、DNF5、Pacman、Zypper、APK、XBPS，后台1小时轮询+5分钟超时防卡死）、Linux Wi-Fi netlink (`nl80211`) 信号指标采集、LXC 容器 cgroup CPU 真实利用率归一化、SMART 状态合并查询与休眠保护。
+    - Hub 端：`SSHTransport` 单所有权与连接状态机、WebSocket 慢 Agent 保活 ping/pong、`HUB_HEADERS` 注入、systemd journal 日志 API、通用令牌认证端点。
+    - 安全与数据表：PocketBase 敏感所有权字段防越权修改（`alerts`、`fingerprints`、`user_settings`、`quiet_hours` 禁止 `@request.body.system:changed` / `@request.body.user:changed`）。
+    - 数据库迁移：自动执行 5 项上游数据迁移（`certInfo` 证书信息、`server` 监控服务器、`status` 存储池状态、`skipTlsVerify` 探针证书校验豁免、`network_monitor_cert_alerts` 证书告警集合），生产数据库迁移数从 11 项平滑增至 16 项。
+    - 本地特色保留：原生 Gzip 响应压缩中间件无缝集成，网络探针中文名称（`name` 字段）在记录 ID 轮转与配置更新中完整保留。
+  - 前端交互优化：
+    - 告警侧边抽屉服务器标签、系统详情页分区标签栏以及系统信息栏等 3 处横向滚动区域集成 `useHorizontalScroll`，解决鼠标垂直滚轮无法横向滚动以及隐藏滚动条无法拖拽触达的问题。
+  - 生产验证：
+    - 前端预构建：`internal/site/dist` 打包无报错，生产 bundle 引用 `assets/index-HA5l6sId.js` 与 `assets/index-BHHHSdJd.css`。
+    - 数据库验证：40 条探针全部保留（40 条均有中文显示名称），5 项新迁移全部成功执行，生产库无损坏。
+    - 服务健康：本地 `http://127.0.0.1:8090/api/health` 200 OK，公网 `https://beszel.tannerlab.xyz/api/health` 200 OK；Gzip `Content-Encoding: gzip` 正常生效。
+  - 回滚点：镜像 `beszel:schale-backup-pre-sync-20261020-072016`（对应 `34007dcee626`）+ 数据库快照 `/opt/beszel/data.db.bak-20261020-072016`。
+  - 产物清理：清理本地与服务器临时归档 `/tmp/beszel-src-deploy.tar.gz` 与 `_scratch/beszel-src-deploy.tar.gz`，更新 `/opt/beszel/repo`。
+
 - **生产部署 f7adff67（探针显示名称）**:
   - 目标：东京主力机 `beszel-hub` 容器，镜像 `beszel:schale`。自 `2c1986faf117`（`74ac00f6`）升级至 `34007dcee626`（`f7adff67`，含 `6982a5d7`）。
   - 数据迁移 `1792454400` 在启动时自动执行，`network_monitors` 新增 `name` 字段；部署前已把 `data.db` 快照为 `/opt/beszel/data.db.bak-20261020-054801`。冒烟容器用生产库副本验证了迁移可重复执行（重启第二次无报错）。
