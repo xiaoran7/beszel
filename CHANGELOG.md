@@ -6,6 +6,16 @@ All notable changes to this project will be documented in this file.
 
 ### Deployed
 
+- **生产部署 06b0f986（HTML 文档禁止陈旧缓存 & 版本递增至 0.21.1）**:
+  - 目标：东京主力机 `beszel-hub` 容器，镜像 `beszel:schale`。自 `ff64ce5397f2`（`accf7071`）升级至 `e159d678132d`（含 `2e6a0e28` 缓存修复与 `06b0f986` 版本递增），产品版本 `0.21.0` → `0.21.1`。
+  - 修复内容：Hub 在返回 HTML 文档时显式声明 `Cache-Control: no-cache`，避免浏览器用启发式缓存保存文档，把标签页永久钉死在它加载时的那份内容哈希 bundle 上。静态资源保持 `public, max-age=2592000`，缓存失效仍由内容哈希承担。
+  - 部署前置排查：定位「探针显示 IP 而非名称」时确认服务端代码、迁移与生产数据均正确（40 条探针全部带中文名，线上 bundle 字段投影含 `name`），实际原因是浏览器标签页最后一次加载文档在探针名称功能上线之前，之后一直运行旧 bundle（旧 bundle 发出的探针请求字段不含 `name`）。已打开的标签页仍需手动强制刷新一次才会切到新 bundle。
+  - 冒烟验证：新镜像在独立容器（`127.0.0.1:18099`）以生产库副本启动，`/api/health` 200、日志无 error/panic；`/` 返回 `no-cache`、`/assets/*` 仍为长缓存、404 路径同样 `no-cache`、Gzip 生效、`HUB_VERSION` 为 `0.21.1`。
+  - 生产验证：容器 `healthy`、重启次数 0、日志无 error/panic；`/api/health` 本地与公网均 200；公网 `https://beszel.tannerlab.xyz/` 返回 `Cache-Control: no-cache`，`/assets/index-HA5l6sId.js` 仍为 `public, max-age=2592000`；8/8 节点全部重新上线并持续上报，40 条探针全部具名且均有实时延迟数据。
+  - 回滚点：镜像 `beszel:schale-backup-20261020-174200`（对应 `ff64ce5397f2`）+ 数据库快照 `/opt/beszel/data/data.db.bak-20261020-174200` + 源码树归档 `/opt/beszel/repo-backup-20261020-174200.tar.gz`。
+  - 版本清单同步：`beszel.go` 与 `internal/site/package.json` / `package-lock.json` 递增至 `0.21.1`，Agent SSH 版本测试夹具同步为 `beszel_0.21.1`。Helm chart 的 `appVersion` 保持上游 `0.20.0` 不变——该 chart 引用 `henrygd/beszel` 上游镜像 tag，本 fork 未发布 `0.21.1` 镜像。
+  - 产物清理：删除本地与服务器临时归档 `/tmp/beszel-src-deploy.tar.gz` 与 `_scratch/beszel-src-deploy.tar.gz`，清理冒烟容器与临时数据副本。
+
 - **生产部署 cbbdc9de & accf7071（上游后端逻辑合并 & 横向滚动交互优化）**:
   - 目标：东京主力机 `beszel-hub` 容器，镜像 `beszel:schale`。自 `34007dcee626`（`f7adff67`）升级至 `ff64ce5397f2`（`accf7071`，含 `cbbdc9de` 上游后端同步逻辑）。
   - 后端功能同步：
