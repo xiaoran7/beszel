@@ -68,6 +68,13 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Stale Tab Keeps Running the Old Bundle (标签页停留在旧版本前端)**:
+  - 排查「网络探针显示 IP 而非名称」时发现：服务端代码、迁移与生产数据均正确，40 条探针在库里全部带中文名，线上 bundle 的字段投影也含 `name`。真正的原因是浏览器那个标签页最后一次加载 HTML 文档是在探针名称功能上线之前，之后一直没重新加载，于是长期运行着内存里的旧 bundle——旧 bundle 发出的探针请求字段里根本没有 `name`，标签自然回退成显示 IP。
+  - 根因是 HTML 文档既没有 `Cache-Control` 也没有 `ETag`/`Last-Modified`，浏览器对「无缓存指令」的响应可以走启发式缓存；而文档里指向的是内容哈希 bundle，一旦文档被缓存，这个标签页就被永久钉死在它加载时的那份 bundle 上，直到用户手动刷新。
+  - 修复：Hub 在返回 HTML 文档时显式声明 `Cache-Control: no-cache`（`internal/hub/server_production.go`），浏览器每次导航都回源取文档，从而拿到最新哈希的 bundle。静态资源（`/assets/`、`/static/`）保持 `public, max-age=2592000` 不变，缓存失效仍由内容哈希承担，不增加重复流量。
+  - 边界说明：`no-cache` 解决的是「新打开的页面拿到旧文档」。**已经打开且不刷新的标签页**仍会继续跑旧代码——那属于 SPA 长驻场景，浏览器不会在标签页存活期间主动重新执行已加载的脚本。若要覆盖这种情况需要前端做版本轮询与自刷新，本次未做。
+  - 新增测试 `TestAppDocumentCacheControl`（`internal/hub/server_production_test.go`）：覆盖应用路由与 404 路径的 `no-cache`，并锁定哈希资源仍为长缓存。
+
 - **Horizontal Strips Unreachable by Mouse (横向筛选条无法鼠标滚动)**:
   - 修复告警管理面板「Select Server」设备标签条、系统详情页的分区标签页、以及系统信息栏三处横向溢出区域在桌面端无法滚到右侧的问题。这三处都用 `overflow-x-auto` 配合 `scrollbar-hide` 隐藏滚动条（Aozora 视觉规范），结果既没有可见滚动条可拖，垂直滚轮又不会作用于横向容器，右侧设备/标签实际点不到。
   - 新增共享 hook `useHorizontalScroll`（`lib/use-horizontal-scroll.ts`）：把垂直滚轮映射为横向滚动，并支持按住左键拖拽平移。仅在该条实际溢出时才接管滚轮，因此窄屏以外的正常页面滚动不受影响；`ctrl`+滚轮缩放与触控板横向手势保持原生行为。
