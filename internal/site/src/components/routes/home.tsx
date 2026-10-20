@@ -28,20 +28,29 @@ type ViewMode = (typeof VIEW_MODES)[number]
 const MAX_CARD_MONITORS = 5
 
 /**
- * Stable card ordering: named probes first, alphabetically, then unnamed ones by
- * target. Without this the card shows whichever records the API returned first,
- * so a node's visible probe set could change between loads.
+ * Stable card ordering. Probes shared by the most systems come first, so the
+ * cross-node comparison probes (the Hunan three-network set, public DNS) survive
+ * the per-card cap on every card. Only after that do names break the tie, then
+ * the raw target for unnamed probes.
+ *
+ * Sorting on raw name alone would push those shared probes off a busy card: on a
+ * seven-probe node, alphabetically-later names lose to node-local Tailnet probes
+ * that no other card can compare against.
  */
-function compareMonitors(a: NetworkMonitorRecord, b: NetworkMonitorRecord) {
-	const nameA = a.name?.trim()
-	const nameB = b.name?.trim()
-	if (nameA && nameB) {
-		const byName = nameA.localeCompare(nameB)
-		if (byName !== 0) return byName
-	} else if (nameA || nameB) {
-		return nameA ? -1 : 1
+function compareMonitors(sharedCounts: Map<string, number>) {
+	return (a: NetworkMonitorRecord, b: NetworkMonitorRecord) => {
+		const shared = (sharedCounts.get(b.target) ?? 0) - (sharedCounts.get(a.target) ?? 0)
+		if (shared !== 0) return shared
+		const nameA = a.name?.trim()
+		const nameB = b.name?.trim()
+		if (nameA && nameB) {
+			const byName = nameA.localeCompare(nameB)
+			if (byName !== 0) return byName
+		} else if (nameA || nameB) {
+			return nameA ? -1 : 1
+		}
+		return a.target.localeCompare(b.target)
 	}
-	return a.target.localeCompare(b.target)
 }
 
 function isViewMode(value: string | null): value is ViewMode {
@@ -103,9 +112,12 @@ export default memo(function Home() {
 
 	// Group monitors once here instead of letting every card filter the full list.
 	// Sort before truncating so the probes that survive the cap are always the
-	// same ones, not whichever records arrived first.
+	// same ones, not whichever records arrived first. Probes probed from more
+	// systems rank higher, so cross-node comparisons stay visible everywhere.
 	const monitorsBySystem = useMemo(() => {
 		const grouped: Record<string, NetworkMonitorRecord[]> = {}
+		/** How many distinct systems probe each target. */
+		const probesByTarget = new Map<string, Set<string>>()
 		for (const monitor of monitors) {
 			if (!monitor.enabled) continue
 			const list = grouped[monitor.system]
@@ -114,9 +126,20 @@ export default memo(function Home() {
 			} else {
 				grouped[monitor.system] = [monitor]
 			}
+			const systems = probesByTarget.get(monitor.target)
+			if (systems) {
+				systems.add(monitor.system)
+			} else {
+				probesByTarget.set(monitor.target, new Set([monitor.system]))
+			}
 		}
+		const sharedCounts = new Map<string, number>()
+		for (const [target, systems] of probesByTarget) {
+			sharedCounts.set(target, systems.size)
+		}
+		const sortMonitors = compareMonitors(sharedCounts)
 		for (const [systemId, list] of Object.entries(grouped)) {
-			list.sort(compareMonitors)
+			list.sort(sortMonitors)
 			grouped[systemId] = list.slice(0, MAX_CARD_MONITORS)
 		}
 		return grouped
