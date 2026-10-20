@@ -51,6 +51,13 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Horizontal Strips Unreachable by Mouse (横向筛选条无法鼠标滚动)**:
+  - 修复告警管理面板「Select Server」设备标签条、系统详情页的分区标签页、以及系统信息栏三处横向溢出区域在桌面端无法滚到右侧的问题。这三处都用 `overflow-x-auto` 配合 `scrollbar-hide` 隐藏滚动条（Aozora 视觉规范），结果既没有可见滚动条可拖，垂直滚轮又不会作用于横向容器，右侧设备/标签实际点不到。
+  - 新增共享 hook `useHorizontalScroll`（`lib/use-horizontal-scroll.ts`）：把垂直滚轮映射为横向滚动，并支持按住左键拖拽平移。仅在该条实际溢出时才接管滚轮，因此窄屏以外的正常页面滚动不受影响；`ctrl`+滚轮缩放与触控板横向手势保持原生行为。
+  - 拖拽超过 4px 才判定为拖拽，并在拖拽结束后吞掉紧随的一次 click，避免滑动时误选设备；普通点击仍正常选中。
+  - 监听器通过 ref callback 绑定而非 `useEffect`，因为告警面板是懒挂载内容，挂载期 effect 会与之竞争导致监听器丢失（本地实测该写法滚轮无效，改此写法后恢复）。
+  - 实测（本地 hub，8 台设备、内容 716px、可视 576px）：滚轮 0→300→500、拖拽→700，可滚至最右端；最右设备「US-Zenix (洛杉矶新机)」完整可见且可点击选中；滑动起点的设备不会被误选。
+
 - **Dashboard Metric Algorithm Audit (负载与指标口径校正)**:
   - 负载率归一化改用逻辑 CPU 数（`threads`），与 `top` / `htop` 及系统表格一致。此前按物理核数计算，2 核 4 线程的机器会把 39% 的真实利用率显示成 78%，并把 `Optimal` 误判为 `Normal`。
   - 负载等级阈值改用系统表格同源的 65% / 90%，替代原先与表格不一致的 0.7 / 1.0 倍核数判定。

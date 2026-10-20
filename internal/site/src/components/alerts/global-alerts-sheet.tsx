@@ -6,6 +6,7 @@ import { AlertDialogContent } from "./alerts-sheet"
 import { ServerIcon, BellIcon, CheckCircle2Icon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { SystemStatus } from "@/lib/enums"
+import { useHorizontalScroll } from "@/lib/use-horizontal-scroll"
 
 export const GlobalAlertsSheet = memo(function GlobalAlertsSheet({
 	open,
@@ -17,6 +18,9 @@ export const GlobalAlertsSheet = memo(function GlobalAlertsSheet({
 	const systems = useStore($systems)
 	const alerts = useStore($alerts)
 	const [selectedSystemId, setSelectedSystemId] = useState<string>("")
+	// The chip row overflows on narrow sheets; without this the systems past the
+	// right edge are unreachable with a mouse.
+	const serverStrip = useHorizontalScroll<HTMLDivElement>()
 
 	// If no selected system or selected system no longer exists, default to first system with active alerts or first system
 	useEffect(() => {
@@ -78,7 +82,11 @@ export const GlobalAlertsSheet = memo(function GlobalAlertsSheet({
 								<label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
 									Select Server
 								</label>
-								<div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+								<div
+									ref={serverStrip.ref}
+									onPointerDown={serverStrip.onPointerDown}
+									className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide cursor-grab active:cursor-grabbing"
+								>
 									{systems.map((s) => {
 										const isSelected = s.id === currentSystem?.id
 										const alertCount = systemAlertCounts[s.id] || 0

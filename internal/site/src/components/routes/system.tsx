@@ -36,6 +36,7 @@ import { SystemInfoOverviewCard } from "./system/system-info-overview-card"
 import { CitySkylineCard } from "./system/city-skyline-card"
 import ChartTimeSelect from "../charts/chart-time-select"
 import { cn } from "@/lib/utils"
+import { useHorizontalScroll } from "@/lib/use-horizontal-scroll"
 
 const SEMVER_0_14_0 = parseSemVer("0.14.0")
 const SEMVER_0_15_0 = parseSemVer("0.15.0")
@@ -69,6 +70,9 @@ export default memo(function SystemDetail({ id }: { id: string }) {
 	const [activeSectionTab, setActiveSectionTab] = useState<
 		"overview" | "core" | "containers" | "network" | "storage" | "gpu" | "services"
 	>("overview")
+	// The tab strip scrolls horizontally with its scrollbar hidden, so it needs
+	// wheel/drag support or the later tabs are unreachable by mouse.
+	const tabStrip = useHorizontalScroll<HTMLDivElement>()
 
 	if (!system.id) {
 		return null
@@ -105,7 +109,11 @@ export default memo(function SystemDetail({ id }: { id: string }) {
 			{/* 3. Navigation Controls Bar: Tabs, Time Selector, Grid Width */}
 			<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
 				{/* Tab Selector Buttons */}
-				<div className="flex items-center gap-1.5 p-1 rounded-2xl bg-secondary/60 border border-border/70 overflow-x-auto scrollbar-hide">
+				<div
+					ref={tabStrip.ref}
+					onPointerDown={tabStrip.onPointerDown}
+					className="flex items-center gap-1.5 p-1 rounded-2xl bg-secondary/60 border border-border/70 overflow-x-auto scrollbar-hide cursor-grab active:cursor-grabbing"
+				>
 					{tabsList.map((tab) => {
 						const Icon = tab.icon
 						const isActive = activeSectionTab === tab.id

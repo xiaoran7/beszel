@@ -28,6 +28,7 @@ import { Separator } from "@/components/ui/separator"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { ConnectionType, connectionTypeLabels, Os, SystemStatus } from "@/lib/enums"
 import { cn, formatBytes, getHostDisplayValue, secondsToUptimeString, toFixedFloat } from "@/lib/utils"
+import { useHorizontalScroll } from "@/lib/use-horizontal-scroll"
 import type { ChartData, SystemDetailsRecord, SystemRecord } from "@/types"
 
 export default function InfoBar({
@@ -48,6 +49,8 @@ export default function InfoBar({
 	details: SystemDetailsRecord | null
 }) {
 	const { t } = useLingui()
+	// The info row scrolls sideways with a hidden scrollbar on narrow screens.
+	const infoStrip = useHorizontalScroll<HTMLDivElement>()
 
 	// values for system info bar - use details with fallback to system.info
 	const systemInfo = useMemo(() => {
@@ -138,7 +141,11 @@ export default function InfoBar({
 			<div className="grid xl:flex xl:gap-4 px-4 sm:px-6 pt-3 sm:pt-4 pb-5">
 				<div className="min-w-0">
 					<h1 className="text-2xl sm:text-[1.6rem] font-semibold mb-1.5">{system.name}</h1>
-					<div className="flex xl:flex-wrap items-center py-4 xl:p-0 -mt-3 xl:mt-1 gap-3 text-sm text-nowrap opacity-90 overflow-x-auto scrollbar-hide -mx-4 px-4 xl:mx-0">
+					<div
+						ref={infoStrip.ref}
+						onPointerDown={infoStrip.onPointerDown}
+						className="flex xl:flex-wrap items-center py-4 xl:p-0 -mt-3 xl:mt-1 gap-3 text-sm text-nowrap opacity-90 overflow-x-auto scrollbar-hide -mx-4 px-4 xl:mx-0 xl:cursor-auto cursor-grab active:cursor-grabbing"
+					>
 						<Tooltip>
 							<TooltipTrigger asChild>
 								<div className="capitalize flex gap-2 items-center">
