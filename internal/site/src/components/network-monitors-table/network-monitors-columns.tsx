@@ -135,7 +135,12 @@ export function getMonitorColumns(
 		},
 		{
 			id: "target",
-			sortingFn: (a, b) => a.original.target.localeCompare(b.original.target),
+			sortingFn: (a, b) => {
+				const labelA = a.original.name?.trim() ? a.original.name : a.original.target
+				const labelB = b.original.name?.trim() ? b.original.name : b.original.target
+				const byLabel = labelA.localeCompare(labelB)
+				return byLabel !== 0 ? byLabel : a.original.target.localeCompare(b.original.target)
+			},
 			accessorFn: (record) => getMonitorTarget(record),
 			header: ({ column }) => <HeaderButton column={column} name={t`Target`} Icon={GlobeIcon} />,
 			cell: ({ row, getValue }) => {
@@ -148,14 +153,33 @@ export function getMonitorColumns(
 				} else if (status === SystemStatus.Down || status === SystemStatus.Pending) {
 					color = "bg-yellow-500"
 				}
+				// A named probe shows the label, with the raw target underneath so two
+				// probes pointing at different hosts under the same label stay distinct.
+				const name = monitor.name?.trim()
+				const target = getValue() as string
 				return (
 					<div className="ms-1.5 max-w-64 flex gap-2 items-center tabular-nums">
 						<span className={cn("shrink-0 size-2 rounded-full", color)} />
 						<div className="relative w-fit min-w-0 max-w-full">
+							{/* The invisible block reserves the column width. A named probe needs a
+							    second line, so it reserves the target line too. */}
 							<span className="invisible block overflow-hidden whitespace-nowrap" aria-hidden="true">
 								{longestTarget}
+								{name ? (
+									<>
+										<br />
+										{target}
+									</>
+								) : null}
 							</span>
-							<span className="absolute inset-0 truncate">{getValue() as string}</span>
+							{name ? (
+								<span className="absolute inset-0 flex flex-col justify-center leading-tight">
+									<span className="truncate font-medium">{name}</span>
+									<span className="truncate text-[10px] text-muted-foreground">{target}</span>
+								</span>
+							) : (
+								<span className="absolute inset-0 truncate">{target}</span>
+							)}
 						</div>
 					</div>
 				)

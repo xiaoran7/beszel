@@ -637,6 +637,8 @@ export interface UpdateInfo {
 export interface NetworkMonitorRecord {
 	id: string
 	system: string
+	/** Optional display label (e.g. 湖南电信). Empty means "use the target". */
+	name: string
 	target: string
 	protocol: "icmp" | "tcp" | "http" | "dns"
 	port: number

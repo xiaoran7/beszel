@@ -25,7 +25,24 @@ const VIEW_MODES = ["dense", "grid", "table"] as const
 type ViewMode = (typeof VIEW_MODES)[number]
 
 /** Latency matrix on a card shows at most this many probes. */
-const MAX_CARD_MONITORS = 3
+const MAX_CARD_MONITORS = 5
+
+/**
+ * Stable card ordering: named probes first, alphabetically, then unnamed ones by
+ * target. Without this the card shows whichever records the API returned first,
+ * so a node's visible probe set could change between loads.
+ */
+function compareMonitors(a: NetworkMonitorRecord, b: NetworkMonitorRecord) {
+	const nameA = a.name?.trim()
+	const nameB = b.name?.trim()
+	if (nameA && nameB) {
+		const byName = nameA.localeCompare(nameB)
+		if (byName !== 0) return byName
+	} else if (nameA || nameB) {
+		return nameA ? -1 : 1
+	}
+	return a.target.localeCompare(b.target)
+}
 
 function isViewMode(value: string | null): value is ViewMode {
 	return value !== null && (VIEW_MODES as readonly string[]).includes(value)
@@ -84,17 +101,23 @@ export default memo(function Home() {
 		return copy
 	}, [realSystems, sortBy])
 
-	// Group monitors once here instead of letting every card filter the full list
+	// Group monitors once here instead of letting every card filter the full list.
+	// Sort before truncating so the probes that survive the cap are always the
+	// same ones, not whichever records arrived first.
 	const monitorsBySystem = useMemo(() => {
 		const grouped: Record<string, NetworkMonitorRecord[]> = {}
 		for (const monitor of monitors) {
 			if (!monitor.enabled) continue
 			const list = grouped[monitor.system]
 			if (list) {
-				if (list.length < MAX_CARD_MONITORS) list.push(monitor)
+				list.push(monitor)
 			} else {
 				grouped[monitor.system] = [monitor]
 			}
+		}
+		for (const [systemId, list] of Object.entries(grouped)) {
+			list.sort(compareMonitors)
+			grouped[systemId] = list.slice(0, MAX_CARD_MONITORS)
 		}
 		return grouped
 	}, [monitors])

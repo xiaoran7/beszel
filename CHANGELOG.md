@@ -16,6 +16,16 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- **Network Monitor Display Names (探针显示名称)**:
+  - `network_monitors` 新增可选 `name` 字段（迁移 `1792454400_add_network_monitor_name.go`，可回滚、可重复执行）。此前探针只有 IP / 主机名可用作标签，仪表盘上只能显示 `218.76.0.1` 这类地址；现在可标注为「湖南电信」「湖南移动」「湖南联通」等。
+  - `name` 属于配置而非测量数据，因此在目标变更触发 `copyMonitorToNewRecord` 的记录轮换时一并保留，不会因改端口或改协议而丢失。
+  - 新增共享标签助手 `getMonitorLabel` / `getMonitorTarget`（`lib/network-monitor-utils.ts`）：名称留空时回退到目标地址（TCP 会带上端口），全部展示面统一走同一入口。
+  - 覆盖范围：仪表盘卡片延迟矩阵、监控表格目标列（两行显示「名称 / IP」）、表格全局搜索（同时匹配名称与目标）、监控图表图例与筛选、详情抽屉标题；原始目标保留为提示与副标题，便于核对。
+  - 仪表盘卡片可见探针由 3 条提升到 5 条，并按「有名者优先、名称字母序、其余按目标」稳定排序后再截断，避免每次加载显示不同探针。
+  - 新增/编辑对话框与批量导入均支持名称；批量格式扩展为 `target[,protocol[,port[,interval[,name]]]]`，新增第 5 个字段并保持向后兼容（旧的四段式仍可解析）。名称在集合层限长 64 字符。
+  - 修复名称不显示的根因：`useNetworkMonitors` 的 `NETWORK_MONITOR_FIELDS` 字段投影未包含 `name`，导致接口返回的记录缺字段、标签静默渲染为空字符串。
+  - 中文（`zh` / `zh-CN`）已翻译两条新增文案，其余语言交由常规翻译流程补齐。
+
 - **Hunan Multi-ISP Return-Path Monitoring (湖南三网回程监测)**:
   - 新增本机 Agent 节点「Hunan-Zhuzhou (湖南株洲联通)」：以 WebSocket 主动外连 `wss://beszel.tannerlab.xyz/api/beszel/agent-connect` 接入 Hub，无需公网端口映射，适配 NAT 后的家庭宽带环境。
   - 湖南电信 / 移动 / 联通三网探针：三网公共 DNS 的 ICMP 均被限速或屏蔽，改用 `tcp/53` 探针实测可达，从湖南本地视角给出真实回程延迟与丢包。

@@ -1377,6 +1377,7 @@ msgstr "Mountpoint"
 #: src/components/add-system.tsx
 #: src/components/alerts-history-columns.tsx
 #: src/components/containers-table/containers-table-columns.tsx
+#: src/components/network-monitors-table/monitor-dialog.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Name"
@@ -1526,6 +1527,10 @@ msgstr "One-time password"
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Open menu"
 msgstr "Open menu"
+
+#: src/components/network-monitors-table/monitor-dialog.tsx
+msgid "Optional, e.g. 湖南电信"
+msgstr "Optional, e.g. 湖南电信"
 
 #: src/components/login/auth-form.tsx
 msgid "Or continue with"
@@ -1980,6 +1985,10 @@ msgstr "Settings"
 #: src/components/routes/settings/layout.tsx
 msgid "Settings saved"
 msgstr "Settings saved"
+
+#: src/components/network-monitors-table/monitor-dialog.tsx
+msgid "Shown instead of the target on the dashboard. Leave empty to show the target."
+msgstr "Shown instead of the target on the dashboard. Leave empty to show the target."
 
 #: src/components/login/auth-form.tsx
 msgid "Sign in"

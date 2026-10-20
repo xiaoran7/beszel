@@ -31,6 +31,7 @@ import {
 	type RealtimeSystemMetrics,
 } from "@/lib/system-card-stats"
 import type { SystemRecord, NetworkMonitorRecord, SystemDetailsRecord } from "@/types"
+import { getMonitorLabel, getMonitorTarget } from "@/lib/network-monitor-utils"
 import { $router, navigate } from "../router"
 import { getPagePath } from "@nanostores/router"
 import { ActionsButton } from "../systems-table/systems-table-columns"
@@ -606,8 +607,8 @@ export const DenseServerCard = memo(function DenseServerCard({
 								return (
 									<div key={mon.id} className="flex flex-col gap-1">
 										<div className="flex items-center justify-between gap-2 text-[10px]">
-											<span className="font-medium text-foreground truncate" title={mon.target}>
-												{mon.target}
+											<span className="font-medium text-foreground truncate" title={getMonitorTarget(mon)}>
+												{getMonitorLabel(mon)}
 											</span>
 											<div className="flex items-center gap-2 font-mono tabular-nums shrink-0">
 												<span className="font-semibold text-foreground">

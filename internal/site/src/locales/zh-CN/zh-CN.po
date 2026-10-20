@@ -1382,6 +1382,7 @@ msgstr "挂载点"
 #: src/components/add-system.tsx
 #: src/components/alerts-history-columns.tsx
 #: src/components/containers-table/containers-table-columns.tsx
+#: src/components/network-monitors-table/monitor-dialog.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Name"
@@ -1531,6 +1532,10 @@ msgstr "一次性密码"
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Open menu"
 msgstr "打开菜单"
+
+#: src/components/network-monitors-table/monitor-dialog.tsx
+msgid "Optional, e.g. 湖南电信"
+msgstr "可选，例如：湖南电信"
 
 #: src/components/login/auth-form.tsx
 msgid "Or continue with"
@@ -1985,6 +1990,10 @@ msgstr "设置"
 #: src/components/routes/settings/layout.tsx
 msgid "Settings saved"
 msgstr "设置已保存"
+
+#: src/components/network-monitors-table/monitor-dialog.tsx
+msgid "Shown instead of the target on the dashboard. Leave empty to show the target."
+msgstr "仪表盘上显示此名称以替代目标地址；留空则显示目标地址。"
 
 #: src/components/login/auth-form.tsx
 msgid "Sign in"

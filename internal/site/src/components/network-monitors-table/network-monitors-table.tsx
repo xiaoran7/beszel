@@ -1,4 +1,4 @@
-import { getMonitorTarget } from "@/lib/network-monitor-utils"
+import { getMonitorLabel, getMonitorTarget } from "@/lib/network-monitor-utils"
 import { t } from "@lingui/core/macro"
 import { Trans } from "@lingui/react/macro"
 import {
@@ -45,7 +45,7 @@ import {
 } from "@/lib/utils"
 import type { ChartData, NetworkMonitorRecord } from "@/types"
 import { AddMonitorDialog, EditMonitorDialog } from "./monitor-dialog"
-import { ArrowLeftRightIcon, EthernetPortIcon, LoaderCircleIcon, ServerIcon, XIcon } from "lucide-react"
+import { ArrowLeftRightIcon, EthernetPortIcon, GlobeIcon, LoaderCircleIcon, ServerIcon, XIcon } from "lucide-react"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import ChartTimeSelect from "@/components/charts/chart-time-select"
 import { LossChart, AvgMinMaxResponseChart } from "@/components/routes/system/charts/monitors-charts"
@@ -84,8 +84,8 @@ export default function NetworkMonitorsTableNew({
 	const longestTarget = useMemo(() => {
 		let longestTarget = ""
 		for (const p of monitors) {
-			if (isVisuallyLonger(getMonitorTarget(p), longestTarget)) {
-				longestTarget = getMonitorTarget(p)
+			if (isVisuallyLonger(getMonitorLabel(p), longestTarget)) {
+				longestTarget = getMonitorLabel(p)
 			}
 		}
 		return longestTarget
@@ -229,7 +229,8 @@ export default function NetworkMonitorsTableNew({
 			if (!value) return true
 			const monitor = row.original
 			const systemName = $allSystemsById.get()[monitor.system]?.name ?? ""
-			const searchString = `${getMonitorTarget(monitor)}${monitor.protocol}${systemName}`.toLocaleLowerCase()
+			const searchString =
+				`${getMonitorLabel(monitor)}${getMonitorTarget(monitor)}${monitor.protocol}${systemName}`.toLocaleLowerCase()
 			return matchesFilterGroups(searchString, parseFilterGroups(value))
 		},
 	})
@@ -522,7 +523,7 @@ function NetworkMonitorSheetContent({
 		[system?.info?.v, direction, chartTime]
 	)
 	const hasMonitorStats = monitorStats.some((record) => record.stats?.[monitor.id] != null)
-	const monitorLabel = getMonitorTarget(monitor)
+	const monitorLabel = getMonitorLabel(monitor)
 
 	return (
 		<Sheet open={open} onOpenChange={onOpenChange}>
@@ -530,6 +531,9 @@ function NetworkMonitorSheetContent({
 				<SheetHeader className="mb-0 border-b p-0 pb-4">
 					<SheetTitle>{monitorLabel}</SheetTitle>
 					<SheetDescription className="flex flex-wrap items-center gap-x-2 gap-y-1">
+						<GlobeIcon className="size-3.5 text-muted-foreground" />
+						<span className="font-mono">{getMonitorTarget(monitor)}</span>
+						<Separator orientation="vertical" className="h-2.5 bg-muted-foreground opacity-70" />
 						<ServerIcon className="size-3.5 text-muted-foreground" />
 						<Link className="hover:underline" href={getPagePath($router, "system", { id: system?.id ?? "" })}>
 							{system?.name ?? ""}

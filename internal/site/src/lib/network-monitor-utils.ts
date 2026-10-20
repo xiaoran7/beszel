@@ -15,3 +15,14 @@ export function getMonitorTarget(monitor: Pick<NetworkMonitorRecord, "target" | 
 	const host = monitor.target.includes(":") && !monitor.target.startsWith("[") ? `[${monitor.target}]` : monitor.target
 	return `${host}:${monitor.port}`
 }
+
+/**
+ * Human label for a monitor: its `name` when set, otherwise the target.
+ *
+ * Names are optional and user-supplied, so every list/chart/alert surface reads
+ * the label through here rather than reaching for `target` directly.
+ */
+export function getMonitorLabel(monitor: Pick<NetworkMonitorRecord, "name" | "target" | "protocol" | "port">) {
+	const name = monitor.name?.trim()
+	return name ? name : getMonitorTarget(monitor)
+}

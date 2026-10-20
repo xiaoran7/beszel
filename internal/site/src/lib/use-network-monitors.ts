@@ -73,8 +73,10 @@ async function fetchMonitorStats(
 	return mergeMonitorStats(rawRecords)
 }
 
+// `name` must stay in this projection: the dashboard card and the monitor table
+// read the display label from it, and a missing field silently renders as "".
 const NETWORK_MONITOR_FIELDS =
-	"id,system,target,protocol,port,interval,res,resMin1h,resMax1h,resAvg1h,loss1h,enabled,updated"
+	"id,system,name,target,protocol,port,interval,res,resMin1h,resMax1h,resAvg1h,loss1h,enabled,updated"
 
 interface UseNetworkMonitorsProps {
 	systemId?: string

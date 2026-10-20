@@ -1382,6 +1382,7 @@ msgstr "نقطة الربط"
 #: src/components/add-system.tsx
 #: src/components/alerts-history-columns.tsx
 #: src/components/containers-table/containers-table-columns.tsx
+#: src/components/network-monitors-table/monitor-dialog.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Name"
@@ -1531,6 +1532,10 @@ msgstr "كلمة مرور لمرة واحدة"
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Open menu"
 msgstr "فتح القائمة"
+
+#: src/components/network-monitors-table/monitor-dialog.tsx
+msgid "Optional, e.g. 湖南电信"
+msgstr ""
 
 #: src/components/login/auth-form.tsx
 msgid "Or continue with"
@@ -1985,6 +1990,10 @@ msgstr "الإعدادات"
 #: src/components/routes/settings/layout.tsx
 msgid "Settings saved"
 msgstr "تم حفظ الإعدادات"
+
+#: src/components/network-monitors-table/monitor-dialog.tsx
+msgid "Shown instead of the target on the dashboard. Leave empty to show the target."
+msgstr ""
 
 #: src/components/login/auth-form.tsx
 msgid "Sign in"

@@ -34,6 +34,7 @@ type MonitorProtocol = "icmp" | "tcp" | "http" | "dns"
 
 type MonitorValues = {
 	system: string
+	name: string
 	target: string
 	protocol: MonitorProtocol
 	port: number
@@ -44,7 +45,7 @@ type NormalizedMonitorValues = Omit<MonitorValues, "system" | "interval"> & {
 	interval: number
 }
 
-type BulkMonitorLineSource = Pick<NetworkMonitorRecord, "target" | "protocol" | "port" | "interval">
+type BulkMonitorLineSource = Pick<NetworkMonitorRecord, "name" | "target" | "protocol" | "port" | "interval">
 
 const defaultInterval = 30
 
@@ -52,10 +53,14 @@ const MonitorProtocolSchema = v.picklist(["icmp", "tcp", "http", "dns"])
 
 const MonitorIntervalSchema = v.pipe(v.string(), v.toNumber(), v.minValue(1), v.maxValue(3600))
 
+/** Optional display label. The collection caps it at 64 characters. */
+const MonitorNameSchema = v.optional(v.pipe(v.string(), v.trim(), v.maxLength(64)), "")
+
 // Both the single-monitor form and the bulk importer flow through this schema so
 // defaults and HTTP target normalization stay in one place.
 const NormalizedMonitorValuesSchema = v.pipe(
 	v.object({
+		name: MonitorNameSchema,
 		target: v.pipe(v.string(), v.trim(), v.nonEmpty("target is required")),
 		protocol: MonitorProtocolSchema,
 		port: v.number(),
@@ -75,6 +80,7 @@ const NormalizedMonitorValuesSchema = v.pipe(
 		return {
 			// HTTP monitors may be entered as bare hostnames, so normalize them to a
 			// scheme-bearing URL before the payload is sent to PocketBase.
+			name: input.name.trim(),
 			target: protocol === "http" ? httpTarget : input.target,
 			protocol,
 			port,
@@ -100,6 +106,7 @@ const BulkMonitorSchema = v.object({
 	protocol: v.optional(v.pipe(v.string(), v.trim())),
 	port: v.optional(v.pipe(v.string(), v.trim())),
 	interval: v.optional(v.pipe(v.string(), v.trim())),
+	name: v.optional(v.pipe(v.string(), v.trim())),
 })
 
 function normalizeHttpTarget(target: string, port = 0) {
@@ -158,12 +165,13 @@ function getMonitorIdentityKey({ system, target, protocol, port }: MonitorIdenti
 }
 
 function parseBulkMonitorLine(line: string, lineNumber: number, system: string) {
-	const [rawTarget = "", rawProtocol = "", rawPort = "", rawInterval = ""] = line.split(",")
+	const [rawTarget = "", rawProtocol = "", rawPort = "", rawInterval = "", rawName = ""] = line.split(",")
 	const parsed = v.safeParse(BulkMonitorSchema, {
 		target: rawTarget,
 		protocol: rawProtocol,
 		port: rawPort,
 		interval: rawInterval,
+		name: rawName,
 	})
 	if (!parsed.success) {
 		throw new Error(`Line ${lineNumber}: ${parsed.issues[0]?.message || "invalid monitor entry"}`)
@@ -173,6 +181,7 @@ function parseBulkMonitorLine(line: string, lineNumber: number, system: string) 
 
 	return buildMonitorPayload({
 		system,
+		name: parsed.output.name ?? "",
 		target: parsed.output.target,
 		protocol,
 		port: parsed.output.port ? Number(parsed.output.port) : 0,
@@ -183,7 +192,7 @@ function parseBulkMonitorLine(line: string, lineNumber: number, system: string) 
 export function formatBulkMonitorLine(monitor: BulkMonitorLineSource) {
 	const port = monitor.protocol !== "tcp" || monitor.port === 443 ? "" : `${monitor.port}`
 	const interval = monitor.interval === defaultInterval ? "" : `${monitor.interval}`
-	return trimTrailingEmptyFields([monitor.target, monitor.protocol, port, interval]).join(",")
+	return trimTrailingEmptyFields([monitor.target, monitor.protocol, port, interval, monitor.name ?? ""]).join(",")
 }
 
 function SystemMultiSelect({
@@ -485,7 +494,7 @@ export function AddMonitorDialog({ systemId, monitors }: { systemId?: string; mo
 						<SheetTitle>
 							<Trans>Bulk Add {{ foo: t`Network Monitors` }}</Trans>
 						</SheetTitle>
-						<SheetDescription>target[,protocol[,port[,interval]]]</SheetDescription>
+						<SheetDescription>target[,protocol[,port[,interval[,name]]]]</SheetDescription>
 					</SheetHeader>
 					<form ref={bulkFormRef} onSubmit={handleBulkSubmit} className="flex h-full flex-col overflow-hidden">
 						<div className="flex-1 flex flex-col space-y-4 overflow-auto p-4">
@@ -518,10 +527,15 @@ export function AddMonitorDialog({ systemId, monitors }: { systemId?: string; mo
 										}
 									}}
 									className="font-mono grow text-sm bg-card"
-									placeholder={["1.1.1.1", "example.com,tcp", "https://example.com,http,,60"].join("\n")}
+									placeholder={[
+										"1.1.1.1",
+										"example.com,tcp",
+										"https://example.com,http,,60",
+										"218.76.0.1,icmp,,60,湖南电信",
+									].join("\n")}
 									required
 								/>
-								<p className="text-xs text-muted-foreground">target[,protocol[,port[,interval]]]</p>
+								<p className="text-xs text-muted-foreground">target[,protocol[,port[,interval[,name]]]]</p>
 							</div>
 						</div>
 						<SheetFooter className="border-t">
@@ -573,6 +587,7 @@ function MonitorDialogContent({
 	onOpenBulkAdd?: (selectedSystemIds: Set<string>) => void
 }) {
 	const [protocol, setProtocol] = useState<MonitorProtocol>(monitor?.protocol ?? "icmp")
+	const [name, setName] = useState(monitor?.name ?? "")
 	const [target, setTarget] = useState(monitor?.target ?? "")
 	const [port, setPort] = useState(monitor?.protocol === "tcp" && monitor.port ? String(monitor.port) : "")
 	const [monitorInterval, setMonitorInterval] = useState(String(monitor?.interval ?? defaultInterval))
@@ -591,6 +606,7 @@ function MonitorDialogContent({
 		}
 
 		setProtocol(monitor?.protocol ?? "icmp")
+		setName(monitor?.name ?? "")
 		setTarget(monitor?.target ?? "")
 		setPort(monitor?.protocol === "tcp" && monitor.port ? String(monitor.port) : "")
 		setMonitorInterval(String(monitor?.interval ?? defaultInterval))
@@ -610,6 +626,7 @@ function MonitorDialogContent({
 			const payload = buildMonitorPayload(
 				{
 					system: targetSystems[0],
+					name,
 					target,
 					protocol,
 					port: protocol === "tcp" ? Number(port) : 0,
@@ -688,6 +705,20 @@ function MonitorDialogContent({
 				)}
 				<div className="grid gap-2">
 					<Label>
+						<Trans>Name</Trans>
+					</Label>
+					<Input
+						value={name}
+						onChange={(e) => setName(e.target.value)}
+						placeholder={t`Optional, e.g. 湖南电信`}
+						maxLength={64}
+					/>
+					<p className="text-xs text-muted-foreground">
+						<Trans>Shown instead of the target on the dashboard. Leave empty to show the target.</Trans>
+					</p>
+				</div>
+				<div className="grid gap-2">
+					<Label>
 						<Trans>Target</Trans>
 					</Label>
 					<Input
@@ -759,11 +790,7 @@ function MonitorDialogContent({
 						type="submit"
 						disabled={loading || (!systemId && (isEditing ? !selectedSystemId : !selectedSystemIds.size))}
 					>
-						{isEditing ? (
-							<Trans>Save {{ foo: t`Monitor` }}</Trans>
-						) : (
-							<Trans>Add {{ foo: t`Monitor` }}</Trans>
-						)}
+						{isEditing ? <Trans>Save {{ foo: t`Monitor` }}</Trans> : <Trans>Add {{ foo: t`Monitor` }}</Trans>}
 					</Button>
 				</DialogFooter>
 			</form>
