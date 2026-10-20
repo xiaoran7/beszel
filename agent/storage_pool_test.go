@@ -386,13 +386,14 @@ func TestGetDetailFailureReturnsIncompleteCachedInventory(t *testing.T) {
 		return []zfs.PoolStat{{Name: "tank"}}, nil
 	}
 	zm.backends[0].poolStatusesFn = func() ([]zfs.PoolStatus, error) {
-		return []zfs.PoolStatus{{Name: "tank", Vdevs: []zfs.VdevStatus{{Name: "mirror-0"}}}}, nil
+		return []zfs.PoolStatus{{Name: "tank", Status: "test advisory", Vdevs: []zfs.VdevStatus{{Name: "mirror-0"}}}}, nil
 	}
 	zm.backends[0].datasetsFn = func() ([]zfs.Dataset, error) {
 		return []zfs.Dataset{{Name: "tank/data"}}, nil
 	}
 	first := zm.GetDetail(false)
 	require.True(t, first.Complete)
+	assert.Equal(t, "test advisory", first.Pools[0].Status)
 	require.Len(t, first.Pools[0].Vdevs, 1)
 	require.Len(t, first.Pools[0].Datasets, 1)
 
@@ -400,6 +401,7 @@ func TestGetDetailFailureReturnsIncompleteCachedInventory(t *testing.T) {
 	zm.backends[0].datasetsFn = func() ([]zfs.Dataset, error) { return nil, zfs.ErrNoZfs }
 	partial := zm.GetDetail(true)
 	require.True(t, partial.Complete)
+	assert.Equal(t, "test advisory", partial.Pools[0].Status)
 	require.Len(t, partial.Pools[0].Vdevs, 1)
 	require.Len(t, partial.Pools[0].Datasets, 1)
 
@@ -517,4 +519,32 @@ func TestBtrfsPoolIdentities(t *testing.T) {
 	assert.Equal(t, "renamed", stats.ZfsPools[first].DisplayName)
 	assert.Equal(t, first, zm.GetDetail(true).Pools[1].Name)
 	assert.Equal(t, "renamed", zm.GetDetail(true).Pools[1].DisplayName)
+}
+
+func TestStaleUtilityCachesRefreshInBackground(t *testing.T) {
+	release := make(chan struct{})
+	b := &poolBackend{name: "zfs"}
+	b.poolStatsFn = func() ([]zfs.PoolStat, error) {
+		<-release
+		return []zfs.PoolStat{{Name: "new"}}, nil
+	}
+	b.datasetsFn = func() ([]zfs.Dataset, error) {
+		<-release
+		return []zfs.Dataset{{Name: "new", Mountpoint: "/new"}}, nil
+	}
+	b.poolData = []zfs.PoolStat{{Name: "old"}}
+	b.lastPoolStats = time.Now().Add(-2 * poolStatsRefreshInterval)
+	b.datasetUsage = map[string]zfsDatasetUsage{"/old": {}}
+	b.lastUsageRefresh = time.Now().Add(-2 * datasetUsageRefreshInterval)
+
+	// A hung utility must not block collection; cached data is served meanwhile.
+	for range 2 {
+		assert.Equal(t, "old", b.poolStats()[0].Name)
+		assert.Contains(t, b.refreshDatasetUsage(), "/old")
+	}
+
+	close(release)
+	require.Eventually(t, func() bool {
+		return b.poolStats()[0].Name == "new" && b.refreshDatasetUsage()["/new"] == zfsDatasetUsage{}
+	}, time.Second, time.Millisecond)
 }

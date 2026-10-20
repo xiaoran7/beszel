@@ -26,7 +26,7 @@ func TestMonitorManagerGetResultsIncludesHourResponseRange(t *testing.T) {
 	task.history.addSampleLocked(monitorSample{responseUs: 30, timestamp: now.Add(-50 * time.Second)})
 	task.history.addSampleLocked(monitorSample{responseUs: -1, timestamp: now.Add(-30 * time.Second)})
 
-	pm := newMonitorManager()
+	pm := newMonitorManager(nil)
 	pm.monitors = map[string]*monitorTask{"icmp:example.com": task}
 
 	results := pm.GetResults(uint16(time.Minute / time.Millisecond))
@@ -48,7 +48,7 @@ func TestMonitorManagerGetResultsIncludesLossOnlyHourData(t *testing.T) {
 	task.history.addSampleLocked(monitorSample{responseUs: -1, timestamp: now.Add(-30 * time.Second)})
 	task.history.addSampleLocked(monitorSample{responseUs: -1, timestamp: now.Add(-10 * time.Second)})
 
-	pm := newMonitorManager()
+	pm := newMonitorManager(nil)
 	pm.monitors = map[string]*monitorTask{"icmp:example.com": task}
 
 	results := pm.GetResults(uint16(time.Minute / time.Millisecond))
@@ -73,7 +73,7 @@ func TestMonitorManagerSyncMonitorsSkipsConfigsWithoutStableID(t *testing.T) {
 	validCfg := monitor.Config{ID: "monitor-1", Target: "ignored", Protocol: "noop", Interval: 10}
 	invalidCfg := monitor.Config{Target: "ignored", Protocol: "noop", Interval: 10}
 
-	pm := newMonitorManager()
+	pm := newMonitorManager(nil)
 	pm.SyncMonitors([]monitor.Config{validCfg, invalidCfg})
 	defer pm.Stop()
 
@@ -89,7 +89,7 @@ func TestMonitorManagerSyncMonitorsStopsRemovedTasksButKeepsExisting(t *testing.
 
 	keptTask := newMonitorTask(keepCfg)
 	removedTask := newMonitorTask(removeCfg)
-	pm := newMonitorManager()
+	pm := newMonitorManager(nil)
 	pm.monitors = map[string]*monitorTask{
 		keepCfg.ID:   keptTask,
 		removeCfg.ID: removedTask,
@@ -118,7 +118,7 @@ func TestMonitorManagerSyncMonitorsRestartsChangedConfig(t *testing.T) {
 	originalCfg := monitor.Config{ID: "monitor-1", Target: "ignored-a", Protocol: "noop", Interval: 10}
 	updatedCfg := monitor.Config{ID: "monitor-1", Target: "ignored-b", Protocol: "noop", Interval: 10}
 	originalTask := newMonitorTask(originalCfg)
-	pm := newMonitorManager()
+	pm := newMonitorManager(nil)
 	pm.monitors = map[string]*monitorTask{
 		originalCfg.ID: originalTask,
 	}
@@ -145,7 +145,7 @@ func TestMonitorManagerApplySyncUpsertRunsImmediatelyAndReturnsResult(t *testing
 
 	pm := &MonitorManager{
 		monitors: make(map[string]*monitorTask),
-		probe:    networkMonitorProbe(server.Client()),
+		probe:    networkMonitorProbe(server.Client(), nil),
 	}
 
 	resp, err := pm.HandleSyncRequest(monitor.SyncRequest{
@@ -176,7 +176,7 @@ func TestMonitorManagerUpsertMonitorKeepsHistoryWhenOnlyIntervalChanges(t *testi
 	existingTask.history.addSampleLocked(monitorSample{responseUs: 12, timestamp: now.Add(-50 * time.Minute)})
 	existingTask.history.addSampleLocked(monitorSample{responseUs: 24, timestamp: now.Add(-30 * time.Second)})
 
-	pm := newMonitorManager()
+	pm := newMonitorManager(nil)
 	pm.monitors = map[string]*monitorTask{originalCfg.ID: existingTask}
 
 	result, err := pm.UpsertMonitor(updatedCfg, false)
@@ -211,7 +211,7 @@ func TestMonitorManagerUpsertMonitorKeepsHistoryWhenOnlyIntervalChanges(t *testi
 func TestMonitorManagerApplySyncDeleteRemovesTask(t *testing.T) {
 	config := monitor.Config{ID: "monitor-1", Target: "1.1.1.1", Protocol: "icmp", Interval: 10}
 	task := newMonitorTask(config)
-	pm := newMonitorManager()
+	pm := newMonitorManager(nil)
 	pm.monitors = map[string]*monitorTask{config.ID: task}
 
 	_, err := pm.HandleSyncRequest(monitor.SyncRequest{
@@ -260,6 +260,24 @@ func TestMonitorHTTP(t *testing.T) {
 		responseUs, err := monitorHTTP(context.Background(), server.Client(), server.URL)
 		assert.Equal(t, int64(-1), responseUs)
 		require.Error(t, err)
+	})
+
+	t.Run("self-signed certificate", func(t *testing.T) {
+		server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusNoContent)
+		}))
+		defer server.Close()
+		probe := newMonitorManager(nil).probe
+		config := monitor.Config{Protocol: "http", Target: server.URL}
+
+		responseUs, err := probe(context.Background(), config)
+		assert.Equal(t, int64(-1), responseUs)
+		require.Error(t, err)
+
+		config.SkipTLSVerify = true
+		responseUs, err = probe(context.Background(), config)
+		require.NoError(t, err)
+		assert.GreaterOrEqual(t, responseUs, int64(0))
 	})
 }
 
@@ -376,15 +394,79 @@ func tcpMonitorTestResolver(ips []string) *net.Resolver {
 	}}
 }
 
+// udpDNSTestServer starts a UDP server on loopback that answers A queries with the
+// given IPs, and returns its listen address (host:port).
+func udpDNSTestServer(t *testing.T, ips []string) string {
+	t.Helper()
+	conn, err := net.ListenUDP("udp", &net.UDPAddr{IP: net.ParseIP("127.0.0.1")})
+	require.NoError(t, err)
+	t.Cleanup(func() { conn.Close() })
+
+	go func() {
+		buf := make([]byte, 512)
+		for {
+			n, addr, err := conn.ReadFromUDP(buf)
+			if err != nil {
+				return
+			}
+			var msg dnsmessage.Message
+			if err := msg.Unpack(buf[:n]); err != nil {
+				continue
+			}
+			msg.Header.Response = true
+			msg.Header.RecursionAvailable = true
+			for _, question := range msg.Questions {
+				if question.Type != dnsmessage.TypeA {
+					continue
+				}
+				for _, ip := range ips {
+					msg.Answers = append(msg.Answers, dnsmessage.Resource{
+						Header: dnsmessage.ResourceHeader{Name: question.Name, Type: dnsmessage.TypeA, Class: dnsmessage.ClassINET},
+						Body:   &dnsmessage.AResource{A: [4]byte(net.ParseIP(ip).To4())},
+					})
+				}
+			}
+			packet, err := msg.Pack()
+			if err != nil {
+				continue
+			}
+			_, _ = conn.WriteToUDP(packet, addr)
+		}
+	}()
+
+	return conn.LocalAddr().String()
+}
+
 func TestMonitorDNS(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		responseUs, err := monitorDNS(context.Background(), "localhost")
+		responseUs, err := monitorDNS(context.Background(), "localhost", "")
 		require.NoError(t, err)
 		assert.GreaterOrEqual(t, responseUs, int64(0))
 	})
 
 	t.Run("lookup failure", func(t *testing.T) {
-		responseUs, err := monitorDNS(context.Background(), "")
+		responseUs, err := monitorDNS(context.Background(), "", "")
+		assert.Equal(t, int64(-1), responseUs)
+		require.Error(t, err)
+	})
+
+	t.Run("custom server", func(t *testing.T) {
+		serverAddr := udpDNSTestServer(t, []string{"192.0.2.10"})
+		responseUs, err := monitorDNS(context.Background(), "example.test.", serverAddr)
+		require.NoError(t, err)
+		assert.GreaterOrEqual(t, responseUs, int64(0))
+	})
+
+	t.Run("custom server without port defaults to 53", func(t *testing.T) {
+		resolver := dnsResolverForServer("127.0.0.1")
+		conn, err := resolver.Dial(context.Background(), "udp", "")
+		require.NoError(t, err)
+		defer conn.Close()
+		assert.Equal(t, "127.0.0.1:53", conn.RemoteAddr().String())
+	})
+
+	t.Run("custom server unreachable", func(t *testing.T) {
+		responseUs, err := monitorDNS(context.Background(), "example.test.", "127.0.0.1:1")
 		assert.Equal(t, int64(-1), responseUs)
 		require.Error(t, err)
 	})
@@ -406,7 +488,7 @@ func TestMonitorManagerCancelsActiveProbe(t *testing.T) {
 			}))
 			defer server.Close()
 			defer close(release)
-			pm := newMonitorManager()
+			pm := newMonitorManager(nil)
 			defer pm.Stop()
 			cfg := monitor.Config{ID: "test", Protocol: "http", Target: server.URL, Interval: 3600}
 			task := newMonitorTask(cfg)
@@ -479,7 +561,7 @@ func TestMonitorResolutionCancellation(t *testing.T) {
 				case "tcp":
 					_, err = monitorTCP(ctx, "monitor-cancellation.invalid.", 80)
 				case "dns":
-					_, err = monitorDNS(ctx, "monitor-cancellation.invalid.")
+					_, err = monitorDNS(ctx, "monitor-cancellation.invalid.", "")
 				case "icmp":
 					_, err = monitorICMP(ctx, "monitor-cancellation.invalid.")
 				}
@@ -511,8 +593,8 @@ func TestMonitorProbeTimeoutRecordsLoss(t *testing.T) {
 	}))
 	defer server.Close()
 	defer close(release)
-	pm := newMonitorManager()
-	pm.probe = networkMonitorProbe(&http.Client{Timeout: 20 * time.Millisecond})
+	pm := newMonitorManager(nil)
+	pm.probe = networkMonitorProbe(&http.Client{Timeout: 20 * time.Millisecond}, nil)
 	task := newMonitorTask(monitor.Config{ID: "timeout", Protocol: "http", Target: server.URL})
 	defer task.cancel()
 

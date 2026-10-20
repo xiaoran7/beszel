@@ -5,10 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"os"
 	"path"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 	"unicode/utf8"
 
@@ -19,7 +22,12 @@ import (
 	"github.com/shirou/gopsutil/v4/sensors"
 )
 
-var errTemperatureFetchTimeout = errors.New("temperature collection timed out")
+var (
+	errTemperatureFetchTimeout = errors.New("temperature collection timed out")
+	errSensorReadInFlight      = errors.New("previous sensor read still in progress")
+)
+
+const defaultSensorsTimeout = 2 * time.Second
 
 // Matches sensors.TemperaturesWithContext to allow for panic recovery (gopsutil/issues/1832)
 type getTempsFn func(ctx context.Context) ([]sensors.TemperatureStat, error)
@@ -32,6 +40,8 @@ type SensorConfig struct {
 	isBlacklist    bool
 	hasWildcards   bool
 	skipCollection bool
+	skipGPU        bool
+	sensorShadow   string
 	firstRun       bool
 }
 
@@ -41,14 +51,15 @@ func (a *Agent) newSensorConfig() *SensorConfig {
 	sensorsEnvVal, sensorsSet := utils.GetEnv("SENSORS")
 	skipCollection := sensorsSet && sensorsEnvVal == ""
 	sensorsTimeout, _ := utils.GetEnv("SENSORS_TIMEOUT")
+	skipGPU, _ := utils.GetEnv("SKIP_GPU")
 
-	return a.newSensorConfigWithEnv(primarySensor, sysSensors, sensorsEnvVal, sensorsTimeout, skipCollection)
+	return a.newSensorConfigWithEnv(primarySensor, sysSensors, sensorsEnvVal, sensorsTimeout, skipCollection, skipGPU == "true")
 }
 
 // newSensorConfigWithEnv creates a SensorConfig with the provided environment variables
 // sensorsSet indicates if the SENSORS environment variable was explicitly set (even to empty string)
-func (a *Agent) newSensorConfigWithEnv(primarySensor, sysSensors, sensorsEnvVal, sensorsTimeout string, skipCollection bool) *SensorConfig {
-	timeout := 2 * time.Second
+func (a *Agent) newSensorConfigWithEnv(primarySensor, sysSensors, sensorsEnvVal, sensorsTimeout string, skipCollection, skipGPU bool) *SensorConfig {
+	timeout := defaultSensorsTimeout
 	if sensorsTimeout != "" {
 		if d, err := time.ParseDuration(sensorsTimeout); err == nil {
 			timeout = d
@@ -62,6 +73,7 @@ func (a *Agent) newSensorConfigWithEnv(primarySensor, sysSensors, sensorsEnvVal,
 		primarySensor:  primarySensor,
 		timeout:        timeout,
 		skipCollection: skipCollection,
+		skipGPU:        skipGPU,
 		firstRun:       true,
 		sensors:        make(map[string]struct{}),
 	}
@@ -72,6 +84,19 @@ func (a *Agent) newSensorConfigWithEnv(primarySensor, sysSensors, sensorsEnvVal,
 		config.context = context.WithValue(config.context,
 			common.EnvKey, common.EnvMap{common.HostSysEnvKey: sysSensors},
 		)
+	}
+	if skipGPU && runtime.GOOS == "linux" {
+		// gopsutil reads every temp*_input before results can be filtered, so
+		// point it at a shadow tree built from the effective sysfs root instead.
+		if shadow, err := buildNonGpuSysShadow(effectiveSysRoot(config.context)); err == nil {
+			slog.Info("SKIP_GPU enabled, using non-GPU sensor sysfs shadow", "path", shadow)
+			config.sensorShadow = shadow
+			config.context = context.WithValue(config.context,
+				common.EnvKey, common.EnvMap{common.HostSysEnvKey: shadow},
+			)
+		} else {
+			slog.Warn("SKIP_GPU sensor shadow unavailable, falling back to post-read filtering", "err", err)
+		}
 	}
 
 	// handle blacklist
@@ -107,7 +132,7 @@ func (a *Agent) updateTemperatures(systemStats *system.Stats) {
 	temps, err := a.getTempsWithTimeout(getSensorTemps)
 	if err != nil {
 		// retry once on panic (gopsutil/issues/1832)
-		if !errors.Is(err, errTemperatureFetchTimeout) {
+		if !errors.Is(err, errTemperatureFetchTimeout) && !errors.Is(err, errSensorReadInFlight) {
 			temps, err = a.getTempsWithTimeout(getSensorTemps)
 		}
 		if err != nil {
@@ -126,11 +151,23 @@ func (a *Agent) updateTemperatures(systemStats *system.Stats) {
 	}
 
 	systemStats.Temperatures = make(map[string]float64, len(temps))
+	// claimed tracks every name handed out, including names of sensors that are
+	// dropped below, so a sensor's key never depends on which sensors were filtered
+	claimed := make(map[string]struct{}, len(temps))
 	for i, sensor := range temps {
 		// check for malformed strings on darwin (gopsutil/issues/1832)
 		if runtime.GOOS == "darwin" && !utf8.ValidString(sensor.SensorKey) {
 			continue
 		}
+
+		// claim a name before any filtering, so excluding a sensor does not
+		// rename the sensors after it
+		sensorName := sensor.SensorKey
+		if _, ok := claimed[sensorName]; ok {
+			// if key already claimed, append int to key
+			sensorName = sensorName + "_" + strconv.Itoa(i)
+		}
+		claimed[sensorName] = struct{}{}
 
 		// scale temperature
 		if sensor.Temperature != 0 && sensor.Temperature < 1 {
@@ -140,13 +177,11 @@ func (a *Agent) updateTemperatures(systemStats *system.Stats) {
 		if sensor.Temperature <= 0 || sensor.Temperature >= 200 {
 			continue
 		}
-		sensorName := sensor.SensorKey
-		if _, ok := systemStats.Temperatures[sensorName]; ok {
-			// if key already exists, append int to key
-			sensorName = sensorName + "_" + strconv.Itoa(i)
-		}
 		// skip if not in whitelist or blacklist
 		if !isValidSensor(sensorName, a.sensorConfig) {
+			continue
+		}
+		if a.sensorConfig.skipGPU && isGpuSensorKey(sensorName) {
 			continue
 		}
 		// set dashboard temperature
@@ -173,11 +208,6 @@ func (a *Agent) getTempsWithPanicRecovery(getTemps getTempsFn) (temps []sensors.
 }
 
 func (a *Agent) getTempsWithTimeout(getTemps getTempsFn) ([]sensors.TemperatureStat, error) {
-	type result struct {
-		temps []sensors.TemperatureStat
-		err   error
-	}
-
 	// Use a longer timeout on the first run to allow for initialization
 	// (e.g. Windows LHM subprocess startup)
 	timeout := a.sensorConfig.timeout
@@ -186,17 +216,37 @@ func (a *Agent) getTempsWithTimeout(getTemps getTempsFn) ([]sensors.TemperatureS
 		timeout = 10 * time.Second
 	}
 
+	return readWithTimeout(&a.tempsReading, timeout, errTemperatureFetchTimeout, func() ([]sensors.TemperatureStat, error) {
+		return a.getTempsWithPanicRecovery(getTemps)
+	})
+}
+
+// readWithTimeout runs read in a goroutine and returns timeoutErr if it doesn't
+// finish within timeout. A sysfs read blocked in the kernel can't be cancelled,
+// so inflight stays set until it returns and later calls get errSensorReadInFlight
+// instead of stacking up another blocked goroutine on every poll.
+func readWithTimeout[T any](inflight *atomic.Bool, timeout time.Duration, timeoutErr error, read func() (T, error)) (T, error) {
+	var zero T
+	if !inflight.CompareAndSwap(false, true) {
+		return zero, errSensorReadInFlight
+	}
+
+	type result struct {
+		value T
+		err   error
+	}
 	resultCh := make(chan result, 1)
 	go func() {
-		temps, err := a.getTempsWithPanicRecovery(getTemps)
-		resultCh <- result{temps: temps, err: err}
+		value, err := read()
+		inflight.Store(false)
+		resultCh <- result{value, err}
 	}()
 
 	select {
 	case res := <-resultCh:
-		return res.temps, res.err
+		return res.value, res.err
 	case <-time.After(timeout):
-		return nil, errTemperatureFetchTimeout
+		return zero, timeoutErr
 	}
 }
 
@@ -244,4 +294,103 @@ func scaleTemperature(temp float64) float64 {
 		return scaled1000
 	}
 	return scaled100
+}
+
+// effectiveSysRoot mirrors gopsutil's HostSys lookup, which lives in its
+// internal package: context override, then HOST_SYS env, then /sys.
+func effectiveSysRoot(ctx context.Context) string {
+	if envMap, ok := ctx.Value(common.EnvKey).(common.EnvMap); ok {
+		if v := envMap[common.HostSysEnvKey]; v != "" {
+			return v
+		}
+	}
+	if v := os.Getenv("HOST_SYS"); v != "" {
+		return v
+	}
+	return "/sys"
+}
+
+func (config *SensorConfig) cleanupSensorShadow() {
+	if config.sensorShadow == "" {
+		return
+	}
+	if err := os.RemoveAll(config.sensorShadow); err != nil {
+		slog.Warn("Error removing sensor sysfs shadow", "path", config.sensorShadow, "err", err)
+		return
+	}
+	config.sensorShadow = ""
+}
+
+func (a *Agent) cleanupSensorShadow() {
+	if a.sensorConfig != nil {
+		a.sensorConfig.cleanupSensorShadow()
+	}
+}
+
+func isGpuThermalZone(zoneType string) bool {
+	zoneType = strings.ToLower(strings.TrimSpace(zoneType))
+	return isGpuChipName(zoneType) || strings.Contains(zoneType, "gpu")
+}
+
+// buildNonGpuSysShadow links non-GPU sensor directories into a temp dir. Only
+// static chip names and thermal-zone types are read; no sensor values are touched.
+func buildNonGpuSysShadow(sysRoot string) (string, error) {
+	shadow, err := os.MkdirTemp("", "beszel-sensors-*")
+	if err != nil {
+		return "", err
+	}
+	shadowHwmon := filepath.Join(shadow, "class", "hwmon")
+	if err := os.MkdirAll(shadowHwmon, 0o755); err != nil {
+		os.RemoveAll(shadow)
+		return "", err
+	}
+	entries, err := os.ReadDir(filepath.Join(sysRoot, "class", "hwmon"))
+	if err != nil && !os.IsNotExist(err) {
+		os.RemoveAll(shadow)
+		return "", err
+	}
+	for _, entry := range entries {
+		chipDir := filepath.Join(sysRoot, "class", "hwmon", entry.Name())
+		// Some hwmon devices expose name under device/ (gopsutil's CentOS fallback).
+		name, ok := utils.ReadStringFileOK(filepath.Join(chipDir, "name"))
+		if !ok {
+			name, ok = utils.ReadStringFileOK(filepath.Join(chipDir, "device", "name"))
+		}
+		if !ok || isGpuChipName(name) {
+			continue
+		}
+		if err := os.Symlink(chipDir, filepath.Join(shadowHwmon, entry.Name())); err != nil {
+			os.RemoveAll(shadow)
+			return "", err
+		}
+	}
+
+	thermalEntries, err := os.ReadDir(filepath.Join(sysRoot, "class", "thermal"))
+	if err != nil {
+		if os.IsNotExist(err) {
+			return shadow, nil
+		}
+		os.RemoveAll(shadow)
+		return "", err
+	}
+	shadowThermal := filepath.Join(shadow, "class", "thermal")
+	if err := os.MkdirAll(shadowThermal, 0o755); err != nil {
+		os.RemoveAll(shadow)
+		return "", err
+	}
+	for _, entry := range thermalEntries {
+		if !strings.HasPrefix(entry.Name(), "thermal_zone") {
+			continue
+		}
+		zoneDir := filepath.Join(sysRoot, "class", "thermal", entry.Name())
+		zoneType, ok := utils.ReadStringFileOK(filepath.Join(zoneDir, "type"))
+		if !ok || isGpuThermalZone(zoneType) {
+			continue
+		}
+		if err := os.Symlink(zoneDir, filepath.Join(shadowThermal, entry.Name())); err != nil {
+			os.RemoveAll(shadow)
+			return "", err
+		}
+	}
+	return shadow, nil
 }

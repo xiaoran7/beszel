@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"errors"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -11,8 +12,10 @@ import (
 	"github.com/henrygd/beszel/internal/entities/system"
 )
 
+var errFanFetchTimeout = errors.New("fan collection timed out")
+
 type fanSensor struct {
-	key, path string
+	key, path, chip string
 }
 
 var getFanSensors = newFanSensorCache(hwmonRoot)
@@ -29,12 +32,15 @@ func (a *Agent) updateFans(systemStats *system.Stats) {
 	if hwmonRoot == "" {
 		return
 	}
-	sensors, err := getFanSensors()
+	fans, err := a.readFansWithTimeout(getFanSensors)
 	if err != nil {
-		slog.Debug("Error reading fans", "err", err)
+		if errors.Is(err, errFanFetchTimeout) {
+			slog.Warn("Error reading fans", "err", err)
+		} else {
+			slog.Debug("Error reading fans", "err", err)
+		}
 		return
 	}
-	fans := readFanSensors(sensors)
 	if len(fans) == 0 {
 		return
 	}
@@ -50,6 +56,27 @@ func (a *Agent) updateFans(systemStats *system.Stats) {
 	// 		a.systemInfo.DashboardFan = rpm
 	// 	}
 	// }
+}
+
+// readFansWithTimeout discovers and reads fan sensors without letting a blocked
+// sysfs read (e.g. an i915 fan1_input stuck resuming the GPU) hang collection,
+// which holds the agent lock and would stall every later hub request.
+func (a *Agent) readFansWithTimeout(getSensors func() ([]fanSensor, error)) (map[string]uint16, error) {
+	timeout := defaultSensorsTimeout
+	if a.sensorConfig != nil && a.sensorConfig.timeout > 0 {
+		timeout = a.sensorConfig.timeout
+	}
+	return readWithTimeout(&a.fansReading, timeout, errFanFetchTimeout, func() (map[string]uint16, error) {
+		sensors, err := getSensors()
+		if err != nil {
+			return nil, err
+		}
+		// Filter before reading fan*_input: each read can wake an idle GPU.
+		if a.sensorConfig != nil && a.sensorConfig.skipGPU {
+			sensors = filterGpuFans(sensors)
+		}
+		return readFanSensors(sensors), nil
+	})
 }
 
 // readHwmonFans walks the given hwmon root (typically /sys/class/hwmon) and
@@ -100,7 +127,7 @@ func discoverHwmonFans(root string) ([]fanSensor, error) {
 			if label != "" {
 				key = chipName + "_" + label
 			}
-			sensors = append(sensors, fanSensor{key, inputPath})
+			sensors = append(sensors, fanSensor{key, inputPath, chipName})
 		}
 	}
 	return sensors, nil
@@ -114,4 +141,16 @@ func readFanSensors(sensors []fanSensor) map[string]uint16 {
 		}
 	}
 	return fans
+}
+
+// filterGpuFans drops GPU chips without touching the shared cache backing array.
+func filterGpuFans(sensors []fanSensor) []fanSensor {
+	kept := make([]fanSensor, 0, len(sensors))
+	for _, sensor := range sensors {
+		if isGpuChipName(sensor.chip) {
+			continue
+		}
+		kept = append(kept, sensor)
+	}
+	return kept
 }

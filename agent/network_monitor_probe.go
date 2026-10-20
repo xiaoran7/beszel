@@ -18,7 +18,9 @@ const networkMonitorUserAgent = "Beszel-Agent/" + beszel.Version + " (+https://b
 // Implementations must honor cancellation and bound their execution time.
 type monitorProbe func(context.Context, monitor.Config) (int64, error)
 
-func networkMonitorProbe(client *http.Client) monitorProbe {
+// networkMonitorProbe returns a probe that uses client for HTTP monitors, or
+// insecureClient for HTTP monitors that skip TLS certificate verification.
+func networkMonitorProbe(client, insecureClient *http.Client) monitorProbe {
 	return func(ctx context.Context, config monitor.Config) (int64, error) {
 		switch config.Protocol {
 		case "icmp":
@@ -26,9 +28,12 @@ func networkMonitorProbe(client *http.Client) monitorProbe {
 		case "tcp":
 			return monitorTCP(ctx, config.Target, config.Port)
 		case "http":
+			if config.SkipTLSVerify {
+				return monitorHTTP(ctx, insecureClient, config.Target)
+			}
 			return monitorHTTP(ctx, client, config.Target)
 		case "dns":
-			return monitorDNS(ctx, config.Target)
+			return monitorDNS(ctx, config.Target, config.Server)
 		default:
 			return -1, fmt.Errorf("unknown monitor protocol: %s", config.Protocol)
 		}
@@ -73,17 +78,41 @@ func monitorTCP(ctx context.Context, target string, port uint16) (int64, error) 
 	return -1, err
 }
 
-// monitorDNS measures DNS resolution response time in microseconds. Returns -1 and an error on failure.
-func monitorDNS(ctx context.Context, target string) (int64, error) {
+// monitorDNS measures DNS resolution response time in microseconds. If server is
+// non-empty, the lookup is sent to that DNS server (host or host:port, default
+// port 53) instead of the system resolver. Returns -1 and an error on failure.
+func monitorDNS(ctx context.Context, target, server string) (int64, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
+	resolver := net.DefaultResolver
+	if server != "" {
+		resolver = dnsResolverForServer(server)
+	}
+
 	start := time.Now()
-	ips, err := net.DefaultResolver.LookupHost(ctx, target)
+	ips, err := resolver.LookupHost(ctx, target)
 	if err != nil || len(ips) == 0 {
 		return -1, err
 	}
 	return time.Since(start).Microseconds(), nil
+}
+
+// dnsResolverForServer builds a resolver that sends lookups to the given DNS
+// server address instead of the system resolver. server may be a bare host or
+// host:port; when no port is given, the standard DNS port 53 is used.
+func dnsResolverForServer(server string) *net.Resolver {
+	address := server
+	if _, _, err := net.SplitHostPort(server); err != nil {
+		address = net.JoinHostPort(server, "53")
+	}
+	return &net.Resolver{
+		PreferGo: true,
+		Dial: func(ctx context.Context, network, _ string) (net.Conn, error) {
+			var dialer net.Dialer
+			return dialer.DialContext(ctx, network, address)
+		},
+	}
 }
 
 // monitorHTTP measures HTTP GET request response in microseconds. Returns -1 and an error on failure.
