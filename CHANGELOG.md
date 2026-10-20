@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- **Hunan Multi-ISP Return-Path Monitoring (湖南三网回程监测)**:
+  - 新增本机 Agent 节点「Hunan-Zhuzhou (湖南株洲联通)」：以 WebSocket 主动外连 `wss://beszel.tannerlab.xyz/api/beszel/agent-connect` 接入 Hub，无需公网端口映射，适配 NAT 后的家庭宽带环境。
+  - 湖南电信 / 移动 / 联通三网探针：三网公共 DNS 的 ICMP 均被限速或屏蔽，改用 `tcp/53` 探针实测可达，从湖南本地视角给出真实回程延迟与丢包。
+  - 东京主力机补充大陆骨干回程探针（阿里 DNS `223.5.5.5`、腾讯 DNS `119.29.29.29`、百度 DNS `180.76.76.76`、CNNIC `1.2.4.8`）与杭州/华为云 Tailnet 探针，形成大陆 ↔ 日本双向对照。
+  - 实测记录：湖南本地 → 三网 DNS 约 2–7 ms、湖南 → 东京公网约 161–165 ms（0% 丢包）、东京 → 大陆骨干约 51–88 ms。
+  - 本机 Agent 通过用户级启动文件夹（`BeszelAgent.vbs`）实现登录自启，无需管理员权限；指纹预置保证重连后仍绑定同一系统记录。
+
 ### Fixed
 
 - **Dashboard Card Correctness & Render-Cost Pass**:
