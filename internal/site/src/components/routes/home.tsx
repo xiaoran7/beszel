@@ -14,6 +14,7 @@ import { ServerGridCard } from "../dashboard/server-grid-card"
 import { AddServerCard } from "../dashboard/add-server-card"
 import { RecentAlertsBar } from "../dashboard/recent-alerts-bar"
 import { AronaCompanionPanel } from "../dashboard/arona-companion-panel"
+import { AronaCoverCard } from "../dashboard/arona-cover-card"
 import SystemsTable from "../systems-table/systems-table"
 import { AddSystemDialog } from "../add-system"
 import { ActiveAlerts } from "../active-alerts"
@@ -113,12 +114,12 @@ export default memo(function Home() {
 			<AronaCompanionPanel />
 
 			{/* Main Interactive Content Workspace */}
-			<div className="relative z-10 w-full p-4 md:p-6 lg:p-7 2xl:pr-[310px] flex flex-col gap-6">
+			<div className="relative z-10 w-full p-4 md:p-6 lg:p-7 flex flex-col gap-6">
 				{/* 1. Sensei Morning Welcome & 4 Metric Cards */}
 				<DashboardMetricsHeader systems={displaySystems} upCount={upCount} downCount={downCount} />
 
 				{/* Active Alerts Banner if any */}
-				<ActiveAlerts />
+				<ActiveAlerts className="2xl:max-w-[calc(75%-4.5px)]" />
 
 				{/* 2. Server Overview Toolbar */}
 				<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
@@ -211,7 +212,8 @@ export default memo(function Home() {
 				{/* 3. Server List (Dense Matrix, Classic Grid, or Table) */}
 				{viewMode === "dense" ? (
 					displaySystems.length > 0 ? (
-						<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 xl:gap-4.5">
+						<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 xl:gap-4.5">
+							<AronaCoverCard />
 							{displaySystems.map((system) => (
 								<DenseServerCard
 									key={system.id}
@@ -247,7 +249,8 @@ export default memo(function Home() {
 					)
 				) : viewMode === "grid" ? (
 					displaySystems.length > 0 ? (
-						<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 xl:gap-4.5">
+						<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 xl:gap-4.5">
+							<AronaCoverCard />
 							{displaySystems.map((system) => (
 								<ServerGridCard
 									key={system.id}

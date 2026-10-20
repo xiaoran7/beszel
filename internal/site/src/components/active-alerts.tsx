@@ -8,8 +8,9 @@ import { useMemo } from "react"
 import { $router, Link } from "./router"
 import { Alert, AlertTitle, AlertDescription } from "./ui/alert"
 import { Card, CardHeader, CardTitle, CardContent } from "./ui/card"
+import { cn } from "@/lib/utils"
 
-export const ActiveAlerts = () => {
+export const ActiveAlerts = ({ className }: { className?: string } = {}) => {
 	const alerts = useStore($alerts)
 	const systems = useStore($allSystemsById)
 
@@ -36,7 +37,7 @@ export const ActiveAlerts = () => {
 			return null
 		}
 		return (
-			<Card>
+			<Card className={cn(className)}>
 				<CardHeader className="pb-4 px-2 sm:px-6 max-sm:pt-5 max-sm:pb-1">
 					<div className="px-2 sm:px-1">
 						<CardTitle>
@@ -46,7 +47,7 @@ export const ActiveAlerts = () => {
 				</CardHeader>
 				<CardContent className="max-sm:p-2">
 					{activeAlerts.length > 0 && (
-						<div className="grid sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3">
+						<div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
 							{activeAlerts.map((alert) => {
 								const info = alertInfo[alert.name as keyof typeof alertInfo]
 								return (
@@ -90,5 +91,5 @@ export const ActiveAlerts = () => {
 				</CardContent>
 			</Card>
 		)
-	}, [alertsKey.join("")])
+	}, [alertsKey.join(""), className])
 }
