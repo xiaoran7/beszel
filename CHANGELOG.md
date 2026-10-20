@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Deployed
+
+- **生产部署 74ac00f6（合并部署）**:
+  - 目标：东京主力机 `beszel-hub` 容器，镜像 `beszel:schale`。自 `e796873b`（上一版）升级至 `2c1986faf117`（`74ac00f6`）。
+  - 包含两批改动：`873ea7f8` 负载按逻辑 CPU 归一化与探针分级统一，以及 `74ac00f6` 四列氛围布局与对齐告警栏。
+  - 前端为 `//go:embed` 打包进 Hub 二进制，因此必须重建镜像而非替换 `dist`：本机构建 dist → 上传源码与 dist 归档 → 服务器解包到 `/opt/beszel/repo-new` → `docker build` → 临时容器 `127.0.0.1:18090` 验证 → 打回滚标签 → `docker compose up -d --no-deps beszel-hub`。
+  - 验证通过：`/api/health` 本地与公网均 200；线上首页引用 `assets/index-BexMqUUj.js`；线上 bundle 含 `threads||t.cores||1` 与 `172800`；Gzip 生效（`content-encoding: gzip`）；容器 `healthy`、重启次数 0。
+  - 回滚点：镜像 `beszel:schale-backup-74ac00f6-20261020-041349`（对应 `e796873b`）+ 源码树归档 `backup-repo-before-74ac00f6-20261020-041123.tar.gz`。
+  - 收尾已清理临时容器、`beszel:schale-new` 标签、上传归档与上上代备份；东京机未重启宿主机、其他容器或任何 systemd 服务。
+
 ### Added
 
 - **Hunan Multi-ISP Return-Path Monitoring (湖南三网回程监测)**:
