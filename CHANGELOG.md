@@ -12,6 +12,11 @@ All notable changes to this project will be documented in this file.
   - 东京主力机补充大陆骨干回程探针（阿里 DNS `223.5.5.5`、腾讯 DNS `119.29.29.29`、百度 DNS `180.76.76.76`、CNNIC `1.2.4.8`）与杭州/华为云 Tailnet 探针，形成大陆 ↔ 日本双向对照。
   - 实测记录：湖南本地 → 三网 DNS 约 2–7 ms、湖南 → 东京公网约 161–165 ms（0% 丢包）、东京 → 大陆骨干约 51–88 ms。
   - 本机 Agent 通过用户级启动文件夹（`BeszelAgent.vbs`）实现登录自启，无需管理员权限；指纹预置保证重连后仍绑定同一系统记录。
+- **Network Loss Alerting & Tailnet Loss Triage**:
+  - 为东京主力机与湖南本机分别启用 `NetworkMonitorLoss` 告警（阈值 20%，基于 1 小时丢包率），生产环境此前无任何告警配置。
+  - 东京 → 阿里云 Tailnet（`100.101.2.4`）与阿里杭州公网（`8.148.11.79`）探针采样间隔由 60 s 收紧至 20 s，以便在样本量足够时快速判定持续丢包。
+  - 实测复核：该 Tailnet 链路 57 次采样失败 6 次（10.5%），同期百度 DNS 8.3%、阿里杭州公网 5.9%，确认为东京 ↔ 大陆链路的间歇性丢包而非单次瞬断；延迟稳定在 81–82 ms。
+  - 澄清 Tailnet 直连问题：东京侧 `tailscaled` 正常监听 `41641`、`ts-input` 放行该端口、无 ufw 拦截，公网映射为锥形 NAT；直连失败源于**本机** `netcheck` 报告 `UDP: false`，与东京端口无关。
 
 ### Fixed
 
