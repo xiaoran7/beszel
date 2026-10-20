@@ -20,6 +20,15 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Dashboard Metric Algorithm Audit (负载与指标口径校正)**:
+  - 负载率归一化改用逻辑 CPU 数（`threads`），与 `top` / `htop` 及系统表格一致。此前按物理核数计算，2 核 4 线程的机器会把 39% 的真实利用率显示成 78%，并把 `Optimal` 误判为 `Normal`。
+  - 负载等级阈值改用系统表格同源的 65% / 90%，替代原先与表格不一致的 0.7 / 1.0 倍核数判定。
+  - 规格徽章改为显示逻辑核数（`4C`），与主机商标注口径一致；此前显示物理核数，导致 4C 机器显示为 `2C`。
+  - 抽取共享探测质量模块 `probe-quality.ts`：延迟阈值表此前在监控表格与仪表盘卡片各存一份，存在漂移风险；现统一为单一来源，并导出 `latencyQualityFor` / `lossQuality`。
+  - 修复 `secondsToUptimeString` 的小时/天分界笔误：原值 `360000` 秒（100 小时）使 4 天内的运行时长全部显示为「小时」，改为标准的 2 天（172800 秒）。
+  - 移除 `system-card-stats` 中对已废弃字段 `info.c` 的读取——Agent 自 0.19 起不再发送该字段，核心数已迁移至 `system_details`，保留该回退只会掩盖数据缺失。
+  - 复核后确认无需改动的算法：CPU 占用（按 `/proc/stat` 时间差计算、排除 guest、iowait 计入非 busy）、内存（`UsedPercent` + htop/legacy 两种口径）、磁盘（`UsedPercent` 按根分区）、带宽（真实累计计数差 ÷ 实际经过毫秒数，含 10 GB/s 异常重置保护）、uptime（`/proc/uptime` 带 gopsutil 回退）、GPU（多设备取最高使用率并正确区分「无 GPU」与「0%」）、内存与流量容量单位（统一 GiB 基）均符合主流实现。
+
 - **Dashboard Card Correctness & Render-Cost Pass**:
   - 修复经典仪表盘卡片在 `stats.g` 为空对象时显示 `-Infinity%` GPU 仪表的问题（`Math.max()` 对空数组返回 `-Infinity`，且该值会绕过 `??` 回退链）。
   - 修复在线服务器当前秒无流量时网络仪表回退到 60 秒旧快照的问题：`stats.b` 在双向速率均为 0 时会被后端省略，现在按「有实时载荷即为 0 B/s」处理，不再伪造 ≥15% 的占用环。

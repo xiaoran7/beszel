@@ -70,7 +70,10 @@ export function deriveSystemCardStats(
 	// 0 is a valid idle GPU reading, so only null means "no GPU reported"
 	const gpu = isOnline ? (liveInfo?.g ?? highestGpuUsage(liveStats) ?? system.info?.g ?? null) : null
 
-	const cores = details?.cores || system.info?.c || undefined
+	// `info.c` is a deprecated field the agent no longer emits (cores moved to
+	// system_details). Keep only the live source so the fallback chain cannot
+	// silently resolve to a stale value.
+	const cores = details?.cores || undefined
 	const threads = details?.threads || system.info?.t || undefined
 
 	const la = liveStats?.la ?? liveInfo?.la ?? system.info?.la
@@ -142,10 +145,48 @@ export function getCpuBrandLabel(model: string | undefined, maxLength = 16): str
 	return model.slice(0, maxLength)
 }
 
-/** `2C · 3.8G` spec chip text, or an empty string when nothing is known. */
-export function formatSpecChip(cores: number | undefined, memTotalGb: number | undefined): string {
+/**
+ * `4C · 9.7G` spec chip text, or an empty string when nothing is known.
+ *
+ * Uses logical CPU count to match how hosting providers advertise a machine
+ * ("4C" on a 2-core/4-thread VM) and how every other surface counts capacity.
+ */
+export function formatSpecChip(
+	cores: number | undefined,
+	threads: number | undefined,
+	memTotalGb: number | undefined
+): string {
 	const parts: string[] = []
-	if (cores) parts.push(`${cores}C`)
+	const cpuCount = threads || cores
+	if (cpuCount) parts.push(`${cpuCount}C`)
 	if (memTotalGb) parts.push(`${memTotalGb >= 10 ? memTotalGb.toFixed(0) : memTotalGb.toFixed(1)}G`)
 	return parts.join(" · ")
+}
+
+/**
+ * Load average as a percentage of available CPU capacity.
+ *
+ * Linux load average counts runnable + uninterruptible tasks, so the value that
+ * means "fully busy" is the number of *logical* CPUs (`threads`), not physical
+ * cores. `top`, `htop` and the systems table all normalise by logical CPUs;
+ * dividing by physical cores double-counts SMT and reports a 4 vCPU box running
+ * at 39% as 78%.
+ */
+export function loadPercent(load1: number | undefined, stats: Pick<SystemCardStats, "cores" | "threads">): number {
+	if (load1 === undefined || !Number.isFinite(load1)) return 0
+	const capacity = stats.threads || stats.cores || 1
+	return Math.max(0, Math.min(100, (load1 / capacity) * 100))
+}
+
+/** Load severity tiers, aligned with the systems table warn/crit defaults. */
+export function loadLevel(load1: number | undefined, stats: Pick<SystemCardStats, "cores" | "threads">) {
+	if (load1 === undefined || !Number.isFinite(load1)) return null
+	const percent = loadPercent(load1, stats)
+	if (percent < 65)
+		return {
+			label: "Optimal",
+			color: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+		}
+	if (percent < 90) return { label: "Normal", color: "text-sky-600 dark:text-sky-400 bg-sky-500/10 border-sky-500/20" }
+	return { label: "Heavy", color: "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20" }
 }

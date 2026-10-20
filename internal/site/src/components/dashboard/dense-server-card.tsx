@@ -26,6 +26,8 @@ import {
 	deriveSystemCardStats,
 	formatSpecChip,
 	getCpuBrandLabel,
+	loadLevel,
+	loadPercent,
 	type RealtimeSystemMetrics,
 } from "@/lib/system-card-stats"
 import type { SystemRecord, NetworkMonitorRecord, SystemDetailsRecord } from "@/types"
@@ -35,19 +37,9 @@ import { ActionsButton } from "../systems-table/systems-table-columns"
 import AlertButton from "../alerts/alert-button"
 
 type BarType = "cpu" | "memory" | "disk" | "gpu" | "load"
-type QualityLevel = "good" | "warn" | "bad" | "idle"
 
-/** Probe latency thresholds in microseconds, mirroring the monitors table tiers. */
-const LATENCY_THRESHOLDS: Record<string, { warn: number; bad: number }> = {
-	icmp: { warn: 100_000, bad: 500_000 },
-	tcp: { warn: 500_000, bad: 2_000_000 },
-	http: { warn: 800_000, bad: 3_000_000 },
-	dns: { warn: 150_000, bad: 800_000 },
-}
-
-/** Loss tiers, matching `responseTimeCell`/loss columns in the monitors table. */
-const LOSS_WARN_PCT = 0
-const LOSS_BAD_PCT = 20
+/** Loss tiers and probe-quality helpers live in one shared module. */
+import { type QualityLevel, latencyQualityFor, lossQuality } from "@/lib/probe-quality"
 
 const QUALITY_SEGMENT_COLORS: Record<QualityLevel, string> = {
 	good: "bg-emerald-500 dark:bg-emerald-400 dark:shadow-[0_0_6px_rgba(52,211,153,0.45)]",
@@ -282,21 +274,12 @@ export const DenseServerCard = memo(function DenseServerCard({
 	}, [diskUsedGb, diskTotalGb])
 
 	// Spec chip: "2C · 3.79G"
-	const specChip = useMemo(() => formatSpecChip(cores, memTotalGb), [cores, memTotalGb])
+	const specChip = useMemo(() => formatSpecChip(cores, threads, memTotalGb), [cores, threads, memTotalGb])
 
-	// Load Level Badge
-	const loadLevel = useMemo(() => {
+	// Load Level Badge — normalised by logical CPUs, matching `top`/`htop`
+	const loadLevelBadge = useMemo(() => {
 		if (!loadAverage) return null
-		const loadCores = cores || threads || 1
-		const normalized = loadAverage[0] / loadCores
-		if (normalized < 0.7)
-			return {
-				label: "Optimal",
-				color: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
-			}
-		if (normalized < 1.0)
-			return { label: "Normal", color: "text-sky-600 dark:text-sky-400 bg-sky-500/10 border-sky-500/20" }
-		return { label: "Heavy", color: "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20" }
+		return loadLevel(loadAverage[0], { cores, threads })
 	}, [loadAverage, cores, threads])
 
 	// Bidirectional realtime rates and cumulative counters from the agent payload
@@ -512,7 +495,7 @@ export const DenseServerCard = memo(function DenseServerCard({
 					/>
 					<SegmentedBlockBar
 						label="Load"
-						value={loadAverage ? Math.min(100, (loadAverage[0] / (cores || threads || 1)) * 100) : 0}
+						value={loadAverage ? loadPercent(loadAverage[0], { cores, threads }) : 0}
 						valueText={loadAverage ? loadAverage[0].toFixed(2) : undefined}
 						detail={loadAverage ? loadAverage.map((v) => v.toFixed(2)).join(" / ") : undefined}
 						isOnline={isOnline}
@@ -532,10 +515,10 @@ export const DenseServerCard = memo(function DenseServerCard({
 					)}
 
 					{/* Load level badge spans the grid footer */}
-					{loadLevel && (
+					{loadLevelBadge && (
 						<div className="col-span-2 flex items-center justify-end -mt-1">
-							<span className={cn("px-2 py-0.2 rounded-full text-[9px] font-bold border", loadLevel.color)}>
-								{loadLevel.label}
+							<span className={cn("px-2 py-0.2 rounded-full text-[9px] font-bold border", loadLevelBadge.color)}>
+								{loadLevelBadge.label}
 							</span>
 						</div>
 					)}
@@ -617,15 +600,8 @@ export const DenseServerCard = memo(function DenseServerCard({
 								const latencyUs = live?.res_avg ?? mon.res
 								const loss = live ? Math.round(live.loss * 10) / 10 : mon.loss1h || 0
 
-								const thresholds = LATENCY_THRESHOLDS[mon.protocol] ?? LATENCY_THRESHOLDS.icmp
-								const latencyLevel: QualityLevel = !latencyUs
-									? "idle"
-									: latencyUs > thresholds.bad
-										? "bad"
-										: latencyUs > thresholds.warn
-											? "warn"
-											: "good"
-								const lossLevel: QualityLevel = loss > LOSS_BAD_PCT ? "bad" : loss > LOSS_WARN_PCT ? "warn" : "good"
+								const latencyLevel: QualityLevel = latencyQualityFor(mon.protocol, latencyUs)
+								const lossLevel: QualityLevel = lossQuality(loss)
 
 								return (
 									<div key={mon.id} className="flex flex-col gap-1">

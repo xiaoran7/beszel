@@ -533,11 +533,13 @@ export function secondsToString(seconds: number, unit: "hour" | "minute" | "day"
 export function secondsToUptimeString(seconds: number): string {
 	if (seconds < 3600) {
 		return secondsToString(seconds, "minute")
-	} else if (seconds < 360000) {
-		return secondsToString(seconds, "hour")
-	} else {
-		return secondsToString(seconds, "day")
 	}
+	if (seconds < 172800) {
+		// 2 days, matching the upstream commented-out implementation. The previous
+		// 360000 (= 100 hours) made anything under ~4 days read as "X hours".
+		return secondsToString(seconds, "hour")
+	}
+	return secondsToString(seconds, "day")
 }
 
 /**

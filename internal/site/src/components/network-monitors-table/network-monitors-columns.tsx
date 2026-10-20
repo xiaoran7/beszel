@@ -38,6 +38,7 @@ import { useMemo } from "react"
 import { formatBulkMonitorLine } from "@/components/network-monitors-table/monitor-dialog"
 import { Badge } from "../ui/badge"
 import { getMonitorTarget } from "@/lib/network-monitor-utils"
+import { RESPONSE_TIME_THRESHOLDS } from "@/lib/probe-quality"
 import { pb } from "@/lib/api"
 
 const protocolColors: Record<string, string> = {
@@ -351,12 +352,7 @@ export function getMonitorColumns(
 	]
 }
 
-const responseTimeThresholds = {
-	http: { warning: 800_000, critical: 3_000_000 },
-	tcp: { warning: 500_000, critical: 2_000_000 },
-	icmp: { warning: 100_000, critical: 500_000 },
-	dns: { warning: 150_000, critical: 800_000 },
-}
+const responseTimeThresholds = RESPONSE_TIME_THRESHOLDS
 
 function responseTimeCell(cell: CellContext<NetworkMonitorRecord, unknown>) {
 	const monitor = cell.row.original
