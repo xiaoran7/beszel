@@ -59,6 +59,7 @@ func customAuthMiddleware(fn func(*core.RequestEvent) bool) func(*core.RequestEv
 
 // registerMiddlewares registers custom middlewares
 func (h *Hub) registerMiddlewares(se *core.ServeEvent) {
+	se.Router.Bind(newGzipMiddleware())
 	// authorizes request with user matching the provided email
 	authorizeRequestWithEmail := func(e *core.RequestEvent, email string) (err error) {
 		if e.Auth != nil || email == "" {
