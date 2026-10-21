@@ -10,6 +10,8 @@ import {
 	MemoryStickIcon,
 	HardDriveIcon,
 	GaugeIcon,
+	TimerIcon,
+	WifiOffIcon,
 } from "lucide-react"
 import {
 	formatBytes,
@@ -171,16 +173,35 @@ const SegmentedBlockBar = memo(function SegmentedBlockBar({
 	)
 })
 
-/** A full-width strip of segments colored by a single quality tier. */
-const QualityBar = memo(function QualityBar({ level, segments = 10 }: { level: QualityLevel; segments?: number }) {
+/**
+ * A full-width strip of segments colored by a single quality tier.
+ *
+ * The label and icon are not decoration: the latency strip and the loss strip
+ * sit side by side with identical geometry, so without them there is no way to
+ * tell which bar describes which metric.
+ */
+const QualityBar = memo(function QualityBar({
+	level,
+	label,
+	Icon,
+	segments = 10,
+}: {
+	level: QualityLevel
+	label: string
+	Icon: ComponentType<{ className?: string }>
+	segments?: number
+}) {
 	return (
-		<div className="flex items-center gap-[3px] w-full">
-			{segmentIndexes(segments).map((idx) => (
-				<div
-					key={idx}
-					className={cn("h-1.5 flex-1 rounded-[2px] transition-colors duration-300", QUALITY_SEGMENT_COLORS[level])}
-				/>
-			))}
+		<div className="flex items-center gap-1.5 w-full" title={label}>
+			<Icon className="size-3 shrink-0 text-muted-foreground/70" />
+			<div className="flex items-center gap-[3px] w-full">
+				{segmentIndexes(segments).map((idx) => (
+					<div
+						key={idx}
+						className={cn("h-1.5 flex-1 rounded-[2px] transition-colors duration-300", QUALITY_SEGMENT_COLORS[level])}
+					/>
+				))}
+			</div>
 		</div>
 	)
 })
@@ -618,8 +639,8 @@ export const DenseServerCard = memo(function DenseServerCard({
 											</div>
 										</div>
 										<div className="grid grid-cols-2 gap-2">
-											<QualityBar level={latencyLevel} />
-											<QualityBar level={lossLevel} />
+											<QualityBar level={latencyLevel} label="Latency quality" Icon={TimerIcon} />
+											<QualityBar level={lossLevel} label="Packet loss quality" Icon={WifiOffIcon} />
 										</div>
 									</div>
 								)

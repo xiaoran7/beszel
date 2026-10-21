@@ -78,6 +78,12 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Ambiguous Latency/Loss Bars (延迟与丢包质量条无法区分)**:
+  - 仪表盘高密度卡片的「Latency & Quality」面板里，每个探针并排渲染两条几何完全相同的分段 LED 条——左边是延迟质量、右边是丢包质量。两者除了颜色阈值不同之外没有任何视觉差异，用户无法判断哪条对应哪个指标（实测提问确认此歧义）。
+  - 修复：两条质量条各自前置语义图标并加 `title` 提示——延迟用秒表图标（`TimerIcon`），丢包用断线 WiFi 图标（`WifiOffIcon`），悬停分别显示「Latency quality」/「Packet loss quality」。图标尺寸固定为 `size-3` 且 `shrink-0`，不会挤压分段条本身。
+  - 文案沿用该文件既有的硬编码英文风格（`dashboard/` 目录整体未接入 lingui），不引入新的 i18n 依赖。
+  - 验证：本地构建产物含新文案与图标；本地 hub 灌入含 5 条探针的测试数据后实测，5 组 tooltip 与图标全部正确渲染，浅色与深色主题下均清晰可辨。
+
 - **Stale Tab Keeps Running the Old Bundle (标签页停留在旧版本前端)**:
   - 排查「网络探针显示 IP 而非名称」时发现：服务端代码、迁移与生产数据均正确，40 条探针在库里全部带中文名，线上 bundle 的字段投影也含 `name`。真正的原因是浏览器那个标签页最后一次加载 HTML 文档是在探针名称功能上线之前，之后一直没重新加载，于是长期运行着内存里的旧 bundle——旧 bundle 发出的探针请求字段里根本没有 `name`，标签自然回退成显示 IP。
   - 根因是 HTML 文档既没有 `Cache-Control` 也没有 `ETag`/`Last-Modified`，浏览器对「无缓存指令」的响应可以走启发式缓存；而文档里指向的是内容哈希 bundle，一旦文档被缓存，这个标签页就被永久钉死在它加载时的那份 bundle 上，直到用户手动刷新。
