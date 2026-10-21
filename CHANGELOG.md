@@ -6,6 +6,14 @@ All notable changes to this project will be documented in this file.
 
 ### Deployed
 
+- **生产部署 0d61c70c（前端版本轮询与自动刷新）**:
+  - 目标：东京主力机 `beszel-hub` 容器，镜像 `beszel:schale`。自 `ce8bacc5d15d`（`85b9d77c`）升级至 `ff80bcb0b84d`（对应 `0d61c70c` 前端版本轮询与自动刷新特性），产品版本保持 `0.21.2`。
+  - 功能上线：实现基于 HTML 双重指纹（入口 script hash 与 HUB_VERSION）的前端版本感知与防打扰自动刷新，解决常驻监控标签页长期不刷新运行旧 bundle 的边界痛点；集成 15s 倒计时悬浮卡片、输入焦点/模态框防打扰暂停保护以及 Topbar 提示胶囊。
+  - 冒烟验证：新镜像在独立容器（`127.0.0.1:18099`）以生产库副本启动，`/api/health` 200 OK、日志无 error/panic；`/` 返回 `Cache-Control: no-cache`、`assets/index-BKHhuqiy.js` 引用正确、`HUB_VERSION` 为 `0.21.2`。
+  - 生产验证：服务平滑重启，容器状态 `healthy`（重启次数 0），日志无 error/panic；`/api/health` 本地与公网均返回 200 OK；公网 `https://beszel.tannerlab.xyz/` 返回 `Cache-Control: no-cache`，入口脚本指向 `assets/index-BKHhuqiy.js`，静态资源长缓存与 Gzip 压缩正常生效；8/8 节点持续上报且全部 `status=up`，40 条探针全部具名且数据正常更新。
+  - 回滚点：镜像 `beszel:schale-backup-20261021-184150`（对应 `ce8bacc5d15d`）+ 数据库一致性快照 `/opt/beszel/data/data.db.bak-20261021-184150`（8 台系统 / 40 条探针）+ 源码树归档 `/opt/beszel/repo-backup-20261021-184150.tar.gz`。
+  - 产物清理：删除服务器临时源码目录、上传归档、临时镜像 `beszel:schale-new`、冒烟容器与数据副本；清理更早备份，保留紧邻回滚点；本地清理临时归档文件。
+
 - **生产部署 85b9d77c（延迟/丢包质量条可辨识 & 版本递增至 0.21.2）**:
   - 目标：东京主力机 `beszel-hub` 容器，镜像 `beszel:schale`。自 `e159d678132d`（`06b0f986`）升级至 `ce8bacc5d15d`（含 `b045c999` 双条可辨识修复与 `85b9d77c` 版本递增），产品版本 `0.21.1` → `0.21.2`。
   - 修复内容：仪表盘高密度卡片「Latency & Quality」面板的延迟质量条前置秒表图标、丢包质量条前置断线 WiFi 图标，并各自带 `title` 提示（`Latency quality` / `Packet loss quality`）。两条分段 LED 条此前几何完全相同、无法区分对应指标。
