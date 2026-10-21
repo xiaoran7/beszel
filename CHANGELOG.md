@@ -6,6 +6,17 @@ All notable changes to this project will be documented in this file.
 
 ### Deployed
 
+- **生产部署 85b9d77c（延迟/丢包质量条可辨识 & 版本递增至 0.21.2）**:
+  - 目标：东京主力机 `beszel-hub` 容器，镜像 `beszel:schale`。自 `e159d678132d`（`06b0f986`）升级至 `ce8bacc5d15d`（含 `b045c999` 双条可辨识修复与 `85b9d77c` 版本递增），产品版本 `0.21.1` → `0.21.2`。
+  - 修复内容：仪表盘高密度卡片「Latency & Quality」面板的延迟质量条前置秒表图标、丢包质量条前置断线 WiFi 图标，并各自带 `title` 提示（`Latency quality` / `Packet loss quality`）。两条分段 LED 条此前几何完全相同、无法区分对应指标。
+  - 部署前置排查：本地构建产物含新文案与图标后，起本地 hub（灌入 1 台系统 + 5 条探针的测试数据）实测，5 组 tooltip 与图标全部正确渲染，浅色与深色主题下均清晰可辨；`internal/hub` 全部测试通过。
+  - 冒烟验证：新镜像在独立容器（`127.0.0.1:18099`）以生产库一致性快照启动，`/api/health` 200、日志无 error/panic；`/` 返回 `no-cache`、`/assets/*` 仍为长缓存、404 路径同样 `no-cache`、Gzip 生效；线上 bundle 含 `Latency quality` 与 `Packet loss quality`。
+  - 生产验证：容器 `healthy`、重启次数 0、日志无 error/panic；`/api/health` 本地与公网均 200；公网 `https://beszel.tannerlab.xyz/` 返回 `Cache-Control: no-cache`，`/assets/home-xxAVICc_.js` 仍为 `public, max-age=2592000`；8/8 节点全部上报且 `status=up`，40 条探针全部具名、38 条有实时延迟数据。
+  - 已知现象（非本次回归）：东京 ↔ 湖南电信探针 `218.76.0.1` 存在间歇性失败——`network_monitor_stats` 显示成功样本 165 ms 与失败样本交替出现，与 CHANGELOG 此前记录的「东京 ↔ 大陆链路间歇性丢包」一致，非部署引入。
+  - 回滚点：镜像 `beszel:schale-backup-20261021-170815`（对应 `e159d678132d`）+ 数据库一致性快照 `/opt/beszel/data/data.db.bak-20261021-170815`（8 台系统 / 40 条探针）+ 源码树归档 `/opt/beszel/repo-backup-20261021-170815.tar.gz`。更早一代的备份镜像与源码归档已按「只保留最新版与紧邻回滚点」清理。
+  - 版本清单同步：`beszel.go` 与 `internal/site/package.json` / `package-lock.json` 递增至 `0.21.2`，Agent SSH 版本测试夹具同步为 `beszel_0.21.2`。Helm chart 的 `appVersion` 保持上游 `0.20.0` 不变——该 chart 引用 `henrygd/beszel` 上游镜像 tag，本 fork 未发布 `0.21.2` 镜像。
+  - 产物清理：删除服务器临时源码目录 `/opt/beszel/repo-new`、上传归档 `/tmp/beszel-src-deploy.tar.gz`、临时镜像 `beszel:schale-new`、冒烟容器与数据副本；本地同步删除 `_scratch/hubtest` 与部署归档。
+
 - **生产部署 06b0f986（HTML 文档禁止陈旧缓存 & 版本递增至 0.21.1）**:
   - 目标：东京主力机 `beszel-hub` 容器，镜像 `beszel:schale`。自 `ff64ce5397f2`（`accf7071`）升级至 `e159d678132d`（含 `2e6a0e28` 缓存修复与 `06b0f986` 版本递增），产品版本 `0.21.0` → `0.21.1`。
   - 修复内容：Hub 在返回 HTML 文档时显式声明 `Cache-Control: no-cache`，避免浏览器用启发式缓存保存文档，把标签页永久钉死在它加载时的那份内容哈希 bundle 上。静态资源保持 `public, max-age=2592000`，缓存失效仍由内容哈希承担。
