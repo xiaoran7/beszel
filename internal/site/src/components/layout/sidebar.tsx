@@ -15,6 +15,7 @@ import {
 import { $router, basePath, Link, navigate } from "../router"
 import { $alerts } from "@/lib/stores"
 import { cn } from "@/lib/utils"
+import { BeszelIcon } from "../logo"
 
 interface SidebarProps {
 	mobileOpen?: boolean
@@ -124,21 +125,8 @@ export const Sidebar = memo(({ mobileOpen, setMobileOpen, onOpenAlerts }: Sideba
 							className="flex items-center gap-2.5 group"
 							onClick={() => setMobileOpen?.(false)}
 						>
-							<div className="relative flex items-center justify-center size-8.5 rounded-xl bg-gradient-to-tr from-sky-500 to-blue-600 text-white shadow-sm shadow-sky-500/25 flex-shrink-0">
-								{/* Blue Archive / Schale Geometric Logo Mark */}
-								<svg
-									viewBox="0 0 24 24"
-									fill="none"
-									stroke="currentColor"
-									strokeWidth="2.4"
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									className="size-4.5"
-								>
-									<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-								</svg>
-								{/* Halo Accent */}
-								<span className="absolute -top-1 -right-0.5 size-2.5 rounded-full border-1.5 border-sky-300 bg-sky-100 dark:bg-sky-950 animate-pulse" />
+							<div className="flex items-center justify-center size-8.5 rounded-xl bg-[#22242a] dark:bg-card border border-border/80 shadow-xs flex-shrink-0 group-hover:border-primary/50 transition-colors">
+								<BeszelIcon className="h-5 w-auto" />
 							</div>
 							<div className="flex flex-col">
 								<span className="text-base font-bold tracking-tight text-foreground font-sans flex items-center leading-none">

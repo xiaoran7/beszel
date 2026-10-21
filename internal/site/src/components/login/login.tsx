@@ -7,6 +7,7 @@ import { UserAuthForm } from "@/components/login/auth-form"
 import { pb } from "@/lib/api"
 import { ModeToggle } from "../mode-toggle"
 import { $router } from "../router"
+import { BeszelIcon } from "../logo"
 import ForgotPassword from "./forgot-pass-form"
 import { OtpRequestForm } from "./otp-forms"
 
@@ -63,21 +64,10 @@ export default function Login() {
 
 			{/* Main Login Card */}
 			<div className="relative z-10 w-full max-w-sm p-8 rounded-3xl bg-card border border-border/80 shadow-xl shadow-sky-500/5 flex flex-col gap-6">
-				{/* Brand Logo & Schale Halo Accent */}
+				{/* Brand Logo */}
 				<div className="flex flex-col items-center text-center">
-					<div className="relative flex items-center justify-center size-14 rounded-2xl bg-gradient-to-tr from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-500/30 mb-3">
-						<svg
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							strokeWidth="2.4"
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							className="size-7"
-						>
-							<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-						</svg>
-						<span className="absolute -top-1.5 -right-1.5 size-4 rounded-full border-2 border-sky-300 bg-sky-100 dark:bg-sky-950 animate-pulse" />
+					<div className="flex items-center justify-center size-14 rounded-2xl bg-[#22242a] dark:bg-card border border-border/80 shadow-md mb-3">
+						<BeszelIcon className="h-8.5 w-auto" />
 					</div>
 					<h1 className="text-2xl font-extrabold tracking-tight text-foreground font-sans">
 						Beszel
