@@ -6,6 +6,16 @@ All notable changes to this project will be documented in this file.
 
 ### Deployed
 
+- **生产部署 a22ca497（换回官方渐变 B 品牌图标）**:
+  - 目标：东京主力机 `beszel-hub` 容器，镜像 `beszel:schale`。自 `ff80bcb0b84d`（`0d61c70c`）升级至 `090563966904`（对应 `a22ca497` 官方 B 图标还原），产品版本保持 `0.21.2`。
+  - 功能上线：
+    - 侧边栏与登录页全面换回官方渐变 "B" 品牌图标，采用 SVG 矢量组件 `BeszelIcon` 绘制，完整呈现官方 `#747bff` 至 `#24eb5c` 经典渐变色及 56:70 原生纵横比。
+    - 侧边栏统一使用 `size-8.5` 徽章容器搭配 `h-5` 官方 B 标，底色适配深色 `#22242a` / 卡片模式；登录页采用 `size-14` 徽章容器搭配 `h-8.5` 官方 B 标；完全移除自定义三层堆叠图层图标与外圈呼吸光环。
+  - 冒烟验证：新镜像在独立容器（`127.0.0.1:18099`）以生产库副本启动，`/api/health` 200 OK、日志无 error/panic；`/` 返回 `assets/index-Cd-mXmk3.js` 与 `assets/index-CyND2CVZ.css`。
+  - 生产验证：服务平滑重启，容器状态 `healthy`（重启次数 0），日志无 error/panic；`/api/health` 本地与公网均返回 200 OK；公网 `https://beszel.tannerlab.xyz/` 入口脚本指向 `assets/index-Cd-mXmk3.js`，生产 bundle 中已包含官方图标 `0 0 56 70` 矢量路径，且旧版三层图层图标路径已被完全剔除；节点保持正常连接与实时数据上报，数据库 WAL 持续写入。
+  - 回滚点：镜像 `beszel:schale-backup-20261021-201234`（对应 `ff80bcb0b84d`）+ 数据库快照 `/opt/beszel/data/data.db.bak-20261021-201234` + 源码树归档 `/opt/beszel/repo-backup-20261021-201234.tar.gz`。
+  - 产物清理：删除服务器临时源码目录、上传归档、临时镜像 `beszel:schale-new`、冒烟容器与数据副本；按「只保留最新版与紧邻回滚点」清理上一代备份（删除 `beszel:schale-backup-20261021-184150` 与历史备份归档）；本地删除临时归档 `_scratch/beszel-src-deploy.tar.gz`。
+
 - **生产部署 0d61c70c（前端版本轮询与自动刷新）**:
   - 目标：东京主力机 `beszel-hub` 容器，镜像 `beszel:schale`。自 `ce8bacc5d15d`（`85b9d77c`）升级至 `ff80bcb0b84d`（对应 `0d61c70c` 前端版本轮询与自动刷新特性），产品版本保持 `0.21.2`。
   - 功能上线：实现基于 HTML 双重指纹（入口 script hash 与 HUB_VERSION）的前端版本感知与防打扰自动刷新，解决常驻监控标签页长期不刷新运行旧 bundle 的边界痛点；集成 15s 倒计时悬浮卡片、输入焦点/模态框防打扰暂停保护以及 Topbar 提示胶囊。
