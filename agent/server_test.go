@@ -1140,7 +1140,7 @@ func TestLegacyHubGetsSinglePayload(t *testing.T) {
 // MinVersionAgentResponse sends a CBOR request and must get exactly one
 // AgentResponse with populated system data and a clean exit.
 func TestModernHubRequestResponse(t *testing.T) {
-	client := dialTestAgentClient(t, "SSH-2.0-beszel_0.21.1")
+	client := dialTestAgentClient(t, "SSH-2.0-beszel_0.21.2")
 
 	session, err := client.NewSession()
 	require.NoError(t, err)
