@@ -25,6 +25,8 @@ import type { BeszelInfo, UpdateInfo } from "./types"
 import { Sidebar } from "@/components/layout/sidebar"
 import { Topbar } from "@/components/layout/topbar"
 import { GlobalAlertsSheet } from "@/components/alerts/global-alerts-sheet"
+import { VersionRefreshBanner } from "@/components/version-refresh-banner"
+import { initVersionChecker } from "@/lib/version-checker"
 
 const LoginPage = lazy(() => import("@/components/login/login.tsx"))
 const Home = lazy(() => import("@/components/routes/home.tsx"))
@@ -142,6 +144,8 @@ const I18nApp = () => {
 	useEffect(() => {
 		// Activate a locale so I18nProvider can mount App and load the account settings.
 		dynamicActivate(getLocale())
+		// Initialize frontend version polling and lifecycle
+		return initVersionChecker()
 	}, [])
 
 	return (
@@ -149,6 +153,7 @@ const I18nApp = () => {
 			<ThemeProvider>
 				<Layout />
 				<Toaster />
+				<VersionRefreshBanner />
 			</ThemeProvider>
 		</I18nProvider>
 	)

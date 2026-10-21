@@ -63,6 +63,14 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- **Frontend Version Polling & Automatic Refresh (前端版本轮询与自动刷新)**:
+  - 针对运维大屏与常驻后台标签页长期开启不刷新导致始终执行内存中旧 bundle 的问题，实现基于 HTML 双重指纹的前端版本感知与防打扰自动刷新机制（补齐此前在 `2e6a0e28` 中记录的 SPA 长驻标签页边界）：
+    - **双重指纹比对**：定时拉取应用根路径 HTML（天然遵循 `server_production.go` 的 `Cache-Control: no-cache` 回源），轻量比对主入口脚本哈希（`<script src="assets/index-[hash].js">`）与产品版本号（`HUB_VERSION`），不依赖任何特定后端新端点，未登录态与已登录态均通用。
+    - **智能调度与生命周期**：前台活跃时每 5 分钟静默检测一次；标签页隐藏休眠时暂停轮询；切回前台（`visibilitychange`）若距上次检测超过 1 分钟立即触发重测；网络离线重连（`online`）自动触发补测；遇到 Hub 重启或 502/503 静默忽略防误判；开发环境跳过以兼容 Vite HMR。
+    - **平滑自刷新与操作防打扰保护 (User Activity Guard)**：发现新版本时在右下角弹出 Aozora 毛玻璃悬浮通知，显示版本升级差异与 15 秒倒计时进度条；检测到用户正在输入（`input`、`textarea`、`select`、`contenteditable`）或有模态弹窗（Dialog/Sheet）处于打开状态时，倒计时自动暂停，杜绝打断用户交互或丢失表单草稿。
+    - **稍后提醒与 Topbar 胶囊指示器**：支持点击「稍后提醒」推迟刷新，悬浮卡片收起并在顶部 Topbar 右侧呈现轻微呼吸光效的「新版本可用」胶囊按钮，悬停提示版本信息，随时可一键手动刷新。
+  - 单元测试与环境兼容：为路径归一化与 HTML 指纹提取提供完整单元测试（`version-checker.test.ts`），并加固 `router.tsx` 安全读取 `globalThis.BESZEL?.BASE_PATH`，避免无头测试与 Node 环境下的 `ReferenceError`。
+
 - **Network Monitor Display Names (探针显示名称)**:
   - `network_monitors` 新增可选 `name` 字段（迁移 `1792454400_add_network_monitor_name.go`，可回滚、可重复执行）。此前探针只有 IP / 主机名可用作标签，仪表盘上只能显示 `218.76.0.1` 这类地址；现在可标注为「湖南电信」「湖南移动」「湖南联通」等。
   - `name` 属于配置而非测量数据，因此在目标变更触发 `copyMonitorToNewRecord` 的记录轮换时一并保留，不会因改端口或改协议而丢失。
@@ -99,7 +107,7 @@ All notable changes to this project will be documented in this file.
   - 排查「网络探针显示 IP 而非名称」时发现：服务端代码、迁移与生产数据均正确，40 条探针在库里全部带中文名，线上 bundle 的字段投影也含 `name`。真正的原因是浏览器那个标签页最后一次加载 HTML 文档是在探针名称功能上线之前，之后一直没重新加载，于是长期运行着内存里的旧 bundle——旧 bundle 发出的探针请求字段里根本没有 `name`，标签自然回退成显示 IP。
   - 根因是 HTML 文档既没有 `Cache-Control` 也没有 `ETag`/`Last-Modified`，浏览器对「无缓存指令」的响应可以走启发式缓存；而文档里指向的是内容哈希 bundle，一旦文档被缓存，这个标签页就被永久钉死在它加载时的那份 bundle 上，直到用户手动刷新。
   - 修复：Hub 在返回 HTML 文档时显式声明 `Cache-Control: no-cache`（`internal/hub/server_production.go`），浏览器每次导航都回源取文档，从而拿到最新哈希的 bundle。静态资源（`/assets/`、`/static/`）保持 `public, max-age=2592000` 不变，缓存失效仍由内容哈希承担，不增加重复流量。
-  - 边界说明：`no-cache` 解决的是「新打开的页面拿到旧文档」。**已经打开且不刷新的标签页**仍会继续跑旧代码——那属于 SPA 长驻场景，浏览器不会在标签页存活期间主动重新执行已加载的脚本。若要覆盖这种情况需要前端做版本轮询与自刷新，本次未做。
+  - 边界说明：`no-cache` 解决的是「新打开的页面拿到旧文档」。**已经打开且不刷新的标签页**仍会继续跑旧代码——已在后续功能中通过前端版本双重指纹轮询与防打扰自刷新机制完整解决（参见 Added）。
   - 新增测试 `TestAppDocumentCacheControl`（`internal/hub/server_production_test.go`）：覆盖应用路由与 404 路径的 `no-cache`，并锁定哈希资源仍为长缓存。
 
 - **Horizontal Strips Unreachable by Mouse (横向筛选条无法鼠标滚动)**:

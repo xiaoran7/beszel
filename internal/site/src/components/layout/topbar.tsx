@@ -17,9 +17,11 @@ import {
 	BoxesIcon,
 	HardDriveIcon,
 	NetworkIcon,
+	RefreshCwIcon,
 } from "lucide-react"
 import { $router, basePath, Link, navigate, prependBasePath } from "../router"
-import { $systems, $alerts } from "@/lib/stores"
+import { $systems, $alerts, $frontendUpdate } from "@/lib/stores"
+import { reloadPage } from "@/lib/version-checker"
 import { ModeToggle } from "../mode-toggle"
 import { pb, logOut, isAdmin } from "@/lib/api"
 import { AddSystemDialog } from "../add-system"
@@ -44,6 +46,7 @@ export const Topbar = memo(({ onToggleSidebar, onOpenAlerts }: TopbarProps) => {
 	const page = useStore($router)
 	const systems = useStore($systems)
 	const alerts = useStore($alerts)
+	const frontendUpdate = useStore($frontendUpdate)
 	const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
 	const [addSystemDialogOpen, setAddSystemDialogOpen] = useState(false)
 
@@ -203,6 +206,20 @@ export const Topbar = memo(({ onToggleSidebar, onOpenAlerts }: TopbarProps) => {
 
 				{/* Right Area: Action Controls & User Avatar */}
 				<div className="flex items-center gap-2 sm:gap-3">
+					{/* Frontend Update Available indicator */}
+					{frontendUpdate.hasUpdate && (
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={reloadPage}
+							className="flex items-center gap-1.5 h-8 px-2.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20 transition-all shadow-2xs"
+							title={`发现新版本${frontendUpdate.newVersion ? ` (${frontendUpdate.newVersion})` : ""}，点击刷新页面`}
+						>
+							<RefreshCwIcon className="size-3.5 animate-spin [animation-duration:4s]" />
+							<span className="hidden sm:inline">新版本可用</span>
+						</Button>
+					)}
+
 					{/* Add System quick button */}
 					<Button
 						variant="ghost"

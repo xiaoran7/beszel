@@ -31,6 +31,9 @@ export const $publicKey = atom("")
 /** New version info if an update is available, otherwise undefined */
 export const $newVersion = atom<UpdateInfo | undefined>()
 
+/** Frontend bundle / version update state */
+export { $frontendUpdate, type FrontendUpdateState } from "./version-checker"
+
 /** Chart time period */
 export const $chartTime = atom<ChartTimes>("1h")
 

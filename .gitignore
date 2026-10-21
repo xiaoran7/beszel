@@ -40,9 +40,8 @@ agent.md
 CLAUDE.local.md
 AGENTS.local.md
 
-# Claude 本地临时运行态
-.claude/worktrees/
-.claude/settings.json
-.claude/settings.json.backup.*
-.claude/settings.local.json
-.claude/scheduled_tasks.json
+# Claude 本地临时运行态与工作便签
+_scratch/
+.claude/
+**/.claude/
+
