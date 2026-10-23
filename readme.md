@@ -73,6 +73,33 @@ Support requests and general discussion can be posted on [GitHub discussions](ht
 
 Beszel is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
 
+## 部署指引 (Aozora UI 定制版)
+
+本项目 Hub 端深度集成 Aozora UI 风格监控前端（蔚蓝档案世界观轻二次元天际线氛围、高密度分段 LED 矩阵卡片、`rt_metrics` 秒级实时指标流、探针多线路质量矩阵与三模式自由切换）。
+
+### 推荐：使用预构建 Docker 镜像部署
+
+在 `docker-compose.yml` 中使用 GHCR 预构建镜像：
+
+```yaml
+services:
+  beszel:
+    image: "ghcr.io/xiaoran7/beszel:latest"
+    container_name: "beszel"
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    volumes:
+      - ./beszel_data:/beszel_data
+```
+
+启动命令：
+```bash
+docker compose up -d
+```
+
+> **提示**：如果之前拉取过官方 `henrygd/beszel` 镜像，请将 `image` 替换为 `ghcr.io/xiaoran7/beszel:latest` 并执行 `docker compose pull && docker compose up -d` 即可平滑换新。
+
 ## 本地维护入口
 
 本目录保留上游项目说明。Go 工具链以 `go.mod` 为准；实现分布于 `agent/` 与 `internal/`，辅助资源位于 `supplemental/`。修改前先核对本地 Git 差异；项目约束见 [AGENTS.md](AGENTS.md)。

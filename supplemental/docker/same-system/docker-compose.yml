@@ -3,7 +3,7 @@
 
 services:
   beszel:
-    image: henrygd/beszel:latest
+    image: ghcr.io/xiaoran7/beszel:latest
     container_name: beszel
     restart: unless-stopped
     environment:
@@ -20,7 +20,7 @@ services:
     #   timeout: 5s
 
   beszel-agent:
-    image: henrygd/beszel-agent:latest
+    image: ghcr.io/xiaoran7/beszel-agent:latest
     container_name: beszel-agent
     restart: unless-stopped
     network_mode: host

@@ -2,7 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.21.2] - 2026-10-23
+
+### Release & Packaging
+
+- **GitHub Release & GHCR 容器镜像自动化**:
+  - 完善 `.github/workflows/docker-images.yml` 与 `.goreleaser.yml` 配置，支持在打 tag 时自动化将包含 Aozora UI 的 Hub 和 Agent 多架构镜像推送到 GitHub Packages (`ghcr.io/xiaoran7/beszel:latest` / `ghcr.io/xiaoran7/beszel:0.21.2`)。
+  - 解决 GitHub Actions 在 fork 仓库下使用 `GITHUB_TOKEN` 推送 GHCR 时的 secret 上下文解析边界，并启用 `workflow_dispatch` 手动触发。
+  - 调整 `docker-compose.yml` 示例直接指向 `ghcr.io/xiaoran7/beszel:latest`，避免下游使用者按官方配置拉取上游原版镜像导致 UI 风格不一致。
+  - GoReleaser 开启自动发布公共 Release (`draft: false`)，为全平台打包预编译可执行文件。
 
 ### Deployed
 

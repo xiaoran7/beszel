@@ -271,7 +271,7 @@ winget:
       #     branch: master
 
 release:
-  draft: true
+  draft: false
 
 changelog:
   disable: true

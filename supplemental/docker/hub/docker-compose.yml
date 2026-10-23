@@ -3,7 +3,7 @@
 
 services:
   beszel:
-    image: "henrygd/beszel"
+    image: "ghcr.io/xiaoran7/beszel:latest"
     container_name: "beszel"
     restart: unless-stopped
     ports:
