@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Upstream Backend Sync
+
+同步上游 `henrygd/beszel` 自 `ca7f75ef`（2026-10-19，上一轮同步基线）之后的 7 个提交，全部为后端功能逻辑与依赖维护，未包含任何生产部署。产品版本保持 `0.21.2`，未递增。
+
+- **Agent 内存与交换分区按字节采集** (`37c0547b`, #2359/#2360):
+  - 新增 `MemBytes` `[total, used, buff/cache, zfs arc]` 与 `SwapBytes` `[total, used]`，解决低内存设备因两位小数 GB 取整导致的精度丢失。
+  - 废弃的 GB 字段 (`m`/`mu`/`mb`/`mz`/`s`/`su`) 仍照常填充，兼容旧 Hub 与第三方集成；Hub 端 `migrateDeprecatedFields` 与 records 平均值计算均对旧记录做 GB→字节换算。
+- **CPU 明细新增 IRQ / SoftIRQ / Nice** (`b5357343`, #2647):
+  - `CpuBreakdown` 由 5 项扩展为 8 项 `[user, system, iowait, steal, idle, irq, softirq, nice]`；系统详情页 CPU 弹层同步新增三条堆叠曲线，并将 `Other` 收敛为 `max(0, 100-total)` 防止负值。
+- **CPU 物理插槽数** (`82715790`, #2646):
+  - Agent 上报 `sockets`（Windows 按包数、Linux x86 按 `PhysicalID` 去重），新增迁移 `1792309602_system_details_sockets`；系统信息栏在多插槽时显示 `2x <型号>`。
+- **容器名称支持标签模板** (`ac40ac02`, #2644):
+  - 新增 `CONTAINER_NAME_LABEL` 环境变量，可用容器 label 组合显示名；标签仅在配置模板时随 `/containers/json` 同批次解析，未配置时不额外读取。
+- **HTTPS 探针证书每小时复查** (`ab5d40b8`, #2673):
+  - 证书复查间隔由 24 小时改为 1 小时，并移除“失败重试 1 小时 / 临近过期提前复查”的复杂分支，续期可在一小时内反映。
+- **数字格式化跟随应用语言** (`d3161e02`, #2621):
+  - 数值千分位与小数分隔符改用当前应用语言（`i18n.locale`），并固定 `latn` 数字系统，避免浏览器语言与界面语言不一致。
+- **Go 依赖升级** (`b97abf76`): `purego` 0.11.2、`shoutrrr` 0.22.0、`mimetype` 1.4.16、`godbus/dbus` 5.2.4 等。
+
+**验证**：`go build ./...`、`go vet ./...` 通过；`go test -tags testing ./agent/... ./internal/hub/... ./internal/records/... ./internal/entities/...` 全部通过（含新增的 `TestCpuSockets`、`TestResolveContainerNames`、`TestAverageSystemStatsSlice_LegacyMemoryFields` 等）；前端 `tsc --noEmit` 与 `vite build` 通过。本地 hub 以全新数据目录起于 `127.0.0.1:18099` 冒烟：`/api/health` 200、`system_details` 集合已含 `sockets` 字段、HTML 文档仍返回 `Cache-Control: no-cache`、入口 bundle 200 且日志无 error/panic；测试进程已关闭。
+
+**已知与本次无关**：`go test -tags 'testing no_ui'` 在 Windows 下有两处既存失败——`TestBuildFsStatRegistration`（LVM `dm-*` 设备名在 Windows 解析为 `volume_1`）与 `TestLegacyHubGetsSinglePayload`（`net.Dial("unix", ...)` 在 Windows 不可用）。本次同步未改动 `agent/disk_test.go`、`agent/server.go`、`agent/server_test.go`。
+
 ## [0.21.2] - 2026-10-23
 
 ### Release & Packaging
