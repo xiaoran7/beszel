@@ -1432,6 +1432,10 @@ msgstr "Tráfego de rede das interfaces públicas"
 msgid "Network unit"
 msgstr "Unidade de rede"
 
+#: src/components/routes/system/cpu-sheet.tsx
+msgid "Nice"
+msgstr ""
+
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
@@ -2002,6 +2006,10 @@ msgstr "Entrar"
 #: src/components/command-palette.tsx
 msgid "SMTP settings"
 msgstr "Configurações SMTP"
+
+#: src/components/routes/system/cpu-sheet.tsx
+msgid "SoftIRQ"
+msgstr ""
 
 #: src/components/systems-table/systems-table.tsx
 msgid "Sort By"

@@ -1432,6 +1432,10 @@ msgstr "Netværkstrafik af offentlige grænseflader"
 msgid "Network unit"
 msgstr "Netværksenhed"
 
+#: src/components/routes/system/cpu-sheet.tsx
+msgid "Nice"
+msgstr ""
+
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
@@ -2002,6 +2006,10 @@ msgstr "Log ind"
 #: src/components/command-palette.tsx
 msgid "SMTP settings"
 msgstr "SMTP-indstillinger"
+
+#: src/components/routes/system/cpu-sheet.tsx
+msgid "SoftIRQ"
+msgstr ""
 
 #: src/components/systems-table/systems-table.tsx
 msgid "Sort By"

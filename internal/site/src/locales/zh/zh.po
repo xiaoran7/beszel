@@ -1432,6 +1432,10 @@ msgstr "公開介面的網路流量"
 msgid "Network unit"
 msgstr "網路單位"
 
+#: src/components/routes/system/cpu-sheet.tsx
+msgid "Nice"
+msgstr ""
+
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
@@ -2002,6 +2006,10 @@ msgstr "登入"
 #: src/components/command-palette.tsx
 msgid "SMTP settings"
 msgstr "SMTP 設定"
+
+#: src/components/routes/system/cpu-sheet.tsx
+msgid "SoftIRQ"
+msgstr ""
 
 #: src/components/systems-table/systems-table.tsx
 msgid "Sort By"

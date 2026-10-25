@@ -1432,6 +1432,10 @@ msgstr "공용 인터페이스의 네트워크 트래픽"
 msgid "Network unit"
 msgstr "네트워크 단위"
 
+#: src/components/routes/system/cpu-sheet.tsx
+msgid "Nice"
+msgstr ""
+
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
@@ -2002,6 +2006,10 @@ msgstr "로그인"
 #: src/components/command-palette.tsx
 msgid "SMTP settings"
 msgstr "SMTP 설정"
+
+#: src/components/routes/system/cpu-sheet.tsx
+msgid "SoftIRQ"
+msgstr ""
 
 #: src/components/systems-table/systems-table.tsx
 msgid "Sort By"

@@ -1432,6 +1432,10 @@ msgstr "Ommaviy interfeyslarning tarmoq trafigi"
 msgid "Network unit"
 msgstr "Tarmoq birligi"
 
+#: src/components/routes/system/cpu-sheet.tsx
+msgid "Nice"
+msgstr ""
+
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
@@ -2002,6 +2006,10 @@ msgstr "Kirish"
 #: src/components/command-palette.tsx
 msgid "SMTP settings"
 msgstr "SMTP sozlamalari"
+
+#: src/components/routes/system/cpu-sheet.tsx
+msgid "SoftIRQ"
+msgstr ""
 
 #: src/components/systems-table/systems-table.tsx
 msgid "Sort By"

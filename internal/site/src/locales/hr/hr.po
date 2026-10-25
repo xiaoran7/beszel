@@ -1432,6 +1432,10 @@ msgstr "Mrežni promet javnih sučelja"
 msgid "Network unit"
 msgstr "Mjerna jedinica za mrežu"
 
+#: src/components/routes/system/cpu-sheet.tsx
+msgid "Nice"
+msgstr ""
+
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
@@ -2002,6 +2006,10 @@ msgstr "Prijava"
 #: src/components/command-palette.tsx
 msgid "SMTP settings"
 msgstr "SMTP postavke"
+
+#: src/components/routes/system/cpu-sheet.tsx
+msgid "SoftIRQ"
+msgstr ""
 
 #: src/components/systems-table/systems-table.tsx
 msgid "Sort By"
