@@ -11,6 +11,16 @@ All notable changes to this project will be documented in this file.
   - 修复：`newGzipMiddleware` 在 `/_/` 前缀直接 `e.Next()` 放行，交由 PocketBase 自行压缩。
   - 验证：新增 `TestGzipMiddleware/skips_PocketBase_UI_route_so_apis.Serve_does_not_compress_it_twice`；`go build ./...` 与 `go test ./internal/hub/...` 全部通过。
 
+### Deployed
+
+- **v0.21.3 部署东京生产机** (2026-10-26):
+  - 镜像在美西沙箱 `us-zenix` 构建并冒烟验证（`/api/health` 200、`HUB_VERSION=0.21.3`、`/_/` 单层 gzip、8 台服务器各 6 图全有曲线），`docker save` 导出 23M 后经 Tailnet 传至 `tokyo-new-tailnet`，`docker load` 载入。
+  - 部署前备份：旧镜像打标 `beszel:schale-backup-20261026`，数据库 `.backup` 至 `/opt/beszel/data.db.bak-20261026`。
+  - `docker-compose.yml` 镜像切换为 `beszel:0.21.3`，`docker compose up -d` 平滑重建，容器 `healthy`、重启次数 0。
+  - 公网验证：`https://beszel.tannerlab.xyz/api/health` 200、`HUB_VERSION=0.21.3`、入口 bundle 更新为 `assets/index-DQQbQGhv.js`；8/8 服务器图表全部正常渲染，空态提示 0。
+  - 开发环境迁移：权威源码迁至 `us-zenix:/www/workspace/Project/beszel`，本机副本归档至 `Backups/beszel-local-archive-20261026/`（git bundle 完整历史 + 工作区 tar.gz）。
+  - 本机 beszel-agent 迁至 `C:\ProgramData\beszel-agent`，注册用户级开机自启计划任务 `beszel-agent`，上报恢复（Hunan-Zhuzhou `status=up`）。
+
 ### Upstream Backend Sync
 
 同步上游 `henrygd/beszel` 自 `ca7f75ef`（2026-10-19，上一轮同步基线）之后的 7 个提交，全部为后端功能逻辑与依赖维护，未包含任何生产部署。产品版本保持 `0.21.2`，未递增。
