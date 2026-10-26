@@ -80,6 +80,11 @@ func setupGzipTestRouter(t *testing.T) http.Handler {
 		return e.String(http.StatusOK, "short")
 	})
 
+	// PocketBase UI route, gzipped by apis.Serve before this middleware runs
+	r.GET("/_/{path...}", func(e *core.RequestEvent) error {
+		return e.HTML(http.StatusOK, "<html><body>"+largeBody+"</body></html>")
+	})
+
 	mux, err := r.BuildMux()
 	require.NoError(t, err)
 	return mux
@@ -187,6 +192,18 @@ func TestGzipMiddleware(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, rec.Code)
 		assert.Empty(t, rec.Header().Get("Content-Encoding"))
+	})
+
+	t.Run("skips PocketBase UI route so apis.Serve does not compress it twice", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/_/", nil)
+		req.Header.Set("Accept-Encoding", "gzip")
+		rec := httptest.NewRecorder()
+
+		handler.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusOK, rec.Code)
+		assert.Empty(t, rec.Header().Get("Content-Encoding"))
+		assert.Contains(t, rec.Body.String(), "<html><body>")
 	})
 
 	t.Run("skips compression for responses below minLength", func(t *testing.T) {

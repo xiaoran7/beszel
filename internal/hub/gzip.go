@@ -33,12 +33,17 @@ func isNonCompressibleExtension(path string) bool {
 	}
 }
 
+// pbUIStaticPrefix is PocketBase's own UI route, which already binds apis.Gzip()
+// inside apis.Serve. Compressing it here as well wraps the body twice.
+const pbUIStaticPrefix = "/_/"
+
 // newGzipMiddleware returns a middleware that compresses HTTP responses using Gzip.
 // It safely skips:
-// 1. WebSocket upgrade requests (Upgrade: websocket)
-// 2. Server-Sent Events (/api/realtime or Accept: text/event-stream) to avoid proxy buffering delays
-// 3. Already compressed file formats (PNG, JPG, WebP, WOFF2, zip, etc.)
-// 4. Responses smaller than 256 bytes
+// 1. PocketBase's own /_/ UI route, which is already gzipped by apis.Serve
+// 2. WebSocket upgrade requests (Upgrade: websocket)
+// 3. Server-Sent Events (/api/realtime or Accept: text/event-stream) to avoid proxy buffering delays
+// 4. Already compressed file formats (PNG, JPG, WebP, WOFF2, zip, etc.)
+// 5. Responses smaller than 256 bytes
 func newGzipMiddleware() *hook.Handler[*core.RequestEvent] {
 	pbGzip := apis.GzipWithConfig(apis.GzipConfig{
 		MinLength: 256,
@@ -47,6 +52,11 @@ func newGzipMiddleware() *hook.Handler[*core.RequestEvent] {
 	return &hook.Handler[*core.RequestEvent]{
 		Id: GzipMiddlewareId,
 		Func: func(e *core.RequestEvent) error {
+			// Skip PocketBase's own UI route, already compressed by apis.Serve
+			if strings.HasPrefix(e.Request.URL.Path, pbUIStaticPrefix) {
+				return e.Next()
+			}
+
 			// Skip WebSocket requests
 			if strings.EqualFold(e.Request.Header.Get("Upgrade"), "websocket") {
 				return e.Next()

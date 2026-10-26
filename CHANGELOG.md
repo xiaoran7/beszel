@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Bug Fixes
+
+- **修复 `/_/` 路径 HTML 被双重 Gzip 压缩**:
+  - 根因：PocketBase `apis.Serve` 已为 `/_/{path...}` UI 路由绑定 `apis.Gzip()`，本仓 `newGzipMiddleware` 又在 `registerMiddlewares` 里全局绑定了第二层 gzip，导致该路径响应被压缩两次（`Vary: Accept-Encoding` 出现 2 次，`gunzip` 一次后仍是 gzip 魔数 `1f8b`），浏览器拿到损坏的 HTML。
+  - 修复：`newGzipMiddleware` 在 `/_/` 前缀直接 `e.Next()` 放行，交由 PocketBase 自行压缩。
+  - 验证：新增 `TestGzipMiddleware/skips_PocketBase_UI_route_so_apis.Serve_does_not_compress_it_twice`；`go build ./...` 与 `go test ./internal/hub/...` 全部通过。
+
 ### Upstream Backend Sync
 
 同步上游 `henrygd/beszel` 自 `ca7f75ef`（2026-10-19，上一轮同步基线）之后的 7 个提交，全部为后端功能逻辑与依赖维护，未包含任何生产部署。产品版本保持 `0.21.2`，未递增。
