@@ -1,6 +1,7 @@
 import { useLingui } from "@lingui/react/macro"
 import * as React from "react"
 import * as RechartsPrimitive from "recharts"
+import { cachedAxisFits, xAxisDomain } from "@/lib/chart-axis"
 import { chartTimeData, cn, formatNumber } from "@/lib/utils"
 import type { ChartTimes } from "@/types"
 import { Separator } from "./separator"
@@ -419,13 +420,11 @@ interface XAxisData {
 
 const xAxisCache = new Map<ChartTimes, XAxisData>()
 
-function createXAxisData(chartTime: ChartTimes): XAxisData {
-	// console.log("Creating XAxis for", chartTime, new Date())
-	const axisEndTime = Date.now() + 500
-	const axisEndDate = new Date(axisEndTime)
-	const startTime = chartTimeData[chartTime].getOffset(axisEndDate)
+function createXAxisData(chartTime: ChartTimes, lastCreated: number): XAxisData {
+	const domain = xAxisDomain(lastCreated, chartTimeData[chartTime].getOffset)
+	const axisEndDate = new Date(domain[1])
+	const startTime = new Date(domain[0])
 	const ticks = timeTicks(startTime, axisEndDate, chartTimeData[chartTime].ticks ?? 12).map((date) => date.getTime())
-	const domain: [number, number] = [startTime.getTime(), axisEndTime]
 
 	return {
 		domain,
@@ -451,16 +450,11 @@ function xAxis(chartTime: ChartTimes, lastCreated: number) {
 		return null
 	}
 	const cachedAxis = xAxisCache.get(chartTime)
-
-	const expectedInterval = chartTimeData[chartTime].expectedInterval
-	const conservativeEndTime = Date.now() - expectedInterval / 2
-	const axisEndTime = Math.max(lastCreated, conservativeEndTime)
-
-	if (cachedAxis && axisEndTime < cachedAxis.domain[1]) {
+	if (cachedAxis && cachedAxisFits(cachedAxis.domain, lastCreated)) {
 		return cachedAxis.el
 	}
 
-	const axisData = createXAxisData(chartTime)
+	const axisData = createXAxisData(chartTime, lastCreated)
 	xAxisCache.set(chartTime, axisData)
 	return axisData.el
 }

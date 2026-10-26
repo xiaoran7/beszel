@@ -6,6 +6,20 @@ All notable changes to this project will be documented in this file.
 
 ### Bug Fixes
 
+- **修复图表坐标轴正常但曲线完全不显示（数据时间落后时整条线被裁掉）**:
+  - 症状：系统页 CPU / 内存 / 根使用 / 带宽 / 根 I/O / 系统负载 等图表渲染出坐标轴、网格线和 Y 轴刻度（刻度值由数据算出，如 `32%/24%/16%/8%/0%`），但没有任何曲线；Docker 图表不受影响。
+  - 根因：`internal/site/src/components/ui/chart.tsx` 的 `createXAxisData()` 把 X 轴窗口右边界写死为 `Date.now() + 500`，配合 `allowDataOverflow`，一旦最新数据点时间落后浏览器墙上时钟超过一个窗口长度（agent 上报延迟、实时订阅断开、客户端时钟偏差），所有点都被裁剪到绘图区外。X 轴与网格由 domain 直接绘制、Y 轴 domain 由数据算出，因此轴和刻度照常显示，只有曲线消失。`xAxis()` 虽然算出了 `axisEndTime`，却没有传给 `createXAxisData()`，该值实际未生效。
+  - 修复：新增 `internal/site/src/lib/chart-axis.ts`，把 X 轴窗口锚定到**最新数据点**而非墙上时钟（`xAxisDomain(lastCreated, getOffset)`），窗口长度仍由各时间档位的 `getOffset` 决定；缓存复用改为 `cachedAxisFits()`，只有当缓存窗口真正包含最新数据点时才复用，避免为较新系统建立的窗口裁掉滞后系统。
+  - 验证：新增 `internal/site/tests/chart-axis.test.ts`（6 条用例，覆盖落后 2 小时、窗口长度、缓存命中与两种失效场景）；`bun test tests/` 10 项全绿；`tsc --noEmit` 在改动文件上零错误；真实浏览器复现对照见下。
+  - 复现与回归证据：用 Playwright 拦截 `system_stats` 响应把 `created` 整体前移 2 小时，修复前曲线 x 坐标落在 `-504 ~ -229`（裁剪区为 `x:46, w:275`），整条线不可见，与用户截图完全一致；修复后同一场景曲线正常绘制。
+
+### Build Notes
+
+- **打镜像前必须先重建前端 `dist`**：`internal/site/dist` 位于 `.gitignore`（不入库），而根 `Dockerfile` 只做 `COPY . .` 并使用这份预构建产物，不会编译前端。若只改 `internal/site/src/**` 就直接 `docker build`，镜像里仍是上一次的前端代码，修复不会生效（本次曾因此误判为"已修复"）。
+  - 正确顺序：`cd internal/site && bun run build`（会先 `lingui extract/compile` 再 `vite build`）→ 确认 `dist/assets/chart-card-*.js` 中已无 `Date.now()+500` → 再 `docker build`。
+  - 验证打包产物是否含新逻辑：在 `dist/assets/*.js` 里 grep 特征串（如本次的 `getOffset` 锚定），不要只看版本号。
+
+
 - **修复 `/_/` 路径 HTML 被双重 Gzip 压缩**:
   - 根因：PocketBase `apis.Serve` 已为 `/_/{path...}` UI 路由绑定 `apis.Gzip()`，本仓 `newGzipMiddleware` 又在 `registerMiddlewares` 里全局绑定了第二层 gzip，导致该路径响应被压缩两次（`Vary: Accept-Encoding` 出现 2 次，`gunzip` 一次后仍是 gzip 魔数 `1f8b`），浏览器拿到损坏的 HTML。
   - 修复：`newGzipMiddleware` 在 `/_/` 前缀直接 `e.Next()` 放行，交由 PocketBase 自行压缩。
